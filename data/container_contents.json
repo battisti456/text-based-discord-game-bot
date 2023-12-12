@@ -1,0 +1,234 @@
+{
+    "container_descriptions" : {
+        "very trashy" : {
+            "starting_bid_range" : [10,50],
+            "num_items_range" : [3,6],
+            "possible_item_tiers" : {
+                "a bunch of garbage" : 10,
+                "someone's collection" : 1,
+                "some household's storage" : 1,
+                "a collection of excess laboratory equipment" : 1,
+                "a redneck's stache" : 1,
+                "some old rich person's leftovers" : 1,
+                "a criminal's hideout" : 2,
+                "some warehouse's excess supply storage" : 0
+            }
+        },
+        "fairly plain" : {
+            "starting_bid_range" : [10,100],
+            "num_items_range" : [3,6],
+            "possible_item_tiers" : {
+                "a bunch of garbage" : 3,
+                "someone's collection" : 1,
+                "some household's storage" : 6,
+                "a collection of excess laboratory equipment" : 1,
+                "a redneck's stache" : 3,
+                "some old rich person's leftovers" : 1,
+                "a criminal's hideout" : 1,
+                "some warehouse's excess supply storage" : 0
+            }
+        },
+        "a little ritzty" : {
+            "starting_bid_range" : [50,120],
+            "num_items_range" : [3,6],
+            "possible_item_tiers" : {
+                "a bunch of garbage" : 0,
+                "someone's collection" : 3,
+                "some household's storage" : 3,
+                "a collection of excess laboratory equipment" : 0,
+                "a redneck's stache" : 2,
+                "some old rich person's leftovers" : 5,
+                "a criminal's hideout" : 0,
+                "some warehouse's excess supply storage" : 0
+            }
+        },
+        "a bit corporate" : {
+            "starting_bid_range" : [50,100],
+            "num_items_range" : [3,6],
+            "possible_item_tiers" : {
+                "a bunch of garbage" : 2,
+                "someone's collection" : 1,
+                "some household's storage" : 0,
+                "a collection of excess laboratory equipment" : 4,
+                "a redneck's stache" : 1,
+                "some old rich person's leftovers" : 0,
+                "a criminal's hideout" : 0,
+                "some warehouse's excess supply storage" : 2
+            }
+        },
+        "bulk supply" : {
+            "starting_bid_range" : [30,70],
+            "num_items_range" : [6,9],
+            "possible_item_tiers" : {
+                "a bunch of garbage" : 1,
+                "someone's collection" : 0,
+                "some household's storage" : 0,
+                "a collection of excess laboratory equipment" : 2,
+                "a redneck's stache" : 0,
+                "some old rich person's leftovers" : 0,
+                "a criminal's hideout" : 1,
+                "some warehouse's excess supply storage" : 6
+            }
+        },
+        "a little fishy" : {
+            "starting_bid_range" : [50,100],
+            "num_items_range" : [3,6],
+            "possible_item_tiers" : {
+                "a bunch of garbage" : 2,
+                "someone's collection" : 1,
+                "some household's storage" : 1,
+                "a collection of excess laboratory equipment" : 1,
+                "a redneck's stache" : 1,
+                "some old rich person's leftovers" : 1,
+                "a criminal's hideout" : 2,
+                "some warehouse's excess supply storage" : 1
+            }
+        },
+        "quite creepy" : {
+            "starting_bid_range" : [20,50],
+            "num_items_range" : [3,6],
+            "possible_item_tiers" : {
+                "a bunch of garbage" : 4,
+                "someone's collection" : 4,
+                "some household's storage" : 1,
+                "a collection of excess laboratory equipment" : 0,
+                "a redneck's stache" : 2,
+                "some old rich person's leftovers" : 0,
+                "a criminal's hideout" : 1,
+                "some warehouse's excess supply storage" : 1
+            }
+        },
+        "pretty empty" : {
+            "starting_bid_range" : [10,40],
+            "num_items_range" : [0,2],
+            "possible_item_tiers" : {
+                "a bunch of garbage" : 1,
+                "someone's collection" : 1,
+                "some household's storage" : 1,
+                "a collection of excess laboratory equipment" : 1,
+                "a redneck's stache" : 1,
+                "some old rich person's leftovers" : 1,
+                "a criminal's hideout" : 1,
+                "some warehouse's excess supply storage" : 1
+            }
+        },
+        "quite full" : {
+            "starting_bid_range" : [200,300],
+            "num_items_range" : [6,9],
+            "possible_item_tiers" : {
+                "a bunch of garbage" : 1,
+                "someone's collection" : 1,
+                "some household's storage" : 1,
+                "a collection of excess laboratory equipment" : 1,
+                "a redneck's stache" : 1,
+                "some old rich person's leftovers" : 1,
+                "a criminal's hideout" : 1,
+                "some warehouse's excess supply storage" : 1
+            }
+        }
+    },
+    "container_types" : {
+        "a bunch of garbage" : {
+            "bag of trash" : 5,
+            "bag of trash with useful stuff" : 5,
+            "trashy armchair" : 1,
+            "taxidermy" : 1,
+            "precious metal scraps" : 2,
+            "metal scraps" : 4,
+            "jewelry" : 1,
+            "marble bust" : 1,
+            "briefcase of money in small bills" : 1,
+            "family memorabilia" : 2
+        },
+        "some household's storage" : {
+            "trashy armchair" : 2,
+            "comfy armchair" : 2,
+            "nice armchair" : 2,
+            "luxurious armchair" : 1,
+            "taxidermy" : 1,
+            "jewelry" : 2,
+            "family memorabilia" : 4,
+            "bag of trash" : 2,
+            "bag of trash with useful stuff" : 2
+        },
+        "a collection of excess laboratory equipment" : {
+            "old microscope" : 10,
+            "nice microscope" : 10,
+            "bag of trash" : 2,
+            "bag of trash with useful stuff" : 2,
+            "lab equipment" : 20,
+            "metal scraps" : 6,
+            "precious metal scraps" : 3
+        },
+        "a redneck's stache" : {
+            "trashy armchair" : 3,
+            "comfy armchair" : 1,
+            "taxidermy" : 2,
+            "gun collection" : 4,
+            "jewelry" : 1
+
+        },
+        "some old rich person's leftovers" : {
+            "luxurious armchair" : 2,
+            "taxidermy" : 2,
+            "animal rug" : 3,
+            "gun collection" : 4,
+            "bar of gold" : 1,
+            "precious metal scraps" : 2,
+            "jewelry" : 6,
+            "marble bust" : 2,
+            "gold bust" : 1,
+            "briefcase of money in small bills" : 2,
+            "briefcase of money in large bills" : 1,
+            "family memorabilia" : 2
+        },
+        "someone's collection" : {
+            "taxidermy" : 10,
+            "nice armchair" : 2,
+            "animal rug" : 4,
+            "gun collection" : 4,
+            "jewelry" : 6,
+            "marble bust" : 3,
+            "gold bust" : 1
+        },
+        "a criminal's hideout" : {
+            "taxidermy" : 10,
+            "metal scraps" : 4,
+            "precious metal scraps" : 4,
+            "gun collection" : 12,
+            "briefcase of money in small bills" : 6,
+            "briefcase of money in large bills" : 4,
+            "marble bust" : 4,
+            "gold bust" : 2,
+            "bar of gold" : 2
+        },
+        "some warehouse's excess supply storage" : {
+            "metal scraps" : 10,
+            "briefcase of money in small bills" : 2,
+            "briefcase of money in large bills" : 1
+        }
+    },
+    "items" : {
+        "bag of trash" : -1,
+        "bag of trash with useful stuff" : 1,
+        "trashy armchair" : 5,
+        "comfy armchair" : 10,
+        "nice armchair" : 15,
+        "luxurious armchair" : 50,
+        "taxidermy" : 100,
+        "old microscope" : 20,
+        "nice microscope" : 100,
+        "animal rug" : 20,
+        "gun collection" : 50,
+        "lab equipment" : 5,
+        "bar of gold" : 200,
+        "metal scraps" : 5,
+        "precious metal scraps" : 20,
+        "jewelry" : 50,
+        "marble bust" : 30,
+        "gold bust" : 150,
+        "briefcase of money in small bills" : 100,
+        "briefcase of money in large bills" : 500,
+        "family memorabilia" : 10
+    }
+}
