@@ -27,6 +27,14 @@ def moneyfy(value:int):
         to_return += "-"
     to_return += "$" + str(abs(value))
     return to_return
+def percentify(value:float,decimal_points:int = 2):
+    percent:float = value*100
+    nums = int(percent)
+    decimals = int((percent-nums)*10**decimal_points)
+    if decimal_points > 0 and decimals != 0:
+        return f"{nums}.{decimals}%"
+    else:
+        return f"{nums}%"
 
 def validate_data(data:DataDict,logger:logging.Logger):
     for desc_text in data["container_descriptions"]:
@@ -57,6 +65,19 @@ class Container_Bidding(Rounds_With_Points_Base,Secret_Message_Base):
                         Afterwards, We will look through the container, evaluating the value of objects as we go and adding them to the score of the winning bidder.
                         You may always pay as much money as you would like for containers, but if you go past our starting cash of {moneyfy(STARTING_MONEY)},
                         then you will lose an extra {END_OF_GAME_INTEREST}% at the end of the game for interest.""")
+    def evaluate_container(self,desc:DescDict):
+        total_reward:int = 0
+        tier = random.choices(list(desc["possible_item_tiers"]),list(desc["possible_item_tiers"][tier] for tier in desc["possible_item_tiers"]))[0]
+        num_items = random.randint(desc["num_items_range"][0],desc["num_items_range"][1])
+        reward_text:list[str] = [f"When we open the container we discover that it's actually {tier}.\nThere are {num_items} items:"]
+        item_dict:dict[str,int] = self.data["container_types"][tier]
+        items = random.choices(list(item_dict),list(item_dict[item] for item in item_dict),k = num_items)
+        for item in items:
+            var = random.randint(100-PERCENTILE_VAR,100+PERCENTILE_VAR)/100
+            value = int(self.data['items'][item]*var)
+            reward_text.append(f"> {item} evaluated for {moneyfy(value)}")
+            total_reward += value
+        return total_reward, reward_text
     async def core_game(self):
         desc_name:str = random.choice(list(self.data["container_descriptions"]))
         desc:DescDict = self.data['container_descriptions'][desc_name]
@@ -73,47 +94,33 @@ class Container_Bidding(Rounds_With_Points_Base,Secret_Message_Base):
             response_only_num:str = "".join(list(num for num in response if num.isdigit()))
             if response_only_num != "":
                 player_bids[player] = int(response_only_num)
-        winning_players:list[userid] = []
-        winning_bid:int = 0
-        for player in self.players:
-            if player_bids[player] == winning_bid:
-                winning_players.append(player)
-            elif player_bids[player] > winning_bid:
-                winning_players = [player]
-                winning_bid = player_bids[player]
-        if winning_bid < starting_bid:
-            await self.send("I see this container didn't quite pique your interests. Ah well.")
-            return
-        link_text = "won alone with a bid of"
-        if len(winning_players) > 1:
-            link_text = "tied and will split with bids of"
-        await self.send(f"{self.mention(winning_players)} {link_text} {moneyfy(winning_bid)}.")
-        total_reward:int = 0
-        tier = random.choices(list(desc["possible_item_tiers"]),list(desc["possible_item_tiers"][tier] for tier in desc["possible_item_tiers"]))[0]
-        num_items = random.randint(desc["num_items_range"][0],desc["num_items_range"][1])
-        reward_text:list[str] = [f"When we open the container we discover that it's actually {tier}.\nThere are {num_items} items:"]
-        item_dict:dict[str,int] = self.data["container_types"][tier]
-        items = random.choices(list(item_dict),list(item_dict[item] for item in item_dict),k = num_items)
-        for item in items:
-            var = random.randint(100-PERCENTILE_VAR,100+PERCENTILE_VAR)/100
-            value = int(self.data['items'][item]*var)
-            reward_text.append(f"> {item} evaluated for {moneyfy(value)}")
-            total_reward += value
-        payout = int(total_reward/len(winning_players))
-        more_than_one_winner_text = ""
-        if len(winning_players) > 1:
-            more_than_one_winner_text = f" and a payout of {moneyfy(payout)} to each player"
-        net_text = "loss"
-        if total_reward > winning_bid:
-            net_text = "profit"
-        reward_text.append(
-            f"""This totals to a reward of {moneyfy(total_reward)}{more_than_one_winner_text}.
-            That means that their bid had a net {net_text} of {moneyfy(abs(total_reward-winning_bid))}.""")
-        await self.send("\n".join(reward_text))
-        if winning_players:
-            await self.score(winning_players,payout,True)
-        for player in winning_players:
-            self.money[player] -= int(winning_bid/len(winning_players))
+
+        total_bid:int = sum(player_bids[player] for player in player_bids)
+        if total_bid > starting_bid:
+            total_reward, reward_text = self.evaluate_container(desc)
+            player_split_text = f"It will be split {len(player_bids)} way(s) between {self.mention(list(player_bids))} according to the amounts they provided to the bid."
+            if len(player_bids) == 1:
+                player_split_text = f"{self.mention(list(player_bids))} has won the whole amount."
+            await self.send(
+                f"""Your total bid of {moneyfy(total_bid)} exceeded our starting bid of {moneyfy(starting_bid)}.
+                {reward_text}
+                The total contents of this container are worth {moneyfy(total_reward)}.
+                {player_split_text}""")
+            for player in player_bids:
+                player_portion = player_bids[player]/total_bid
+                player_return = int(total_reward*player_portion)
+                net_text = "profit"
+                if player_bids[player] > player_return:
+                    net_text = "loss"
+                await self.score(player,player_return,True)
+                await self.secret_send(player,
+                                       f"""Your portion of the bid was {percentify(player_portion)} making your return {moneyfy(player_return)}.
+                                       This means you had a net {net_text} of {moneyfy(abs(player_bids[player] - player_return))}.
+                                       You now have {moneyfy(self.money[player])} remaining to bid with and {moneyfy(self.score[player])} in valuables.""")
+        else:
+            await self.send(
+                f"""Your total bid of {moneyfy(total_bid)} didn't exceed our starting bid of {moneyfy(starting_bid)}.
+                Y'all have decided to pass on this container. Ah well.""")
     async def game_cleanup(self):
         await self.send(f"{self.mention(self.players)} had {game.wordify_iterable(moneyfy(self.money[player]) for player in self.players)} respectively leftover.")
         for player in self.players:

@@ -35,7 +35,8 @@ class Rounds_With_Points_Base(game.Game):
             if self.num_rounds != 1:
                 await self.policed_send(f"Now beggining {self.round_name} #{round+1} of {self.num_rounds}.")
             points_to_add:dict[userid,int] = await self.core_game()
-            await self.score(num=points_to_add)#announces score if core_game returned none, changes score if core_game returned values
+            if points_to_add:
+                await self.score(num=points_to_add)#announces score if core_game returned none, changes score if core_game returned values
         await self.game_cleanup()
         scores = list(set(self.points[player] for player in self.points))
         scores.sort()
