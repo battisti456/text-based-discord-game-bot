@@ -21,7 +21,7 @@ def testing(config):
 config = grab_json(CONFIG_PATH)
 testing(config)
 gh = game_handler.Game_Handler(config)
-gh.next_game= Elimination_Trivia(gh)
+gh.next_game= Container_Bidding(gh)
 gh.run()
 
 """
