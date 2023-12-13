@@ -1,6 +1,6 @@
-gamebotconfig.json
+/gamebotconfig.json
+/gamebotlog.txt
+/games.csv
 .vscode
 __pycache__/
-temp
-gamebotlog.txt
-games.csv
+temp/
