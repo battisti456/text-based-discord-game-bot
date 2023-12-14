@@ -16,14 +16,14 @@ class Fibbage_At_Home(Secret_Message_Base,Trivia_Base,Rounds_With_Points_Base):
         Rounds_With_Points_Base.__init__(self,gh)
     async def game_intro(self):
         await self.send(
-            f"""# Today we are playing a game of fibbage at home!
-            In this game you will be presented with trivia questions and each player will secretly craft their own possiple answer.
-            Then, the trivia question will be asked at large.
-            You get {POINTS_FOOL} point for every person you fool, and {POINTS_GUESS} for getting it right yourself.
-            We will do this for {NUM_QUESTIONS} questions(s).
-            If you provide the real answer, you will get as many points as people who guessed it, excluding yourself.
-            The highest points at the end wins!
-            **WARNING: Sometimes the trivia is phrased in such a way that you can provide an alternative correct answer. Please provide an incorrect answer!**"""
+            f"# Today we are playing a game of fibbage at home!\n" +
+            "In this game you will be presented with trivia questions and each player will secretly craft their own possiple answer.\n" +
+            "Then, the trivia question will be asked at large.\n" +
+            f"You get {POINTS_FOOL} point for every person you fool, and {POINTS_GUESS} for getting it right yourself.\n" +
+            f"We will do this for {NUM_QUESTIONS} questions(s).\n" +
+            "If you provide the real answer, you will get as many points as people who guessed it, excluding yourself.\n" +
+            "The highest points at the end wins!\n" +
+            "**WARNING: Sometimes the trivia is phrased in such a way that you can provide an alternative correct answer. Please provide an incorrect answer!**"
         )
     async def core_game(self):
         trivia_dict:TriviaDict = await self.get_trivia(type_ = self.type_.Multiple_Choice)
@@ -31,7 +31,8 @@ class Fibbage_At_Home(Secret_Message_Base,Trivia_Base,Rounds_With_Points_Base):
             trivia_dict = await self.get_trivia(type_ = self.type_.Multiple_Choice)
         question_text = f"*{trivia_dict['question']}*\nAn example answer might be '*{trivia_dict['incorrect_answers'][0]}*'."
         await self.send(question_text)
-        responses:dict[userid,str] = await self.secret_text_response(message = f"{question_text}\nWhat is a possible answer to this qustion that might fool your competitors?")
+        responses:dict[userid,str] = await self.secret_text_response(
+            message = f"{question_text}\nWhat is a possible answer to this qustion that might fool your competitors?")
         options = [trivia_dict['correct_answer']]+list(responses[player] for player in responses)
         options = list(set(options))#remove duplicates
         random.shuffle(options)
@@ -47,7 +48,9 @@ class Fibbage_At_Home(Secret_Message_Base,Trivia_Base,Rounds_With_Points_Base):
             bonus[player_who_gave] = sum(1 for player in self.players if options[choices[player]] == trivia_dict['correct_answer'] and not player == player_who_gave)
         bonus_text = ""
         if bonus:
-            bonus_text = f"\n{self.mention(list(bonus))} got {game.wordify_iterable(bonus[player] for player in bonus)} bonus points respectively for providing the correct answer earlier."
+            bonus_text = (
+                f"\n{self.mention(list(bonus))} got {game.wordify_iterable(bonus[player] for player in bonus)}" + 
+                " bonus points respectively for providing the correct answer earlier.")
         correct_answer_text = f"The correct answer was:\n'{trivia_dict['correct_answer']}'"
         correct_choice_index = options.index(trivia_dict['correct_answer'])
         correct_players = list(player for player in self.players if choices[player] == correct_choice_index)

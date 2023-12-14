@@ -60,13 +60,13 @@ class Container_Bidding(Rounds_With_Points_Base,Secret_Message_Base):
     async def game_intro(self):
         await self.send(f"# Welcome to a game of container bidding!\n" + 
                         f"In this game we will have {NUM_CONTAINERS} containers that we look at.\n" +
-                        "For each container my expert evaluator will prode their decription.\n" +
+                        "For each container my expert evaluator will provide their decription.\n" +
                         "Then you must each secretly choose how much you would be willing to contribute for it!\n" +
-                        "All of you are bidding at once, but each secretly deciding how much to contribute.\n" +
+                        "All of you are bidding together, but each secretly deciding how much to contribute.\n" +
                         "The proportion of the total bid that your contribution takes up determines your share of the valuables inside the container.\n" +
-                        f"If your cumulitive bidding exceeds your starting cash of {moneyfy(STARTING_MONEY)}," +
+                        f"If your cumulitive bidding exceeds your starting cash of {moneyfy(STARTING_MONEY)}, " +
                         f"then you will lose an extra {END_OF_GAME_INTEREST}% at the end of the game for interest for all money spent in excess of that.\n"+
-                        "**WARNING: Your answers are only evaluated based of the digits they contain. All other characters are ignored. So '100.00' is '10000'.**")
+                        "**WARNING: Your answers are only evaluated based of the digits they contain. All other characters are ignored. So '$100.00' is '$10000'.**")
     def evaluate_container(self,desc:DescDict) -> tuple[int,list[str]]:
         total_reward:int = 0
         tier = random.choices(list(desc["possible_item_tiers"]),list(desc["possible_item_tiers"][tier] for tier in desc["possible_item_tiers"]))[0]
@@ -84,7 +84,8 @@ class Container_Bidding(Rounds_With_Points_Base,Secret_Message_Base):
         desc_name:str = random.choice(list(self.data["container_descriptions"]))
         desc:DescDict = self.data['container_descriptions'][desc_name]
         starting_bid:int = random.randint(desc["starting_bid_range"][0],desc["starting_bid_range"][1])
-        question_text:str = f"Our expert evaluator described this container as '{desc_name}'.\nThe base bid is {moneyfy(starting_bid)}. How much are you willing to pay?"
+        question_text:str = (f"Our expert evaluator described this container as '{desc_name}'.\n"+
+                             f"The base bid is {moneyfy(starting_bid)}. How much are you willing to contribute?")
         await self.send(f"{question_text}\nPlease respond in your private channel.")
         individual_message:dict[userid,str] = {}
         for player in self.players:

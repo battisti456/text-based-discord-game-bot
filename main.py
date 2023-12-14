@@ -19,7 +19,7 @@ def testing(config):
     config['players'] = config['test_players']
 
 config = grab_json(CONFIG_PATH)
-testing(config)
+#testing(config)
 gh = game_handler.Game_Handler(config)
 gh.next_game= Container_Bidding(gh)
 gh.run()
@@ -29,7 +29,6 @@ things to work on:
 - add better support for changing or not changing answers in multiple choice questions
 --card base svg is unfixable methinks. so, convert to png
 -include max debt into container bidding
--partial share system container biddin?
 -implement bidding base into container bidding
 -test bidding base
 -add player message deletion?

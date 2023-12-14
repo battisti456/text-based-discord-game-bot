@@ -78,9 +78,9 @@ class Game(object):
             self.logger.debug(f"Reaction action called by {user_id} with {emoji}.")
             if user_id in choice_response and emoji in emj:
                 choice_response[user_id] = emj.index(emoji)
-        to_say = message+ f"""
-**I would like {self.mention(wc)} to please react to this message with their answer(s)! The options are:**
-""" + wordify_iterable((f"{emj[i]} (*{options[i]}*)" for i in range(len(options))),"or")
+        to_say = (message+ 
+                  f"\n**I would like {self.mention(wc)} to please react to this message with their answer(s)! The options are:**\n"+ 
+                  wordify_iterable((f"{emj[i]} (*{options[i]}*)" for i in range(len(options))),"or"))
         message_id = await self.send(to_say,channel_id = channel_id)
         await self.gh.add_reaction(emj,message_id)
         self.add_reaction_action(message_id,reaction_action)

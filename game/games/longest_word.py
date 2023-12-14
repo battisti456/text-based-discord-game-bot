@@ -16,18 +16,17 @@ class Longest_Word(Dictionary_Base,Rounds_With_Points_Base):
         self.words_used = []
         self.current_letters = self.random_balanced_letters(NUM_LETTERS)
     async def game_intro(self):
-        await self.send(f"""# We are playing a game of create the longest word.
-                  Each turn you will be given a set of {NUM_LETTERS} letters and the choice of whether or not to refresh them.
-                  If you do, you spend as many points as letters you refreshed.
-                  You can go into negative points.
-                  Then you must give the longest valid word that can be made from only those letters.
-                  You will get as many points as the word is long squared.
-                  Then the letters are passed on to the next player.""")
+        await self.send("# We are playing a game of create the longest word.\n" +
+                  f"Each turn you will be given a set of {NUM_LETTERS} letters and the choice of whether or not to refresh them.\n" +
+                  "If you do, you spend as many points as letters you refreshed.\n" +
+                  "You can go into negative points.\n" +
+                  "Then you must give the longest valid word that can be made from only those letters.\n" +
+                  "You will get as many points as the word is long squared.\n" +
+                  "Then the letters are passed on to the next player.")
     async def longest_word_question(self,player:userid) -> str:
-        change_letters:messageid = await self.send(
-            f"""The current letters are '{self.current_letters}'.
-            *Respond here with the letters you want to change, if any*.
-            You have {NUM_LETTERS_CAN_REFRESH} letter changes left.""")
+        change_letters:messageid = await self.send(f"The current letters are '{self.current_letters}'.\n" + 
+                                                   "*Respond here with the letters you want to change, if any*.\n" + 
+                                                   f"You have {NUM_LETTERS_CAN_REFRESH} letter changes left.")
         choose_word:messageid = await self.send(f"*Respond here with your word when you have decided.*")
 
         amount_refreshed:list[int] = []
@@ -44,14 +43,14 @@ class Longest_Word(Dictionary_Base,Rounds_With_Points_Base):
                 amount_refreshed.append(num_refreshed)
                 num_left = NUM_LETTERS_CAN_REFRESH-num_letters_refreshed_so_far-num_refreshed
                 if num_left:
-                    await self.send(
-                        f"""The current letters are '{self.current_letters}'.
-                        *Respond here with the letters you want to change, if any*.
-                        You have {num_left} letter changes left.""",message_id=change_letters)
+                    await self.send(f"The current letters are '{self.current_letters}'.\n" + 
+                                    "*Respond here with the letters you want to change, if any*.\n" + 
+                                    f"You have {num_left} letter changes left.",
+                                    message_id=change_letters)
                 else:
-                    await self.send(
-                        f"""The current letters are '{self.current_letters}'.
-                        You have used all of your letter refreshes.""",message_id=change_letters)
+                    await self.send(f"The current letters are '{self.current_letters}'.\n" +
+                                    "You have used all of your letter refreshes.",
+                                    message_id=change_letters)
         word_holder:list[str] = []
         async def choose_word_action(message:str,user_id:userid):
             if user_id == player:
@@ -71,9 +70,9 @@ class Longest_Word(Dictionary_Base,Rounds_With_Points_Base):
                 if warning is None:
                     word_holder.append(word)
                 else:
-                    await self.send(
-                        f"""*Respond here with your word when you have decided.*
-                        Your attempt '{message}' was rejected because it {warning}.""",message_id=choose_word)
+                    await self.send("*Respond here with your word when you have decided.*\n" + 
+                                    f"Your attempt '{message}' was rejected because it {warning}.",
+                                    message_id=choose_word)
         self.add_message_action(change_letters,change_letter_action)
         self.add_message_action(choose_word,choose_word_action)
         while word_holder == []:

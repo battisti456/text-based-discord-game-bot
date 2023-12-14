@@ -20,14 +20,14 @@ class Guess_The_Word(Dictionary_Base,Secret_Message_Base, Rounds_With_Points_Bas
         Rounds_With_Points_Base.__init__(self,gh)
         self.num_rounds = NUM_ROUNDS
     async def game_intro(self):
-        await self.send(f"""# This is a game of guessing the word!
-                        I will generate a random secret word of a length from {MIN_WORD_LEN}-{MAX_WORD_LEN}.
-                        Then I will give you {NUM_DEFINITIONS} different definitions for it.
-                        After each definintion, you will be given a chance to guess the word being defined.
-                        The fewer definitions you need, the more points you will get for a success.
-                        This will continue across {NUM_ROUNDS} different word(s).
-                        The highest points at the end is the winner!
-                        CAUTION: Sometimes words can be spelled other ways....""")
+        await self.send("# This is a game of guessing the word!\n" +
+                        f"I will generate a random secret word of a length from {MIN_WORD_LEN}-{MAX_WORD_LEN}.\n" +
+                        f"Then I will give you {NUM_DEFINITIONS} different definitions for it.\n" +
+                        "After each definintion, you will be given a chance to guess the word being defined.\n" +
+                        "The fewer definitions you need, the more points you will get for a success.\n" +
+                        f"This will continue across {NUM_ROUNDS} different word(s).\n" + 
+                        "The highest points at the end is the winner!\n" +
+                        "CAUTION: Sometimes words can be spelled other ways....")
     async def core_game(self):
         definition_list = []
         while len(definition_list) < NUM_DEFINITIONS:
@@ -86,8 +86,8 @@ class Guess_The_Word(Dictionary_Base,Secret_Message_Base, Rounds_With_Points_Bas
                             slot_text += secret_word[j]
                         else:
                             slot_text += "\_"
-                    await self.send(f"Not a single person got new feedback this round, so I will be providing everyone some.\nOur current public feedback is '{slot_text}'.")
-
+                    await self.send(f"Not a single person got new feedback this round, so I will be providing everyone some.\n" + 
+                                    f"Our current public feedback is '{slot_text}'.")
             if any(correct_players):
                 await self.send(f"{self.mention(correct_players)} got it correct!")
                 for player in correct_players:
@@ -100,7 +100,8 @@ class Guess_The_Word(Dictionary_Base,Secret_Message_Base, Rounds_With_Points_Bas
                 break
         await self.send(f"The word was '{secret_word}'.")
         if(len(definition_list) > NUM_DEFINITIONS):
-            await self.send(f"Some unused definitions included:\n{self.definition_string(definition_list[NUM_DEFINITIONS:])}")
+            await self.send(f"Some unused definitions included:\n" +
+                            self.definition_string(definition_list[NUM_DEFINITIONS:]))
                 
         
             

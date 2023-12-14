@@ -11,15 +11,15 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
     def __init__(self,gh:game.GH):
         Elimination_Base.__init__(self,gh)
         Dictionary_Base.__init__(self,gh)
-
         self.last_player:int = self.players[0]
     async def game_intro(self):
         await self.send(
-            f"""# We are playing a game of word creation!
-            In this game you take turns adding letters to the combined letters, choosing to put them on the left or right side.
-            Once we have more than {NUM_LETTERS}, if you add a letter that makes it spell a word, you lose!
-            But, beware! If the person after you challenges your word you must provide a word that could still be spelled with the letters, or else you are eliminated.
-            If the challenge was made in haste, however, the challenger is eliminated instead."""
+            "# We are playing a game of word creation!\n" +
+            "In this game you take turns adding letters to the combined letters, choosing to put them on the left or right side.\n" +
+            f"Once we have more than {NUM_LETTERS}, if you add a letter that makes it spell a word, you lose!\n" +
+            "But, beware! If the person after you challenges your word you must provide a word " + 
+            "that could still be spelled with the letters, or else you are eliminated.\n" +
+            "If the challenge was made in haste, however, the challenger is eliminated instead."
         )
     async def game_outro(self,order:Iterable[int]):
         pass
@@ -46,7 +46,8 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
             if choice in [0,1]:#add letter
                 letter:str = await self.text_response(f"{self.mention(player)}, which letter would you like?",player)
                 while len(letter) > 1 or not letter.isalpha():
-                    letter:str = await self.text_response(f"{self.mention(player)}, I am sorry, '{letter}' is not a valid response.",player)
+                    letter:str = await self.text_response(
+                        f"{self.mention(player)}, I am sorry, '{letter}' is not a valid response.",player)
                 letter = letter.lower()
                 if choice:#1 is right
                     letters = letters + letter
@@ -64,8 +65,12 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                     await self.send(f"Our letters are now '{letters}'.")
                     continue#unnessasary but helps with readability for me
             else:#challenge
-                await self.send(f"{self.mention(player)} has chosen to challenge {self.mention(self.last_player)} on the letters '{letters}'")
-                word = await self.text_response(f"{self.mention(self.last_player)}, What word do you think you could have spelled with '{letters}'?",self.last_player)
+                await self.send(
+                    f"{self.mention(player)} has chosen to challenge {self.mention(self.last_player)} on the letters '{letters}'")
+                word = await self.text_response(
+                    f"{self.mention(self.last_player)}, " + 
+                    f"What word do you think you could have spelled with '{letters}'?",
+                    self.last_player)
                 word = word.lower()
                 word = "".join(word.split())#remove whitespace
                 if self.is_word(word) and letters in word and len(word) > NUM_LETTERS:
