@@ -24,7 +24,8 @@ CHECK_TIME = 0.5
 
 class Game(object):
     def __init__(self,gh:game_handler.Game_Handler):
-        if not hasattr(self,'gh'):#prevents double initialization, although it probably wouldn't hurt anyway
+        if not hasattr(self,'initialized_bases'):#prevents double initialization, although it probably wouldn't hurt anyway
+            self.initialized_bases:list[type[Game]] = [Game]
             self.gh = gh
             self.logger = self.gh.logger
             self.message_actions:dict[messageid,Callable[[str,userid],None]] = {}#message id replying to, function

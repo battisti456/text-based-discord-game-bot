@@ -45,7 +45,9 @@ definitiondict = dict[partofspeach,list[str]]
 class Dictionary_Base(game.Game):
     def __init__(self,gh:game.GH):
         game.Game.__init__(self,gh)
-        self.dictionary = PyDictionary.PyDictionary()
+        if not Dictionary_Base in self.initialized_bases:
+            self.initialized_bases.append(Dictionary_Base)
+            self.dictionary = PyDictionary.PyDictionary()
     def is_word(self,word:str) -> bool:
         return scrabble.check(word)
     def define(self,word:str) -> definitiondict:

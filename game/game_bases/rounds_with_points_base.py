@@ -5,12 +5,14 @@ from typing import Callable
 class Rounds_With_Points_Base(game.Game):
     def __init__(self,gh:game.GH):
         game.Game.__init__(self,gh)
-        self.points:dict[int,int] = {}
-        for player in self.players:
-            self.points[player] = 0
-        self.num_rounds:int = 3
-        self.points_format:Callable = lambda x: f"{x} points"
-        self.round_name = "round"
+        if not Rounds_With_Points_Base in self.initialized_bases:
+            self.initialized_bases.append(Rounds_With_Points_Base)
+            self.points:dict[int,int] = {}
+            for player in self.players:
+                self.points[player] = 0
+            self.num_rounds:int = 3
+            self.points_format:Callable = lambda x: f"{x} points"
+            self.round_name = "round"
     @game.police_messaging
     async def score(self,player:int|list[int] = None, num:int|dict[userid,int] = None, mute:bool = False):
         n = self.make_player_dict(num)

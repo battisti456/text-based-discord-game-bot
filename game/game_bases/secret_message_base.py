@@ -7,7 +7,9 @@ from game import userid,channelid,messageid
 class Secret_Message_Base(game.Game):
     def __init__(self,gh:game.GH):
         game.Game.__init__(self,gh)
-        self.player_threads:dict[userid,channelid] = {}
+        if not Secret_Message_Base in self.initialized_bases:
+            self.initialized_bases.append(Secret_Message_Base)
+            self.player_threads:dict[userid,channelid] = {}
     @game.police_messaging
     async def get_secret_thread(self,player:userid,name:str = None) -> channelid:
         if player in self.player_threads:

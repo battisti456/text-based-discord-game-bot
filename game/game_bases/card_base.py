@@ -125,8 +125,10 @@ class Deck(Card_Holder):
 class Card_Base(game.Game):
     def __init__(self,gh:game.GH):
         game.Game.__init__(self,gh)
-        self.hand_threads:dict[int,int] = {}
-        self.hand_message:dict[int,int] = {}
+        if not Card_Base in self.initialized_bases:
+            self.initialized_bases.append(Card_Base)
+            self.hand_threads:dict[int,int] = {}
+            self.hand_message:dict[int,int] = {}
     async def setup_cards(self,num:int = 1):
         self.deck:Deck = Deck(num)
         self.discard = Card_Holder()

@@ -15,8 +15,10 @@ def moneyfy(value:int):
 class Bidding_Base(game.Game):
     def __init__(self,gh:game.GH):
         game.Game.__init__(self,gh)
-        self.min_bid:int = 1
-        self.bid_unit_function:Callable[[int],str] = moneyfy
+        if not Bidding_Base in self.initialized_bases:
+            self.initialized_bases.append(Bidding_Base)
+            self.min_bid:int = 1
+            self.bid_unit_function:Callable[[int],str] = moneyfy
     async def get_bid(self,players:list[userid],starting_bid:int,bid_thread_id:channelid = None) -> tuple[userid,int]:
         highest_bid:tuple[userid,int] = (None,starting_bid)
         players_done:dict[userid,bool] = self.make_player_dict(False,players)

@@ -18,10 +18,12 @@ class TriviaDict(TypedDict):
 class Trivia_Base(game.Game):
     def __init__(self,gh:game.GH):
         game.Game.__init__(self,gh)
-        self.trivia_client = pytrivia.Trivia(True)
-        self.difficulty = pytrivia.Diffculty
-        self.category = pytrivia.Category
-        self.type_ = pytrivia.Type
+        if not Trivia_Base in self.initialized_bases:
+            self.initialized_bases.append(Trivia_Base)
+            self.trivia_client = pytrivia.Trivia(True)
+            self.difficulty = pytrivia.Diffculty
+            self.category = pytrivia.Category
+            self.type_ = pytrivia.Type
     def get_difficulty(self,text:str):
         text = text.capitalize()
         if hasattr(self.difficulty,text):

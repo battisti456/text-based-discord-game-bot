@@ -4,17 +4,28 @@ import logging
 
 import random
 
-from typing import Sequence
+from typing import Sequence, TypedDict
 from math import ceil
 
 import os
 
 #import game
 
+class Config(TypedDict):
+    token:str
+    channel_id:int
+    test_channel_id:int
+    log_file:str
+    log_level:int
+    test_players:dict[str,int]
+    players:dict[str,int]
+    temp_path:str
+    data_path:str
+
 
 class Game_Handler(object):
-    def __init__(self,config:dict):
-        self.config = config
+    def __init__(self,config:Config):
+        self.config:Config = config
         self.current_game = None
         self.next_game = None
         

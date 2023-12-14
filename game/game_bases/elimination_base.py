@@ -7,7 +7,9 @@ import game_handler
 class Elimination_Base(game.Game):
     def __init__(self,gh:game_handler.Game_Handler):
         game.Game.__init__(self,gh)
-        self.players_eliminated:list[userid|list[userid]] = []
+        if not Elimination_Base in self.initialized_bases:
+            self.initialized_bases.append(Elimination_Base)
+            self.players_eliminated:list[userid|list[userid]] = []
     @game.police_messaging
     async def eliminate_players(self,players:userid|list[userid]) -> bool:
         """Returns True to tell core_game that another round should be started after calling this.
