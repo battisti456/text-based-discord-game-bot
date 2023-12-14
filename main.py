@@ -3,8 +3,6 @@ import json
 import game_handler
 from game.games import *
 
-working = [Guess_The_Word,Elimination_Letter_Adder,Elimination_Trivia,Longest_Word,Fibbage_At_Home]#i hope
-played = [Elimination_Letter_Adder,Elimination_Trivia]
 
 CONFIG_PATH = "gamebotconfig.json"
 
@@ -21,17 +19,14 @@ def testing(config):
 config = grab_json(CONFIG_PATH)
 #testing(config)
 gh = game_handler.Game_Handler(config)
-gh.next_game= Container_Bidding(gh)
+gh.next_game= Elimination_Blackjack(gh)
 gh.run()
 
 """
 things to work on:
 - add better support for changing or not changing answers in multiple choice questions
---card base svg is unfixable methinks. so, convert to png
--include max debt into container bidding
--implement bidding base into container bidding
 -test bidding base
 -add player message deletion?
 
--rewrite secret text response from scratch to avoid taske ending prematurely bug?
+-rewrite secret text response from scratch to avoid taske ending prematurely bug? I added something. We'll see.
 """

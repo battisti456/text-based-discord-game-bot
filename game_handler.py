@@ -5,6 +5,9 @@ import logging
 import random
 
 from typing import Sequence
+from math import ceil
+
+import os
 
 #import game
 
@@ -68,6 +71,14 @@ class Game_Handler(object):
         channel = self.client.get_channel(self.config["channel_id"])
         for thread in channel.threads:
             await thread.delete()
+        temp_files:list[str] = os.listdir(self.config["temp_path"])
+        for file in temp_files:
+            file_path = f"{self.config['temp_path']}\\{file}"
+            try:
+                os.remove(file_path)
+                self.logger.debug(f"Deleted temp file '{file}'.")
+            except OSError:
+                self.logger.warning(f"Attempted to delete temp file '{file}' but failed.")
     def set_next_game(self,next_game):
         self.next_game = next_game
     async def add_reaction(self,emoji:str|tuple|list,message_id:int):#tested
@@ -130,7 +141,7 @@ class Game_Handler(object):
         player_list = list(self.config["players"][player] for player in self.config["players"])
         random.shuffle(player_list)
         return tuple(player_list)
-    async def send(self,content:str|None = None,embed_data:None|dict = None,attatchements_data:Sequence[str]|str = [],channel_id:int|None = None,message_id:int|None = None) -> int:
+    async def send(self,content:str|None = None,embed_data:None|dict = None,attachments_data:Sequence[str]|str = [],channel_id:int|None = None,message_id:int|None = None) -> int:
         await self.client.wait_until_ready()
         if channel_id is None:
             channel = self.client.get_channel(self.config["channel_id"])
@@ -141,19 +152,25 @@ class Game_Handler(object):
             embed.from_dict(embed_data)
         else:
             embed = None
-        if isinstance(attatchements_data,str):
-            attatchments = [discord.File(attatchements_data)]
+        if isinstance(attachments_data,str):
+            attachments = [discord.File(attachments_data)]
         else:
-            attatchments= []
-            for attatchment_data in attatchements_data:
-                attatchments.append(discord.File(attatchment_data))
+            attachments= []
+            for attatchment_data in attachments_data:
+                attachments.append(discord.File(attatchment_data))
+        if not content is None:
+            if len(content) > 2000:
+                self.logger.warning("Attempted to send a message that was too long.")
+                for i in range(ceil(len(content)/2000)):
+                    await self.send(content[2000*i:min(2000*(i+1),len(content))],channel_id=channel_id)
+                content = "**Warning: Attempted to send a too long message. Contents being split between messages!**"
 
         if message_id is None:
-            message = await channel.send(content=content,embed=embed,files = attatchments)
+            message = await channel.send(content=content,embed=embed,files = attachments)
             return message.id
         else:
-            message:discord.Message = channel.fetch_message(message_id)
-            await message.edit(content=content,embed=embed,attatchments=attatchments)
+            message:discord.Message = await channel.fetch_message(message_id)
+            await message.edit(content=content,embed=embed,attachments=attachments)
             #await message.send()
             return message.id
     def get_user_name(self,user_id:int) -> str:

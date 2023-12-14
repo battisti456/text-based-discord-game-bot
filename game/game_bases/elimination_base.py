@@ -7,34 +7,63 @@ import game_handler
 class Elimination_Base(game.Game):
     def __init__(self,gh:game_handler.Game_Handler):
         game.Game.__init__(self,gh)
+        self.players_eliminated:list[userid|list[userid]] = []
+    @game.police_messaging
+    async def eliminate_players(self,players:userid|list[userid]) -> bool:
+        """Returns True to tell core_game that another round should be started after calling this.
+        Either because all players would have been eliminated, or because someone won."""
+        if isinstance(players,int):
+            players = [players]
+        if players:
+            if len(players) == len(self.players) - self.get_num_eliminated():
+                await self.policed_send(f"{self.mention(players)} despite otherwise being eliminated will continue to another round.")
+                return True#all players would have been eliminated, restart round
+            self.players_eliminated.append(players)
+            were_text = "were"
+            if len(players) == 1:
+                were_text = "was"
+            await self.policed_send(f"{self.mention(players)} {were_text} eliminated.")
+            if self.get_num_eliminated() == len(self.players) -1 :
+                return True #winner decided
+        return False #nothing happens
+    def player_is_eliminated(self,player:userid) -> bool:
+        not_in = True
+        for elimination in self.players_eliminated:
+            if isinstance(elimination,int):
+                not_in = not_in and elimination != player
+            else:
+                not_in = not_in and not player in elimination
+        return not not_in
+    def get_players_not_eliminated(self) -> list[userid]:
+        return list(player for player in self.players if not self.player_is_eliminated(player))
+    def get_num_eliminated(self) -> int:
+        num = 0
+        for elimination in self.players_eliminated:
+            if isinstance(elimination,int):
+                num += 1
+            else:
+                num += len(elimination)
+        return num
     @game.police_messaging
     async def run(self) -> list[userid|list[userid]]:
         await self.game_intro()
-        players_eliminated:list[userid|list[userid]] = []
-        while len(self.players) - game.one_depth_len(players_eliminated) > 1:
-            flat_eliminated = game.one_depth_flat(players_eliminated)
-            players_to_be_eliminated = await self.core_game(list(player for player in self.players if not player in flat_eliminated))
-            if isinstance(players_to_be_eliminated,int):
-                players_eliminated.append(players_to_be_eliminated)
-                await self.policed_send(f"{self.mention(players_to_be_eliminated)} was eliminated.")
-            elif len(players_to_be_eliminated) + len(flat_eliminated) < len(self.players):
-                if len(players_to_be_eliminated) == 0:
-                    await self.policed_send(f"No one was eliminated.")
-                elif len(players_to_be_eliminated) == 1:
-                    players_eliminated.append(players_to_be_eliminated[0])
-                    await self.policed_send(f"{self.mention(players_to_be_eliminated)} was eliminated.")
-                else:
-                    await self.policed_send(f"{self.mention(players_to_be_eliminated)} were eliminated.")
-                    players_eliminated.append(players_to_be_eliminated)
-            else:
-                await self.policed_send(f"{self.mention(players_to_be_eliminated)} despite otherwise being eliminated, will continue to another round to narrow down a winner.")
-        flat_eliminated = game.one_depth_flat(players_eliminated)
-        winner = next(player for player in self.players if not player in flat_eliminated)
+        await self.game_setup()
+        while self.get_num_eliminated() < len(self.players) - 1:
+            players_to_be_eliminated = await self.core_game(self.get_players_not_eliminated())
+            await self.eliminate_players(players_to_be_eliminated)
+        await self.game_cleanup()
+        players_left = self.get_players_not_eliminated()
+        assert len(players_left) == 1
+        winner = players_left[0]
         await self.policed_send(f"{self.mention(winner)} has won!")
-        players_eliminated.append(winner)
-        players_eliminated.reverse()
-        await self.game_outro(players_eliminated)
-        return players_eliminated
+        self.players_eliminated.append(winner)
+        self.players_eliminated.reverse()
+        await self.game_outro(self.players_eliminated)
+        return self.players_eliminated
+    async def game_setup(self):
+        pass
+    async def game_cleanup(self):
+        pass
     async def game_intro(self):
         pass
     async def game_outro(self,order:Iterable[int]):

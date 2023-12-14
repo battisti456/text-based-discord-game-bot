@@ -224,9 +224,10 @@ def police_messaging(func:Callable[P,R]) -> Callable[P,R]:
             if hasattr(clss,func.__name__):
                 c = clss
                 break
+        stored = args[0].current_class_execution
         args[0].current_class_execution = c
         to_return = await func(*args,**kwargs)
-        args[0].current_class_execution = None
+        args[0].current_class_execution = stored
         return to_return
     return wrapped
 

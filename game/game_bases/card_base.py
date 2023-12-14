@@ -5,25 +5,29 @@ import random
 
 import PIL.Image
 import PIL.ImageOps
-#import cairosvg broken?
-from svglib.svglib import svg2rlg
-from reportlab.graphics import renderPM
-from io import BytesIO
 
-svg2rlg()
-
-
-from typing import Iterable
+from typing import Iterable, Callable
+from game import userid
 
 SUIT_NAMES = ["spades","hearts","diamonds","clubs"]
 CARD_NAMES = ["ace","two","three","four","five","six","seven","eight","nine","ten","jack","queen","king"]
 CARD_JOIN = " "
 CARD_PATH = "data\\cards"
-CARD_WIDTH = 200
-HAND_WIDTH = 1600
+CARD_WIDTH = 300
+HAND_WIDTH = 1200
 HAND_PADDING = 20
 HAND_COLOR = (0,0,0,0)
 OVERLAP_RATIO = 0.25
+BETTER_ART = True
+
+def card_file_name(suit:int,value:int):
+    better_art = ""
+    if ((value == 0 and suit == 0) or value > 9) and BETTER_ART:
+        better_art = "2"
+    card_text = CARD_NAMES[value]
+    if value > 0 and value < 10:
+        card_text = str(value +1)
+    return f"{card_text}_of_{SUIT_NAMES[suit]}{better_art}.png"
 
 def wordify_cards(cards:Iterable['Card']) -> str:
     return game.wordify_iterable(card.string() for card in cards)
@@ -37,16 +41,10 @@ class Card(object):
     def emoji(self)->str:
         return game.emoji_groups.PLAYING_CARD_EMOJI[self.suit*len(CARD_NAMES)+self.value]
     def image(self,card_width:int = CARD_WIDTH)->PIL.Image.Image:
-        out = BytesIO()
-        path:str = CARD_PATH + "\\" + self.string() +".svg"
-        with open(path,'r') as file:
-            drawing = svg2rlg(file)
-            bounds:tuple[int,int,int,int] = drawing.getBounds()
-            scale = card_width/abs(bounds[0]-bounds[2])
-            drawing.scale(scale,scale)
-            renderPM.drawToFile(drawing,out,fmt='png')
-            #cairosvg.svg2png(file_obj = file,write_to = out,output_width = card_width)
-        return PIL.Image.open(out)
+        image = PIL.Image.open(f"{CARD_PATH}\\{card_file_name(self.suit,self.value)}")
+        image = image.convert('RGBA')
+        width,height = image.size
+        return image.resize((card_width,int(height/width*card_width)))
     def card_num(self):
         return self.value+1
     def is_face(self):
@@ -62,17 +60,17 @@ class Card_Holder(object):
     def emoji_contents(self) -> str:
         return CARD_JOIN.join(card.emoji() for card in self.cards)
     def image(self) -> PIL.Image.Image:
-        effective_cards_at_max_overlap = ((len(self.cards)-1)*OVERLAP_RATIO + 1)
+        effective_cards_at_max_overlap:float = ((len(self.cards)-1)*OVERLAP_RATIO + 1)
         card_width = CARD_WIDTH
         overlap_ratio = OVERLAP_RATIO
         offset = 0
-        if effective_cards_at_max_overlap*CARD_WIDTH > HAND_WIDTH:#there are too many cards, need to shrink
-            card_width = HAND_WIDTH/effective_cards_at_max_overlap
+        if effective_cards_at_max_overlap*CARD_WIDTH > HAND_WIDTH:#there are too many cards, need to shrinkpl\
+            card_width = int(HAND_WIDTH/effective_cards_at_max_overlap)
         elif CARD_WIDTH*len(self.cards) < HAND_WIDTH:#no overlap needed
             overlap_ratio = 1
             offset = (HAND_WIDTH-CARD_WIDTH*len(self.cards))/2
         else:
-            overlap_ratio = (HAND_WIDTH/CARD_WIDTH-1)/(len(self.hand)-1)
+            overlap_ratio = (HAND_WIDTH/CARD_WIDTH-1)/(len(self.cards)-1)
         card_images:list[PIL.Image.Image] = list(card.image(card_width) for card in self.cards)
         if card_images:
             hand_height = card_images[0].size[1]
@@ -115,11 +113,12 @@ class Hand(Card_Holder):
     pass
 
 class Deck(Card_Holder):
-    def __init__(self,name:str = ""):
-        Card_Holder.__init__(self,name)
-        for suit in range(len(SUIT_NAMES)):
-            for value in range(len(CARD_NAMES)):
-                self.cards.append(Card(suit,value))
+    def __init__(self,num = 1):
+        Card_Holder.__init__(self)
+        for n in range(num):
+            for suit in range(len(SUIT_NAMES)):
+                for value in range(len(CARD_NAMES)):
+                    self.cards.append(Card(suit,value))
         self.shuffle()
         
 
@@ -128,8 +127,8 @@ class Card_Base(game.Game):
         game.Game.__init__(self,gh)
         self.hand_threads:dict[int,int] = {}
         self.hand_message:dict[int,int] = {}
-    async def setup_cards(self):
-        self.deck:Deck = Deck()
+    async def setup_cards(self,num:int = 1):
+        self.deck:Deck = Deck(num)
         self.discard = Card_Holder()
         self.hands:dict[int,Hand] = {}
         for player in self.players:
@@ -144,7 +143,7 @@ class Card_Base(game.Game):
         image = ch.image()
         path = self.temp_file_path(".png")
         image.save(path)
-        await self.send(content = message,attatchements_data=path,channel_id = thread_id,message_id = message_id)
+        return await self.send(content = message,attatchements_data=path,channel_id = thread_id,message_id = message_id)
     @game.police_messaging
     async def update_hand(self,player:int,message:str = ""):
         message_id = None
@@ -161,17 +160,22 @@ class Card_Base(game.Game):
         message_id = await self.send_ch(self.hands[player],contents,self.hand_threads[player],message_id)
         self.hand_message[player] = message_id
     @game.police_messaging
-    async def player_draw(self,player:int|Iterable[int],num:int = 1):
+    async def player_draw(self,player:int|Iterable[int],num:int = 1,text_for_player:Callable[[userid],str] = None):
         if isinstance(player,int):
             players = [player]
         else:
             players=player
+        if players:
+            await self.policed_send(f"{self.mention(players)} drew {num} card(s).")
         for player in players:
             cards = self.hands[player].take(self.deck,num)
             draw_text = ""
-            await self.policed_send(f"{self.mention(player)} drew {len(cards)} card(s).")
             if self.allowed_to_speak():
-                draw_text = f"You drew: {wordify_cards(cards)}"
+                draw_text = f"You drew: {wordify_cards(cards)}."
+            if self.allowed_to_speak() and not text_for_player is None:
+                draw_text += "\n"
+            if not text_for_player is None:
+                draw_text += text_for_player(player)
             await self.update_hand(player,draw_text)
     @game.police_messaging
     async def player_discard(self,player:int,num_random:int = 0,cards:int|Card|Iterable[int]|Iterable[Card] = []):

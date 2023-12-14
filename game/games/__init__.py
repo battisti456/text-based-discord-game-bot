@@ -1,6 +1,6 @@
 import game
 
-#from game.games.elimination_blackjack import Elimination_Blackjack
+from game.games.elimination_blackjack import Elimination_Blackjack
 from game.games.elimination_trivia import Elimination_Trivia
 from game.games.elimination_letter_adder import Elimination_Letter_Adder
 from game.games.longest_word import Longest_Word
