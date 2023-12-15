@@ -21,6 +21,8 @@ class Config(TypedDict):
     players:dict[str,int]
     temp_path:str
     data_path:str
+    game_configs:dict[str,dict]
+
 
 
 class Game_Handler(object):
@@ -75,6 +77,11 @@ class Game_Handler(object):
             self.logger.debug(f"Registered reaction {payload.emoji} on message {payload.message_id} from user {payload.user_id} in channel {payload.channel_id}")
             if(payload.user_id != self.client.user.id) and not self.current_game is None:
                 await self.current_game.on_reaction(payload.emoji.__str__(),payload.message_id,payload.user_id)
+        @self.client.event
+        async def on_raw_reaction_remove(payload:discord.RawReactionActionEvent):
+            self.logger.debug(f"Registered emoji clear {payload.emoji} on message {payload.message_id} from user {payload.user_id} in channel {payload.channel_id}")
+            if(payload.user_id != self.client.user.id) and not self.current_game is None:
+                await self.current_game.on_unreaction(payload.emoji.__str__(),payload.message_id,payload.user_id)
     def run(self):
         self.client.run(self.config["token"])
     async def clean_up(self):

@@ -29,13 +29,13 @@ class Elimination_Base(game.Game):
                 return True #winner decided
         return False #nothing happens
     def player_is_eliminated(self,player:userid) -> bool:
-        not_in = True
+        not_eliminated = True
         for elimination in self.players_eliminated:
             if isinstance(elimination,int):
-                not_in = not_in and elimination != player
+                not_eliminated = not_eliminated and elimination != player
             else:
-                not_in = not_in and not player in elimination
-        return not not_in
+                not_eliminated = not_eliminated and not (player in elimination)
+        return not not_eliminated
     def get_players_not_eliminated(self) -> list[userid]:
         return list(player for player in self.players if not self.player_is_eliminated(player))
     def get_num_eliminated(self) -> int:

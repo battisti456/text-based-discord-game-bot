@@ -16,11 +16,18 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
         Elimination_Base.__init__(self,gh)
     def player_points(self,player:int)->int:
         sum = 0
+        num_aces = 0
         for card in self.hands[player].cards:
             if card.is_face():
                 sum += 10
             else:
-                sum += card.card_num()
+                num = card.card_num()
+                sum += num
+                if num == 1:#card is an ace
+                    num_aces += 1
+        while num_aces > 0 and sum + 10 < HAND_LIMIT:
+            sum += 10
+            num_aces -= 1
         return sum
     async def game_intro(self):
         await self.send(
@@ -28,14 +35,14 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
             "We will play a round of blackjack, and, at the end, those with the lowest score are eliminated.\n" +
             "On your turn you may either choose to draw or pass. If you draw another card is added to your hand.\n" +
             "The point value of your hand is the sum of the number cards plus 10 for each face card.\n" +
-            "Aces are worth 1 point\n" +
+            f"Aces are worth 11 points, unless that would put you over {HAND_LIMIT} in which case they are worth 1 point.\n" +
             f"If your score goes above {HAND_LIMIT}, you are immediately eliminated (earlier than if you had just scored lowest in the round).\n" +
             f"The closer to {HAND_LIMIT} you get, the higher the chance you will defeat your competitors, however.")
     async def game_outro(self,order:Iterable[int]):
         pass
     async def core_game(self,remaining_players:list[int])->[int]:
-        await self.setup_cards(ceil(len(self.players)/NUM_PLAYERS_PER_DECK))
-        await self.player_draw(remaining_players)
+        await self.setup_cards(ceil(len(remaining_players)/NUM_PLAYERS_PER_DECK))
+        await self.player_draw(remaining_players,2)
         players_passed:list[int] = []
         players_still_drawing = remaining_players.copy()
         while players_still_drawing:

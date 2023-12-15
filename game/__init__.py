@@ -30,6 +30,7 @@ class Game(object):
             self.logger = self.gh.logger
             self.message_actions:dict[messageid,Callable[[str,userid],None]] = {}#message id replying to, function
             self.reaction_actions:dict[messageid,Callable[[str,userid],None]] = {}#message reacting to, function
+            self.unreaction_actions:dict[messageid,Callable[[str,userid],None]] = {}#message remove reaction from, function
             self.players:tuple[userid] = self.gh.get_players()
             self.current_class_execution:type[Game] = None
             self.classes_banned_from_speaking:list[type[Game]] = []
@@ -47,6 +48,11 @@ class Game(object):
         if reply_id in self.message_actions:
             self.logger.debug(f"Calling message action {reply_id} from {user_id} with '{message}'")
             await self.message_actions[reply_id](message,user_id)
+    async def on_unreaction(self,emoji:str,message_id:messageid,user_id:userid):
+        self.logger.debug(f"on_unreaction called for {message_id} from {user_id} with '{emoji}'")
+        if message_id in self.unreaction_actions:
+            self.logger.debug(f"Calling unreaction action for {message_id} from {user_id} with '{emoji}'")
+            await self.unreaction_actions[message_id](emoji,user_id)
     def mention(self,user_id:userid|Iterable[userid]) -> str:
         #returns a string with properly formatted text for a discord mention
         if isinstance(user_id,int):
@@ -55,7 +61,7 @@ class Game(object):
             return wordify_iterable(self.mention(uid) for uid in user_id)
 
     async def multiple_choice(self,message:str = None,options:list[str] = [],who_chooses:userid|list[userid] = None,
-                              emojis:str|list[str] = None, channel_id:channelid = None) -> int | dict[userid,int]:
+                              emojis:str|list[str] = None, channel_id:channelid = None, allow_answer_change:bool = True) -> int | dict[userid,int]:
         #returns the indexof the choice a user would like from choices, waits for user to respond
         if isinstance(who_chooses,list):
             wc = who_chooses
@@ -72,30 +78,53 @@ class Game(object):
         else:
             emj = list(emojis)
         emj = emj[0:len(options)]
+        self.logger.info(f"Beggining multiple choice monitoring for answers {options} via emojis {emj} from users {wc}.")
         choice_response:dict[userid,int] = {}
         for user_id in wc:
             choice_response[user_id] = None
+        option_text = (
+            f"**The options are:**\n"+ 
+            wordify_iterable((f"{emj[i]} (*{options[i]}*)" for i in range(len(options))),"or"))
+        allow_answer_change_text = ""
+        if allow_answer_change:
+            allow_answer_change_text = "You may change your answers."
+        def question_text() -> str:
+            players_not_answered:list = list(player for player in choice_response if choice_response[player] is None)
+            waiting_on_text = "All players have reacted."
+            if players_not_answered:
+                waiting_on_text = f"Awaiting reaction from {self.mention(players_not_answered)}. {allow_answer_change_text}"
+            return f"{message}\n{waiting_on_text}\n{option_text}"
+        message_id = await self.send(question_text(),channel_id = channel_id)
         async def reaction_action(emoji:str,user_id:int):
             self.logger.debug(f"Reaction action called by {user_id} with {emoji}.")
             if user_id in choice_response and emoji in emj:
-                choice_response[user_id] = emj.index(emoji)
-        to_say = (message+ 
-                  f"\n**I would like {self.mention(wc)} to please react to this message with their answer(s)! The options are:**\n"+ 
-                  wordify_iterable((f"{emj[i]} (*{options[i]}*)" for i in range(len(options))),"or"))
-        message_id = await self.send(to_say,channel_id = channel_id)
-        await self.gh.add_reaction(emj,message_id)
+                if allow_answer_change or choice_response[user_id] is None:
+                    choice_response[user_id] = emj.index(emoji)
+                    await self.send(question_text(),message_id=message_id)
+                    if not choice_response[user_id] is None:
+                        self.logger.info(
+                            f"User {user_id} added reaction {emoji} to multiple choice response, selecting '{options[choice_response[user_id]]}'")
+        async def unreaction_action(emoji:str,user_id:userid):
+            if user_id in choice_response:
+                if emoji == emj[choice_response[user_id]] and allow_answer_change:
+                    choice_response[user_id] = None
+                    await self.send(question_text(),message_id=message_id)
+                    self.logger.info(f"User {user_id} removed reaction {emoji} from multiple choice response, selecting nothing.")
         self.add_reaction_action(message_id,reaction_action)
+        self.add_unreaction_action(message_id,unreaction_action)
+        await self.gh.add_reaction(emj,message_id)
         while any(choice_response[user_id] == None for user_id in choice_response):
             await self.wait(CHECK_TIME)
-            self.logger.debug(f"Waiting for emoji responses on {message_id} from {wc}. Currently {choice_response}.")
+            #self.logger.debug(f"Waiting for emoji responses on {message_id} from {wc}. Currently {choice_response}.")
         self.remove_reaction_action(message_id)
+        self.remove_unreaction_action(message_id)
         if isinstance(who_chooses,int):
             return choice_response[who_chooses]
         else:
             return choice_response
-    async def no_yes(self,message:str = None,who_chooses:userid|list[userid] = None,channel_id:channelid = None) -> int | dict[userid,int]:
+    async def no_yes(self,message:str = None,who_chooses:userid|list[userid] = None,channel_id:channelid = None,allow_answer_change:bool = True) -> int | dict[userid,int]:
         #returns 0 for no and 1 for yes to a yes or no question, waits for user to respond
-        return await self.multiple_choice(message,("no","yes"),who_chooses,game.emoji_groups.NO_YES_EMOJI,channel_id)
+        return await self.multiple_choice(message,("no","yes"),who_chooses,game.emoji_groups.NO_YES_EMOJI,channel_id,allow_answer_change)
     async def text_response(self,message:str,who_responds:userid|list[userid]|None = None,channel_id:channelid = None) -> str | dict[userid,str]:
         users = self.deduce_players(who_responds)
         responses:dict[userid,str] = self.make_player_dict(None,users)
@@ -133,6 +162,10 @@ class Game(object):
     def remove_message_action(self,message_id:messageid):
         #removes a function from the dict of responses to messages
         del self.message_actions[message_id]
+    def add_unreaction_action(self,message_id:messageid,unreaction_action:Callable[[str,userid],None]):
+        self.unreaction_actions[message_id] = unreaction_action
+    def remove_unreaction_action(self,message_id:messageid):
+        del self.unreaction_actions[message_id]
     async def create_thread(self,name:str = None) -> channelid:
         #creates a private thread
         return await self.gh.create_thread(name)
