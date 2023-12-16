@@ -20,7 +20,7 @@ R = TypeVar('R')
 
 
 GH = game_handler.Game_Handler
-CHECK_TIME = 0.5
+CHECK_TIME = 0.1
 
 class Game(object):
     def __init__(self,gh:game_handler.Game_Handler):
@@ -28,9 +28,11 @@ class Game(object):
             self.initialized_bases:list[type[Game]] = [Game]
             self.gh = gh
             self.logger = self.gh.logger
-            self.message_actions:dict[messageid,Callable[[str,userid],None]] = {}#message id replying to, function
+            self.message_actions:dict[messageid,Callable[[str,userid,messageid],None]] = {}#message id replying to, function
             self.reaction_actions:dict[messageid,Callable[[str,userid],None]] = {}#message reacting to, function
             self.unreaction_actions:dict[messageid,Callable[[str,userid],None]] = {}#message remove reaction from, function
+            self.edit_actions:dict[messageid,Callable[[str,userid,messageid],None]] = {}
+            self.delete_actions:dict[messageid,Callable[[str,userid,messageid],None]] = {}
             self.players:tuple[userid] = self.gh.get_players()
             self.current_class_execution:type[Game] = None
             self.classes_banned_from_speaking:list[type[Game]] = []
@@ -42,17 +44,27 @@ class Game(object):
         self.logger.debug(f"on_message called for {message_id} from {user_id} with '{emoji}'")
         if message_id in self.reaction_actions:
             await self.reaction_actions[message_id](emoji,user_id)
-    async def on_message(self,message:str,reply_id:messageid,user_id:userid):
+    async def on_message(self,message:str,reply_id:messageid,user_id:userid,message_id:messageid):
         #on_message action, should be called by gh
-        self.logger.debug(f"on_message called for {reply_id} from {user_id} with '{message}'")
+        self.logger.debug(f"on_message called in reply to {reply_id} from {user_id} with '{message}' via {message_id}")
         if reply_id in self.message_actions:
             self.logger.debug(f"Calling message action {reply_id} from {user_id} with '{message}'")
-            await self.message_actions[reply_id](message,user_id)
+            await self.message_actions[reply_id](message,user_id,message_id)
     async def on_unreaction(self,emoji:str,message_id:messageid,user_id:userid):
         self.logger.debug(f"on_unreaction called for {message_id} from {user_id} with '{emoji}'")
         if message_id in self.unreaction_actions:
             self.logger.debug(f"Calling unreaction action for {message_id} from {user_id} with '{emoji}'")
             await self.unreaction_actions[message_id](emoji,user_id)
+    async def on_edit(self,message:str,reply_id:messageid,user_id:userid,message_id:messageid):
+        self.logger.debug(f"on_edit called in reply to {reply_id} from {user_id} with '{message}' via {message_id}")
+        if reply_id in self.edit_actions:
+            self.logger.debug(f"Calling edit action in reply to {reply_id} from {user_id} with '{message}' via {message_id}")
+            await self.edit_actions[reply_id](message,user_id,message_id)
+    async def on_delete(self,message:str,reply_id:messageid,user_id:userid,message_id:messageid):
+        self.logger.debug(f"on_delete called in reply to {reply_id} from {user_id} with '{message}' via {message_id}")
+        if reply_id in self.edit_actions:
+            self.logger.debug(f"Calling delete action in reply to {reply_id} from {user_id} with '{message}' via {message_id}")
+            await self.delete_actions[reply_id](message,user_id,message_id)
     def mention(self,user_id:userid|Iterable[userid]) -> str:
         #returns a string with properly formatted text for a discord mention
         if isinstance(user_id,int):
@@ -61,7 +73,8 @@ class Game(object):
             return wordify_iterable(self.mention(uid) for uid in user_id)
 
     async def multiple_choice(self,message:str = None,options:list[str] = [],who_chooses:userid|list[userid] = None,
-                              emojis:str|list[str] = None, channel_id:channelid = None, allow_answer_change:bool = True) -> int | dict[userid,int]:
+                              emojis:str|list[str] = None, channel_id:channelid = None, allow_answer_change:bool = True,
+                              sync_lock:Callable[[str,dict[userid,int],bool],bool] = None) -> int | dict[userid,int]:
         #returns the indexof the choice a user would like from choices, waits for user to respond
         if isinstance(who_chooses,list):
             wc = who_chooses
@@ -113,8 +126,15 @@ class Game(object):
         self.add_reaction_action(message_id,reaction_action)
         self.add_unreaction_action(message_id,unreaction_action)
         await self.gh.add_reaction(emj,message_id)
-        while any(choice_response[user_id] == None for user_id in choice_response):
-            await self.wait(CHECK_TIME)
+        keep_going = True
+        while keep_going:
+            #await self.wait(CHECK_TIME)
+            await self.do_nothing()
+            is_done = not any(choice_response[user_id] is None for user_id in wc)
+            if sync_lock is None:
+                keep_going = not is_done
+            else:
+                keep_going = not await sync_lock(message,choice_response,is_done)
             #self.logger.debug(f"Waiting for emoji responses on {message_id} from {wc}. Currently {choice_response}.")
         self.remove_reaction_action(message_id)
         self.remove_unreaction_action(message_id)
@@ -122,24 +142,58 @@ class Game(object):
             return choice_response[who_chooses]
         else:
             return choice_response
-    async def no_yes(self,message:str = None,who_chooses:userid|list[userid] = None,channel_id:channelid = None,allow_answer_change:bool = True) -> int | dict[userid,int]:
+    async def no_yes(self,message:str = None,who_chooses:userid|list[userid] = None,channel_id:channelid = None,
+                     allow_answer_change:bool = True, sync_lock:Callable[[str,dict[userid,int]],bool] = None) -> int | dict[userid,int]:
         #returns 0 for no and 1 for yes to a yes or no question, waits for user to respond
-        return await self.multiple_choice(message,("no","yes"),who_chooses,game.emoji_groups.NO_YES_EMOJI,channel_id,allow_answer_change)
-    async def text_response(self,message:str,who_responds:userid|list[userid]|None = None,channel_id:channelid = None) -> str | dict[userid,str]:
+        return await self.multiple_choice(message,("no","yes"),who_chooses,game.emoji_groups.NO_YES_EMOJI,channel_id,allow_answer_change,sync_lock)
+    async def text_response(
+            self,message:str,who_responds:userid|list[userid]|None = None,
+            channel_id:channelid = None, allow_answer_change:bool = True, 
+            sync_lock:Callable[[str,dict[userid,str],bool],bool] = None) -> str | dict[userid,str]:
         users = self.deduce_players(who_responds)
         responses:dict[userid,str] = self.make_player_dict(None,users)
-        async def message_action(message:str,user_id:userid):
-            self.logger.debug(f"Message action called by {user_id} with '{message}'.")
+        allow_answer_change_text = ""
+        if allow_answer_change:
+            allow_answer_change_text = "You may change your answer."
+        def question_text() -> str:
+            players_not_answered:list = list(player for player in responses if responses[player] is None)
+            waiting_on_text = "All players have responded."
+            if players_not_answered:
+                waiting_on_text = f"Awaiting reply from {self.mention(players_not_answered)}. {allow_answer_change_text}"
+            return f"{message}\n{waiting_on_text}"
+        message_id = await self.send(question_text(),channel_id = channel_id)
+        async def message_action(message:str,user_id:userid,author_message_id:messageid):
             if user_id in users:
+                if allow_answer_change or responses[user_id] == None:
+                    responses[user_id] = message
+                    self.logger.info(f"{user_id} set their response to '{message}' via {author_message_id}.")
+                    await self.send(question_text(),channel_id = channel_id,message_id=message_id)
+        async def edit_action(message:str,user_id:userid,author_message_id:messageid):
+            if user_id in users and allow_answer_change:
                 responses[user_id] = message
-        message_id = await self.send(message+
-                                     f"""
-**I would like {self.mention(who_responds)} to please reply to this message with their answer(s)**.""",channel_id = channel_id)
+                self.logger.info(f"{user_id} changed their response to '{message}' via {author_message_id}.")
+                await self.send(question_text(),channel_id = channel_id,message_id=message_id)
+        async def delete_action(message:str,user_id:userid,author_message_id:messageid):
+            if user_id in users and allow_answer_change:
+                responses[user_id] = None
+                self.logger.info(f"{user_id} deleted their response  {author_message_id}.")
+                await self.send(question_text(),channel_id = channel_id,message_id=message_id)
         self.add_message_action(message_id,message_action)
-        while any(responses[user] is None for user in users):
-            await self.wait(CHECK_TIME)
-            self.logger.debug(f"Waiting for text responses on {message_id} from {users}. Currently {responses}.")
+        self.add_edit_action(message_id,edit_action)
+        self.add_delete_action(message_id,delete_action)
+        keep_going = True
+        while keep_going:
+            #await self.wait(CHECK_TIME)
+            await self.do_nothing()
+            is_done = not any(responses[user] is None for user in users)
+            if sync_lock is None:
+                keep_going = not is_done
+            else:
+                keep_going = not await sync_lock(message,responses,is_done)
+            #self.logger.debug(f"Waiting for text responses on {message_id} from {users}. Currently {responses}.")
         self.remove_message_action(message_id)
+        self.remove_edit_action(message_id)
+        self.remove_delete_action(message_id)
         if isinstance(who_responds,int):
             return responses[who_responds]
         else:
@@ -150,18 +204,34 @@ class Game(object):
             sleep(seconds)
         task = asyncio.create_task(wait())
         await asyncio.wait([task],timeout=seconds)
+    async def do_nothing(self):
+        async def do_nothing():
+            pass
+        await asyncio.wait([asyncio.Task(do_nothing())])
     def add_reaction_action(self,message_id:messageid,reaction_action:Callable[[str,userid],None]):
         #adds a function from the dict of responses to reactions
         self.reaction_actions[message_id] = reaction_action
     def remove_reaction_action(self,message_id:messageid):
         #removes a function from the dict of responses to reactions
         del self.reaction_actions[message_id]
-    def add_message_action(self,message_id:messageid,message_action:Callable[[str,userid],None]):
+    def add_message_action(self,message_id:messageid,message_action:Callable[[str,userid,messageid],None]):
         #adds a function from the dict of responses to messages
         self.message_actions[message_id] = message_action
     def remove_message_action(self,message_id:messageid):
         #removes a function from the dict of responses to messages
         del self.message_actions[message_id]
+    def add_edit_action(self,message_id:messageid,message_action:Callable[[str,userid,messageid],None]):
+        #adds a function from the dict of responses to message edits
+        self.edit_actions[message_id] = message_action
+    def remove_edit_action(self,message_id:messageid):
+        #removes a function from the dict of responses to message edits
+        del self.edit_actions[message_id]
+    def add_delete_action(self,message_id:messageid,message_action:Callable[[str,userid,messageid],None]):
+        #adds a function from the dict of responses to message deletions
+        self.delete_actions[message_id] = message_action
+    def remove_delete_action(self,message_id:messageid):
+        #removes a function from the dict of responses to message deletions
+        del self.delete_actions[message_id]
     def add_unreaction_action(self,message_id:messageid,unreaction_action:Callable[[str,userid],None]):
         self.unreaction_actions[message_id] = unreaction_action
     def remove_unreaction_action(self,message_id:messageid):

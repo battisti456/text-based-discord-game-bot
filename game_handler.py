@@ -68,10 +68,28 @@ class Game_Handler(object):
             self.logger.debug(f"Received message '{payload.content}' from {payload.author}.")
             if(payload.author.id != self.client.user.id) and not self.current_game is None:
                 reply_id = None
-                if payload.reference is not None:
+                if not payload.reference is None:
                     if not payload.reference.cached_message is None:
                         reply_id = payload.reference.cached_message.id
-                await self.current_game.on_message(payload.content,reply_id,payload.author.id)
+                await self.current_game.on_message(payload.content,reply_id,payload.author.id,payload.id)
+        @self.client.event
+        async def on_raw_message_edit(payload:discord.RawMessageUpdateEvent):
+            self.logger.debug(f"Received message edit '{payload.data['content']}' from {payload.cached_message.author}.")
+            if(payload.cached_message.author.id != self.client.user.id) and not self.current_game is None:
+                reply_id = None
+                if not payload.cached_message.reference is None: 
+                    if not payload.cached_message.reference.cached_message is None:
+                        reply_id = payload.cached_message.reference.cached_message.id
+                await self.current_game.on_edit(payload.data['content'],reply_id,payload.cached_message.author.id,payload.message_id)
+        @self.client.event
+        async def on_raw_message_delete(payload:discord.RawMessageDeleteEvent):
+            self.logger.debug(f"Received message delete.")
+            if(payload.cached_message.author.id != self.client.user.id) and not self.current_game is None:
+                reply_id = None
+                if not payload.cached_message.reference is None: 
+                    if not payload.cached_message.reference.cached_message is None:
+                        reply_id = payload.cached_message.reference.cached_message.id
+                await self.current_game.on_delete(payload.cached_message.content,reply_id,payload.cached_message.author.id,payload.message_id)
         @self.client.event
         async def on_raw_reaction_add(payload:discord.RawReactionActionEvent):#trigger when client detects a reaction being added
             self.logger.debug(f"Registered reaction {payload.emoji} on message {payload.message_id} from user {payload.user_id} in channel {payload.channel_id}")
@@ -101,19 +119,19 @@ class Game_Handler(object):
         self.next_game = next_game
     async def add_reaction(self,emoji:str|tuple|list,message_id:int):#tested
         #adds all the emojis in emoji in order as reactions to the given message
-        await self.client.wait_until_ready()
         self.logger.debug(f"Adding reactions to message {message_id}: {emoji}.")
         reactions_to_add = []
         if isinstance(emoji,str):
             reactions_to_add = emoji.split()
         else:
             reactions_to_add = emoji
-        await self.client.wait_until_ready()
         channel = self.client.get_channel(self.config["channel_id"])
         message = channel.get_partial_message(message_id)
+        await self.client.wait_until_ready()
         await message.fetch()
         for reaction in reactions_to_add:
             self.logger.debug(f"Adding \"{reaction}\" to message {message.id} on channel {channel.id}.")
+            await self.client.wait_until_ready()
             await message.add_reaction(reaction)
     async def create_thread(self,name:str) -> int:
         #creates a private thread on the default channel and return its id

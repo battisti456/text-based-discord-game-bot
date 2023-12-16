@@ -1,0 +1,117 @@
+{
+    "point_limit" : 20,
+    "stat_limit" : 8,
+    "win_penalty" : [5,20],
+    "loss_penalty" : [40,120],
+    "stats" : ["hoppiness","cutiepie-ness","sparkles","zoomies","eldrich monster"],
+    "obstacles" :{
+        "kitten hurdles" : {
+            "stat_checks" : ["hoppiness","zoomies"],
+            "loss_text" : [
+                "tripped over the last hurdle",
+                "decided to walk around",
+                "got distracted by a mouse",
+                "tripped over the first hurdle",
+                "got a thorn stuck in their paw",
+                "decided to just go through them",
+                "insulted a judge's mother",
+                "tried their best",
+                "mewed pitifully for your help"],
+            "win_text" : [
+                "hopped overy every hurdle"
+            ]
+        },
+        "singing competition" : {
+            "stat_checks" : ["cutiepie-ness","sparkles"],
+            "loss_text" : [
+                "yowled too loud",
+                "didn't quite dazzle the judges",
+                "tried their best",
+                "was sick",
+                "executed an epic dance number, unfortunately in the wrong competition",
+                "meowed their heart out, but it wasn't enough",
+                "was a bit confused",
+                "hacked up a hairball instead"
+            ],
+            "win_text" : [
+                "just plain dazzled the judges with their voice"
+            ]
+        },
+        "posing competition" : {
+            "stat_checks" : ["cutiepie-ness"],
+            "loss_text" : [
+                "fell over",
+                "fell over a lot",
+                "took a nap instead"
+            ],
+            "win_text" : [
+                "had some real banger poses"
+            ]
+        },
+        "dancing competition" : {
+            "stat_checks" : ["cutiepie-ness","hoppiness"],
+            "loss_text" : [
+                "fell over",
+                "fell over a lot",
+                "really yowled their heart out, unfortunately at the wrong competition",
+                "had a great time participating",
+                "tripped over their four left paws"
+            ],
+            "win_text" : [
+                "danced like they had never danced before"
+            ]
+        },
+        "a straight up sprint" : {
+            "stat_checks" : ["zoomies"],
+            "loss_text" : [
+                "forgot to tie their shoelace and tripped",
+                "decided to take it at a walk",
+                "ate too much catnip the night before",
+                "wandered off course for some well deserved human attention",
+                "ran at top speed, in the wrong direction",
+                "went on strike"
+            ],
+            "win_text" : [
+                "sprinted the whole way"
+            ]
+        },
+        "curtain climbing" : {
+            "stat_checks" : ["hoppiness","eldrich monster"],
+            "loss_text" : [
+                "shredded, but did not climb",
+                "missed the curtain and clawed the wall instead",
+                "made it quickly to the top, but fell asleep there",
+                "tried going up backwards to not so great success",
+                "got their claws stuck",
+                "forgot how to get down halfway up and had to yowl for help"
+            ],
+            "win_text" : [
+                "quickly ascended"
+            ]
+        },
+        "aweing the audience" : {
+            "stat_checks" : ["sparkles"],
+            "loss_text" : [
+                "did not shine",
+                "had some matted fur",
+                "looked cute, but more like, next-door cute",
+                "got distracted and wandered off before the audience could truly appreciate their greatness",
+                "had too much self-esteem to prostitute themselves for human approval",
+                "looked a bit too feral for the audience's tastes"
+            ],
+            "win_text" : [
+                "just plain sparkled"
+            ]
+        },
+        "human biting" : {
+            "stat_checks" : ["eldrich monster"],
+            "loss_text" : [
+                "forgot their inner monster"
+            ],
+            "win_text" : [
+                "munched all the humans",
+                "nommed all the humans"
+            ]
+        }
+    }
+}

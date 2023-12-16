@@ -19,7 +19,7 @@ def testing(config):
 config = grab_json(CONFIG_PATH)
 testing(config)
 gh = game_handler.Game_Handler(config)
-gh.next_game= Elimination_Blackjack(gh)
+gh.next_game= The_Great_Kitten_Race(gh)
 gh.run()
 
 """
@@ -28,10 +28,12 @@ things to work on:
     -finished on base multiple choice!
     -add to secret base
     -add to text responses (will require on_message_delete and on_message_edit)
--test bidding base
--add player message deletion?
+-add player message deletion? requires receiving player message ids somehow
+
+TEXT RESPONSE NOT WORKING IN KITTENS!!!!!
 
 -rewrite secret text response from scratch to avoid taske ending prematurely bug? I added something. We'll see.
 
-add while waiting message prompts
+add while waiting message prompts - sorta done. Won't notify, but now updates dynamcally
+-test bidding base
 """
