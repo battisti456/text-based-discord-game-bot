@@ -74,7 +74,7 @@ class Game_Handler(object):
                 await self.current_game.on_message(payload.content,reply_id,payload.author.id,payload.id)
         @self.client.event
         async def on_raw_message_edit(payload:discord.RawMessageUpdateEvent):
-            self.logger.debug(f"Received message edit '{payload.data['content']}' from {payload.cached_message.author}.")
+            self.logger.debug(f"Received message edit '{payload.data['content']}'.")
             if(payload.cached_message.author.id != self.client.user.id) and not self.current_game is None:
                 reply_id = None
                 if not payload.cached_message.reference is None: 

@@ -74,7 +74,7 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                 word = word.lower()
                 word = "".join(word.split())#remove whitespace
                 if self.is_word(word) and letters in word and len(word) > NUM_LETTERS:
-                    await self.send(f"The word {word} is valid!\n{self.define(word)}")
+                    await self.send(f"The word {word} is valid!\n{self.definition_string(self.define(word))}")
                     self.last_player = player
                     return player
                 elif not self.is_word(word):

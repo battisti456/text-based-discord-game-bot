@@ -36,7 +36,7 @@ class Elimination_Base(game.Game):
             else:
                 not_eliminated = not_eliminated and not (player in elimination)
         return not not_eliminated
-    def get_players_not_eliminated(self) -> list[userid]:
+    def get_remaining_players(self) -> list[userid]:
         return list(player for player in self.players if not self.player_is_eliminated(player))
     def get_num_eliminated(self) -> int:
         num = 0
@@ -51,10 +51,10 @@ class Elimination_Base(game.Game):
         await self.game_intro()
         await self.game_setup()
         while self.get_num_eliminated() < len(self.players) - 1:
-            players_to_be_eliminated = await self.core_game(self.get_players_not_eliminated())
+            players_to_be_eliminated = await self.core_game(self.get_remaining_players())
             await self.eliminate_players(players_to_be_eliminated)
         await self.game_cleanup()
-        players_left = self.get_players_not_eliminated()
+        players_left = self.get_remaining_players()
         assert len(players_left) == 1
         winner = players_left[0]
         await self.policed_send(f"{self.mention(winner)} has won!")

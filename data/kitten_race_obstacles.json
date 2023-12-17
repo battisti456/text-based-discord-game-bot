@@ -96,7 +96,7 @@
                 "had some matted fur",
                 "looked cute, but more like, next-door cute",
                 "got distracted and wandered off before the audience could truly appreciate their greatness",
-                "had too much self-esteem to prostitute themselves for human approval",
+                "had too much self-esteem to prostitute themself for human approval",
                 "looked a bit too feral for the audience's tastes"
             ],
             "win_text" : [
@@ -111,6 +111,32 @@
             "win_text" : [
                 "munched all the humans",
                 "nommed all the humans"
+            ]
+        },
+        "lounging about" : {
+            "stat_checks" : ["cutiepie-ness"],
+            "loss_text" : [
+                "was a bit too antsy",
+                "went to lay down, but missed the floor",
+                "tried to relax, but got too nervous"
+            ],
+            "win_text" : [
+                "lazed around with the best of them",
+                "slept though the competition"
+            ]
+        },
+        "getting in a box" : {
+            "stat_checks" : ["hoppiness","eldrich monster"],
+            "loss_text" : [
+                "tried to jump into the box, but missed",
+                "got right in, only to realize, it was a bag",
+                "accidentally got in a box being sent to Timbuktu",
+                "couldn't quite fit",
+                "got a bit to excited and shredded their box"
+            ],
+            "win_text" : [
+                "really obstructed the work flow",
+                "boxed themself completely"
             ]
         }
     }

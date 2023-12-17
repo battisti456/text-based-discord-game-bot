@@ -61,8 +61,8 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
                 exit_core = await self.eliminate_players(players_eliminated_this_draw)
                 if exit_core:
                     return
-            players_still_drawing = list(player for player in self.get_players_not_eliminated() if not player in players_passed)
-        remaining_players = self.get_players_not_eliminated()
+            players_still_drawing = list(player for player in self.get_remaining_players() if not player in players_passed)
+        remaining_players = self.get_remaining_players()
         scores:dict[userid,int] = {}
         for player in remaining_players:
             player_score = self.player_points(player)

@@ -60,13 +60,14 @@ class Dictionary_Base(game.Game):
             args = [args]
         defs:list[tuple[partofspeach,str]] = []
         for def_ in args:
-            if len(def_) == 2 and all(isinstance(item,str) for item in def_):
+            if isinstance(def_,dict):
+                for part in def_:
+                    for alt in def_[part]:
+                        defs.append((part,alt))
+            elif len(def_) == 2 and all(isinstance(item,str) for item in def_):
                 defs.append(def_)
             elif isinstance(def_,list):
                 defs += def_
-            elif isinstance(def_,dict):
-                for part in def_:
-                    defs.append(part,def_[part])
         for def_ in defs:
             if '(' in def_[1] and not ')' in def_[1]:
                 def_[1] += ")"

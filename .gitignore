@@ -1,6 +1,7 @@
 /gamebotconfig.json
 /gamebotlog.txt
 /games.csv
+/data/lichess_db_puzzle.csv
 .vscode
 __pycache__/
 temp/
