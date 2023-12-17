@@ -1,7 +1,9 @@
+.gitignore
 /gamebotconfig.json
 /gamebotlog.txt
 /games.csv
 /data/lichess_db_puzzle.csv
+/data/cards/
 .vscode
 __pycache__/
 temp/

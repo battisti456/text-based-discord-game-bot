@@ -9,6 +9,9 @@ import PIL.ImageOps
 from typing import Iterable, Callable
 from game import userid
 
+from itertools import combinations
+
+POKER_HAND_NAMES = ["high card","pair","two pair","three of a kind","straight","flush","full house","four of a kind","straight flush","royal flush"]
 SUIT_NAMES = ["spades","hearts","diamonds","clubs"]
 CARD_NAMES = ["ace","two","three","four","five","six","seven","eight","nine","ten","jack","queen","king"]
 CARD_JOIN = " "
@@ -107,7 +110,6 @@ class Card_Holder(object):
         return other.give(self,num_random_cards,cards)
 
         
-        
 
 class Hand(Card_Holder):
     pass
@@ -120,6 +122,122 @@ class Deck(Card_Holder):
                 for value in range(len(CARD_NAMES)):
                     self.cards.append(Card(suit,value))
         self.shuffle()
+class Poker_Hand(Card_Holder):
+    def get_poker_values(self) -> list[int]:
+        values = []
+        for card in self.cards:
+            if card.value == 0:#an ace
+                values.append(13)
+            else:
+                values.append(card.value)
+        return values
+    def is_royal_flush(self) -> bool:
+        values = self.get_poker_values()
+        values.sort(reverse=True)
+        return self.is_straight_flush() and values[0] == 13
+    def is_straight_flush(self) -> bool:
+        return self.is_flush() and self.is_straight()
+    def is_four_of_a_kind(self) -> bool:
+        values=  self.get_poker_values()
+        for check_value in set(values):
+            if sum(1 for value in values if value == check_value) >= 4:
+                return True
+        return False
+    def is_full_house(self) -> bool:
+        values = self.get_poker_values()
+        totals:dict[int,int] = {}
+        for value_check in set(values):
+            totals[value_check] = sum(1 for value in values if value == value_check)
+        desired = [2,3]
+        for value_check in totals:
+            if totals[value_check] in desired:
+                desired.remove(totals[value_check])
+            else:
+                return False
+        return len(desired) == 0
+    def is_flush(self) -> bool:
+        suits = list(card.suit for card in self.cards)
+        return len(set(suits)) == 1
+    def is_straight(self) -> bool:
+        values = self.get_poker_values()
+        values.sort()
+        i=0
+        while values[i+1] == values[i] +1:
+            i += 1
+            if i == len(values):
+                return True
+        return False
+    def is_three_of_a_kind(self) -> bool:
+        values=  self.get_poker_values()
+        for check_value in set(values):
+            if sum(1 for value in values if value == check_value) >= 3:
+                return True
+        return False
+    def is_two_pair(self) -> bool:
+        values = self.get_poker_values()
+        totals:dict[int,int] = {}
+        for value_check in set(values):
+            totals[value_check] = sum(1 for value in values if value == value_check)
+        desired = [2,2]
+        for value_check in totals:
+            if totals[value_check] in desired:
+                desired.remove(totals[value_check])
+            else:
+                return False
+        return len(desired) == 0
+    def is_pair(self) -> bool:
+        #doesn't check for other hands
+        values = self.get_poker_values()
+        return len(set(values)) < len(values)
+    def rank(self) -> int:
+        hand_value = 0
+        if self.is_royal_flush():#not nessasary, but nice anyways
+            hand_value = 9
+        elif self.is_straight_flush():
+            hand_value = 8
+        elif self.is_four_of_a_kind():
+            hand_value = 7
+        elif self.is_full_house():
+            hand_value = 6
+        elif self.is_flush():
+            hand_value = 5
+        elif self.is_straight():
+            hand_value = 4
+        elif self.is_three_of_a_kind():
+            hand_value = 3
+        elif self.is_two_pair():
+            hand_value = 2
+        elif self.is_pair():
+            hand_value = 1
+        card_values = self.get_poker_values()
+        card_values.sort()
+        values = card_values + [hand_value]
+        total = 0
+        for i in range(len(values)):
+            total += values[i] * 16**i
+        return total#each digit should be hand value, then descending order of cards in base 16
+
+def best_poker_hand(*args:list[Card_Holder]) -> tuple[Poker_Hand,int]:
+    cards:list[Card] = []
+    for arg in args:
+        cards = cards + arg.cards
+    test_poker_hand = Poker_Hand()
+    found_poker_hand = Poker_Hand()
+    found_rank = -1
+    for card_set in combinations(cards,5):
+        test_poker_hand.cards = card_set
+        test_rank = test_poker_hand.rank()
+        if test_rank > found_rank:
+            found_poker_hand.cards = card_set
+            found_rank = test_rank
+    return found_poker_hand,found_rank
+
+def name_poker_hand_by_rank(rank:int) -> str:
+    hex_string = hex(rank)[2:]
+    hand_int = int('0x' + hex_string[0])
+    return POKER_HAND_NAMES[hand_int]
+    
+
         
 
 class Card_Base(game.Game):
@@ -129,8 +247,8 @@ class Card_Base(game.Game):
             self.initialized_bases.append(Card_Base)
             self.hand_threads:dict[int,int] = {}
             self.hand_message:dict[int,int] = {}
-    async def setup_cards(self,num:int = 1):
-        self.deck:Deck = Deck(num)
+    async def setup_cards(self,num_decks:int = 1):
+        self.deck:Deck = Deck(num_decks)
         self.discard = Card_Holder()
         self.hands:dict[int,Hand] = {}
         for player in self.players:

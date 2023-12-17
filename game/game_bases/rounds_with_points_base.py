@@ -13,6 +13,7 @@ class Rounds_With_Points_Base(game.Game):
             self.num_rounds:int = 3
             self.points_format:Callable = lambda x: f"{x} points"
             self.round_name = "round"
+            self.reverse_scoring = False
     @game.police_messaging
     async def score(self,player:int|list[int] = None, num:int|dict[userid,int] = None, mute:bool = False):
         n = self.make_player_dict(num)
@@ -42,7 +43,8 @@ class Rounds_With_Points_Base(game.Game):
         await self.game_cleanup()
         scores = list(set(self.points[player] for player in self.points))
         scores.sort()
-        scores.reverse()
+        if not self.reverse_scoring:
+            scores.reverse()
         rank:list[userid|list[userid]] = []
         for score in scores:
             players_at_score = list(player for player in self.players if self.points[player] == score)

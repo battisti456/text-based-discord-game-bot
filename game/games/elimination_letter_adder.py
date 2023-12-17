@@ -4,7 +4,10 @@ from game.game_bases.dictionary_base import Dictionary_Base
 
 from typing import Iterable
 
+import random
+
 NUM_LETTERS = 4
+START_LETTERS = NUM_LETTERS
 LEFT_RIGHT_CHALLENGE_EMOJI = ['⬅️','➡️','📖']
 
 class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
@@ -19,12 +22,17 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
             f"Once we have more than {NUM_LETTERS}, if you add a letter that makes it spell a word, you lose!\n" +
             "But, beware! If the person after you challenges your word you must provide a word " + 
             "that could still be spelled with the letters, or else you are eliminated.\n" +
-            "If the challenge was made in haste, however, the challenger is eliminated instead."
+            "If the challenge was made in haste, however, the challenger is eliminated instead.\n" +
+            f"To start us off in a round, I will generate {START_LETTERS} letters which are definitely a part of a word."
         )
     async def game_outro(self,order:Iterable[int]):
         pass
     async def core_game(self,remaining_players:Iterable[int])->Iterable[int]|int:
-        letters = ""
+        num_letters_in_starting_word = START_LETTERS + random.randint(1,len(remaining_players))
+        starting_word = self.random_word(num_letters_in_starting_word)
+        offset = random.randint(0,num_letters_in_starting_word-START_LETTERS-1)
+        letters = starting_word[offset:offset+START_LETTERS]
+        first_turn = True
         while True:
             #determine whose turn it is
             player = None
@@ -34,15 +42,17 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                 if player in remaining_players:
                     break
             #
-            if not letters == "":
-                message = f"{self.mention(player)}, what would you like to do?"
-                choices = ['add to left','add to right']
-                if len(letters) > 1:
-                    choices.append('challenge')
-                choice = await self.multiple_choice(message,choices,player,LEFT_RIGHT_CHALLENGE_EMOJI)
-            else:
+            if first_turn and START_LETTERS == 0:
                 await self.send("Let's start off our word!")
                 choice = 0
+            else:
+                message = f"Our letters are '{letters}' what would you like to do?"
+                choices = ['add to left','add to right']
+                if len(letters) > 1 and not first_turn:
+                    choices.append('challenge')
+                choice = await self.multiple_choice(message,choices,player,LEFT_RIGHT_CHALLENGE_EMOJI)
+            first_turn = False
+    
             if choice in [0,1]:#add letter
                 letter:str = await self.text_response(f"{self.mention(player)}, which letter would you like?",player)
                 while len(letter) > 1 or not letter.isalpha():
@@ -62,7 +72,7 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                     return player
                 else:
                     self.last_player = player
-                    await self.send(f"Our letters are now '{letters}'.")
+                    #await self.send(f"Our letters are now '{letters}'.")
                     continue#unnessasary but helps with readability for me
             else:#challenge
                 await self.send(

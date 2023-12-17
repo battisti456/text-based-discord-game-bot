@@ -25,15 +25,31 @@ gh.run()
 """
 things to work on:
 - add better support for changing or not changing answers in multiple choice questions
-    -finished on base multiple choice!
-    -add to secret base
-    -add to text responses (will require on_message_delete and on_message_edit)
--add player message deletion? requires receiving player message ids somehow
-
-TEXT RESPONSE NOT WORKING IN KITTENS!!!!!
+    -add to secret base?
 
 -rewrite secret text response from scratch to avoid taske ending prematurely bug? I added something. We'll see.
 
+- letter adder, we should probably start with a few letters to save time/ also, I think we can make some sort of super question to combine asking what side and stuff
+
 add while waiting message prompts - sorta done. Won't notify, but now updates dynamcally
--test bidding base
+
+-big picture changes:
+change format a bit
+    create game_interface object
+    change game_handler to be a discord version of game_interface
+    change userid,messageid, and channelid to be objects User, Message, Channel (with all nessasry functionality)
+    and hopefully fix import order a bit better because of it
+    add Question or User_Prompty type too, hopeffuly fix all the spaghetti code of the current various question and send functions
+    add a Sync object to get rid of the horrers that is the current Sync_Lock implementation
+
+
+-minor
+fix gitignore so git only includes files I made
+test bidding base- will anything even use it?
+finish testing chess puzzle game
+finish testing texas holdem
+
+
+-priorities!
+considering there isn't much time left, priority should probably go to fixing it up so it can actually be shown on github, although overhauling everything would be nice too....
 """
