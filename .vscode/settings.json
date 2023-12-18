@@ -10,5 +10,6 @@
             "fontStyle": "italic"
         }
         }
-    }
+    },
+    "editor.wordWrap" : "on"
 }
