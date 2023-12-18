@@ -4,11 +4,12 @@ In addition, the code, while fairly versatile, is not friendly to work with and 
 So be warned.
 
 To begin using it:
--install all nessasary python libraries
-    -'fogleman_TWL06_scrabble' is not an available library, but is merely the twl.py file from "https://github.com/fogleman/TWL06" by Michael fogleman
--download missing data resources
-    -I have excluded 'data/lichess_db_puzzle.csv' from this repository as it is rather large. I found it at "https://database.lichess.org/#puzzles". It could, in theory, be replaced by any csv with chess puzzles. The format is "PuzzleId,FEN,Moves,Rating,RatingDeviation,Popularity,NbPlays,Themes,GameUrl,OpeningTags", and I don't use all of these values. I only use FEN, Moves, Rating, and Popularity. Moves are seperated by spaces, and the first move is the opponents move.
+- install all nessasary python libraries
+    - 'fogleman_TWL06_scrabble' is not an available library, but is merely the twl.py file from "https://github.com/fogleman/TWL06" by Michael fogleman
+- download missing data resources
+    - I have excluded 'data/lichess_db_puzzle.csv' from this repository as it is rather large. I found it at "https://database.lichess.org/#puzzles". It could, in theory, be replaced by any csv with chess puzzles. The format is "PuzzleId,FEN,Moves,Rating,RatingDeviation,Popularity,NbPlays,Themes,GameUrl,OpeningTags", and I don't use all of these values. I only use FEN, Moves, Rating, and Popularity. Moves are seperated by spaces, and the first move is the opponents move.
 - create your "gamebotconfig.json" file like so:
+
 '''json
 {
     "token" : "<your discord bot's api token here>",
