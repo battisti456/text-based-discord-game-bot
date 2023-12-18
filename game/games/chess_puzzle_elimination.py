@@ -9,6 +9,9 @@ import chessboard.board
 import chess
 import pygame
 import PIL.Image
+import PIL.ImageDraw
+import PIL.ImageOps
+import PIL.ImageFont
 import random
 
 
@@ -16,7 +19,7 @@ import random
 import pandas
 
 DATA_PATH = "lichess_db_puzzle.csv"
-BG_COLOR = (0,0,0)
+ORIGINAL_BG_COLOR = (0,0,0)
 
 RATING_RANGE = (400,800)
 POPULARITY_RANGE = None
@@ -45,6 +48,21 @@ CASTLE_UCI_DICT = {
     'e8g8': "black castles kingside"
 }
 PUZZLE_RATING_CAP_ESCALATION = 200
+ORIGINAL_BOARD_SIZE = (600,600)
+ORIGINAL_BOARDER_WIDTH = 100
+
+SET_IMAGE_SIZE = (1500,1500)
+
+TEXT_COLOR = (255,255,255)
+NEW_BOARDER_WIDTH = 100
+NEW_BOARDER_COLOR = (0,0,0)
+
+COL_LABELS = "abcdefgh"
+ROW_LABELS = "12345678"
+NUM_TILES = 8
+SIDE_LABEL_OFFSET = int(NEW_BOARDER_WIDTH/4)
+BOTTOM_LABEL_OFFSET = SET_IMAGE_SIZE[1]+NEW_BOARDER_WIDTH
+LABEL_FONT_SIZE = 65
 
 def piece_name(symbol:str):
     color = 'white'
@@ -68,7 +86,7 @@ class ChessPuzzleDict(TypedDict):
 class Chess_Puzzle_Elimination(Elimination_Base):
     def __init__(self,gh:game.GH):
         Elimination_Base.__init__(self,gh)
-        self.chess_puzzle_data:pandas.DataFrame = pandas.read_csv(f"{self.config['date_path']}\\{DATA_PATH}",dtype = {
+        self.chess_puzzle_data:pandas.DataFrame = pandas.read_csv(f"{self.config['data_path']}\\{DATA_PATH}",dtype = {
             'PuzzleId' : 'string',
             'FEN' : 'string',
             'Moves' : 'string',
@@ -80,19 +98,23 @@ class Chess_Puzzle_Elimination(Elimination_Base):
             'GameUrl' : 'string',
             'OpeningTags' : 'string'
         })
-        self.display_surface = pygame.Surface()
-        self.display_board = chessboard.board.Board(BG_COLOR,self.display_surface)
+        self.display_surface = pygame.Surface(ORIGINAL_BOARD_SIZE)
+        self.display_board = chessboard.board.Board(ORIGINAL_BG_COLOR,self.display_surface)
         self.board:chess.Board = chess.Board()
         self.rating_range = RATING_RANGE
     def move_text(self,move_uci:str) -> str:
-        piece:chess.Piece = self.board.piece_at(move_uci[0:2])
-        capture:chess.Piece = self.board.piece_at(move_uci[2:4])
+        def get_piece(uci:str) -> chess.Piece:
+            return self.board.piece_at(eval(f"chess.{uci.upper()}"))
+        piece:chess.Piece = get_piece(move_uci[0:2])
+        if piece is None:
+            self.logger.error(f"Chess move '{move_uci}' is invalid!")
+        capture:chess.Piece = get_piece(move_uci[2:4])
         moves_to:str = 'moves to'
         and_text = ""
 
         if (piece.piece_type == chess.PAWN and #en passant
             capture is None and #not capturing
-            move_uci[0] != move_uci[1]):#but moving diagonally
+            move_uci[0] != move_uci[2]):#but moving diagonally
             and_text = " en passant"
             capture_symbol = 'p'
             if piece.color == chess.BLACK:
@@ -108,14 +130,46 @@ class Chess_Puzzle_Elimination(Elimination_Base):
         elif piece.piece_type == chess.KING and move_uci in CASTLE_UCI_DICT:
               return f"{move_uci} - *{CASTLE_UCI_DICT[move_uci]}*"
 
-        return f"{move_uci} - *{piece_name(piece.symbol())} {piece.unicode_symbol()} on {move_uci[0:2]} {moves_to} {move_uci[2:4]}{and_text}*"
+        return f"{move_uci} - {piece_name(piece.symbol())} {piece.unicode_symbol()} on {move_uci[0:2]} {moves_to} {move_uci[2:4]}{and_text}"
     def make_board_image(self) -> str:
         fen:str = self.board.fen()
-        self.display_board.update_pieces(fen)
         self.display_board.display_board()
-        image_bytes = pygame.image.tobytes(self.display_surface)
+        self.display_board.update_pieces(fen)
+        image_bytes = pygame.image.tobytes(self.display_surface,'RGBA')
         size = self.display_surface.get_size()
         image:PIL.Image.Image = PIL.Image.frombytes("RGBA",size,image_bytes)
+        image = image.crop((ORIGINAL_BOARDER_WIDTH,ORIGINAL_BOARDER_WIDTH,ORIGINAL_BOARD_SIZE[0]-ORIGINAL_BOARDER_WIDTH,ORIGINAL_BOARD_SIZE[1]-ORIGINAL_BOARDER_WIDTH))
+
+        image = image.resize(SET_IMAGE_SIZE)
+        image = PIL.ImageOps.expand(image,NEW_BOARDER_WIDTH,NEW_BOARDER_COLOR)
+        cols:list[str] = list(l for l in COL_LABELS)
+        rows:list[str] = list(l for l in ROW_LABELS)
+        if self.display_board.flipped:
+            cols.reverse()
+            rows.reverse()
+        drawer = PIL.ImageDraw.Draw(image)
+        tile_size = int(SET_IMAGE_SIZE[0]/8)
+
+        for i in range(NUM_TILES):
+            drawer.text(#bottom
+                (
+                    NEW_BOARDER_WIDTH+int((i+0.5)*tile_size)-5,
+                    BOTTOM_LABEL_OFFSET
+                ),
+                cols[i],TEXT_COLOR,
+                font = PIL.ImageFont.truetype("arial.ttf",size = LABEL_FONT_SIZE),
+                align = 'center',
+                spacing = 0)
+            drawer.text(
+                (#side
+                    SIDE_LABEL_OFFSET,
+                    int(NEW_BOARDER_WIDTH/2+SET_IMAGE_SIZE[1] - (i+0.5)*tile_size)
+                ),
+                rows[i],TEXT_COLOR,
+                font = PIL.ImageFont.truetype("arial.ttf",size = LABEL_FONT_SIZE),
+                align = 'center',
+                spacing = 0)
+
         file_path = self.temp_file_path('.png')
         image.save(file_path)
         return file_path
@@ -138,7 +192,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
             return (rating_diff,popularity_diff)
         puzzle:ChessPuzzleDict = None
         puzzle_diffs:tuple[int,int] = None
-        data_sample:pandas.DataFrame = self.chess_puzzle_data.sample(n=NUM_TO_SAMPLE).to_dict()
+        data_sample:pandas.DataFrame = self.chess_puzzle_data.sample(n=NUM_TO_SAMPLE)
         for index, row in data_sample.iterrows():
             row_puzzle:ChessPuzzleDict = row.to_dict()
             row_diffs:tuple[int,int] = get_diffs(row_puzzle)
@@ -164,12 +218,14 @@ class Chess_Puzzle_Elimination(Elimination_Base):
     async def core_game(self, remaining_players: list[userid])->list[userid]:
         puzzle:ChessPuzzleDict = self.random_puzzle(self.rating_range,POPULARITY_RANGE)
         self.rating_range = (self.rating_range[0],self.rating_range[1]+PUZZLE_RATING_CAP_ESCALATION)
-
-        self.board.set_board_fen(puzzle['FEN'])
+        self.board.set_fen(puzzle['FEN'])
         moves:list[str] = puzzle['Moves'].split(" ")
         oppo_color:str = COLOR_NAMES[self.board.turn]
         self.board.push_uci(moves[0])
         player_color:str = COLOR_NAMES[self.board.turn]
+        if (player_color == 'black' and not self.display_board.flipped or
+            player_color == 'white' and self.display_board.flipped):
+            self.display_board.flip()
 
         move_index = 1
         await self.send(
@@ -221,6 +277,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
                 await self.send("And that's that for this puzzle!\nLet's do another one.")
                 return
             
+            mt = self.move_text(moves[move_index])
             self.board.push_uci(moves[move_index])
             
             respond_text = "responds with their best move in this position, "
@@ -228,7 +285,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
                 respond_text = "was forced to respond with "
 
             await self.send(
-                f"The opponent, {oppo_color}, {respond_text} {self.move_text(moves[move_index])}.",
+                f"The opponent, {oppo_color}, {respond_text} {mt}.",
                 attatchements_data=[self.make_board_image()]
             )
             move_index += 1

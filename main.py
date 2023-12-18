@@ -19,7 +19,7 @@ def testing(config):
 config = grab_json(CONFIG_PATH)
 #testing(config)
 gh = game_handler.Game_Handler(config)
-gh.next_game= Elimination_Letter_Adder(gh)
+gh.next_game= Prediction_Texas_Holdem(gh)
 gh.run()
 
 """
@@ -28,8 +28,6 @@ things to work on:
     -add to secret base?
 
 -rewrite secret text response from scratch to avoid taske ending prematurely bug? I added something. We'll see.
-
-- letter adder, we should probably start with a few letters to save time/ also, I think we can make some sort of super question to combine asking what side and stuff
 
 add while waiting message prompts - sorta done. Won't notify, but now updates dynamcally
 
@@ -46,8 +44,8 @@ change format a bit
 -minor
 fix gitignore so git only includes files I made
 test bidding base- will anything even use it?
-finish testing chess puzzle game
 finish testing texas holdem
+retest letter adder
 
 
 -priorities!

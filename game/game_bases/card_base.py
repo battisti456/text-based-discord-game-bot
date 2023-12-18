@@ -10,6 +10,7 @@ from typing import Iterable, Callable
 from game import userid
 
 from itertools import combinations
+from collections import Counter
 
 POKER_HAND_NAMES = ["high card","pair","two pair","three of a kind","straight","flush","full house","four of a kind","straight flush","royal flush"]
 SUIT_NAMES = ["spades","hearts","diamonds","clubs"]
@@ -34,6 +35,8 @@ def card_file_name(suit:int,value:int):
 
 def wordify_cards(cards:Iterable['Card']) -> str:
     return game.wordify_iterable(card.string() for card in cards)
+def frequency(values:list[int]) -> dict[int,int]:
+    return dict(Counter(values))
 
 class Card(object):
     def __init__(self,suit:int,value:int):
@@ -191,27 +194,51 @@ class Poker_Hand(Card_Holder):
         return len(set(values)) < len(values)
     def rank(self) -> int:
         hand_value = 0
-        if self.is_royal_flush():#not nessasary, but nice anyways
-            hand_value = 9
-        elif self.is_straight_flush():
-            hand_value = 8
-        elif self.is_four_of_a_kind():
-            hand_value = 7
-        elif self.is_full_house():
-            hand_value = 6
-        elif self.is_flush():
-            hand_value = 5
-        elif self.is_straight():
-            hand_value = 4
-        elif self.is_three_of_a_kind():
-            hand_value = 3
-        elif self.is_two_pair():
-            hand_value = 2
-        elif self.is_pair():
-            hand_value = 1
+        arranged_values =  []
         card_values = self.get_poker_values()
-        card_values.sort()
-        values = card_values + [hand_value]
+
+        def remove_by_freq(freq_num:int):
+            freq = frequency(card_values)
+            for value in freq:
+                if freq[value] == freq_num:
+                    for i in range(freq_num):
+                        arranged_values.append(value)
+                        card_values.remove(value)
+                    return
+
+        if self.is_royal_flush():#by high
+            hand_value = 9
+        elif self.is_straight_flush(): #by high
+            hand_value = 8
+        elif self.is_four_of_a_kind():# four than other
+            hand_value = 7
+            remove_by_freq(4)
+        elif self.is_full_house():#three, then two
+            hand_value = 6
+            remove_by_freq(3)
+        elif self.is_flush():#by high
+            hand_value = 5
+        elif self.is_straight():#by high
+            hand_value = 4
+        elif self.is_three_of_a_kind():#order three, then others by high
+            hand_value = 3
+            remove_by_freq(3)
+        elif self.is_two_pair():#order high pair, low pair, other card
+            hand_value = 2
+            remove_by_freq(2)
+            remove_by_freq(2)
+            if arranged_values[0] < arranged_values[2]:
+                low = arranged_values[0]
+                arranged_values[0] = arranged_values[2]
+                arranged_values[1] = arranged_values[2]
+                arranged_values[2] = low
+                arranged_values[3] = low
+        elif self.is_pair():#order should be pair, then rest of cards by high
+            hand_value = 1
+            remove_by_freq(2)
+        card_values.sort(reverse=True)
+        values = [hand_value] + arranged_values + card_values
+        values.reverse()
         total = 0
         for i in range(len(values)):
             total += values[i] * 16**i
@@ -234,7 +261,9 @@ def best_poker_hand(*args:list[Card_Holder]) -> tuple[Poker_Hand,int]:
 
 def name_poker_hand_by_rank(rank:int) -> str:
     hex_string = hex(rank)[2:]
-    hand_int = int('0x' + hex_string[0])
+    if len(hex_string) == 5:#first digit was zero
+        hex_string = '0' + hex_string
+    hand_int = int('0x' + hex_string[0], base = 16)
     return POKER_HAND_NAMES[hand_int]
     
 

@@ -19,8 +19,18 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
         self.reverse_scoring = True
         self.points_format = lambda points: f"{points} penalties"
         self.num_rounds = NUM_ROUNDS
+    async def game_intro(self):
+        await self.send(
+            "# Welcome to a game of prediction Texas Holdem!\n" +
+            "This isn't going to work like most games of Texas Holdem.\n" +
+            f"In this game, you get {PLAYER_CARDS} to yourself while there are {SHARED_CARDS} shared.\n" +
+            "You must then predict (solely based on what cards you have) what your best poker hand's rank would be against the other player's best hands.\n" +
+            "Best poker hands are constructed from a combination of your private hand and the shared cards.\n" +
+            "The further you are from guessing your rank correctly, the more penalties you accrue.\n" +
+            "Lowest penalties at the end of the game wins!"
+        )
     async def core_game(self) -> list[userid]:
-        self.setup_cards()
+        await self.setup_cards()
         shared:Card_Holder = Card_Holder("Shared cards.")
         await self.player_draw(self.players,PLAYER_CARDS)
         self.deck.give(shared,SHARED_CARDS)
@@ -62,10 +72,10 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
             )
             await self.send_ch(
                 players_best_poker_hands[player],
-                f"Meaning {self.mention(player)} best poker hand, with the shared cards, was:"
+                f"Meaning {self.mention(player)}'s best poker hand with the shared cards was:"
             )
             await self.send(
-                f"This placed {self.mention(player)} {game.ordinate(ranking.index(player))} "+
+                f"This placed {self.mention(player)} {game.ordinate(1+ranking.index(player))} "+
                 f"in the hand rankings with a {name_poker_hand_by_rank(player_hand_ranks[player])}, "+
                 f"and they predicted they would be {game.ordinate(responses[player]+1)}."
             )

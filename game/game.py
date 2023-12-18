@@ -83,13 +83,15 @@ class Game(object):
         for user_id in wc:
             choice_response[user_id] = None
         
-        seperator = ','
         if any(len(option) > MULTIPLE_CHOICE_LINE_THRESHOLD for option in options):
-            seperator = ',\n'
-        
-        option_text = (
-            f"**The options are:**\n"+ 
-            wordify_iterable((f"{emj[i]} (*{options[i]}*)" for i in range(len(options))),"or",seperator))
+            option_text = (
+                "**The options are:**\n" +
+                '\n'.join(f"{emj[i]} (*{options[i]}*)" for i in range(len(options)))
+            )
+        else:
+            option_text = (
+                f"**The options are:**\n"+ 
+                wordify_iterable((f"{emj[i]} (*{options[i]}*)" for i in range(len(options))),"or"))
         allow_answer_change_text = ""
         if allow_answer_change:
             allow_answer_change_text = "You may change your answers."
