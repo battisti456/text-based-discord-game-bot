@@ -9,20 +9,23 @@ To begin using it:
 - download missing data resources
     - I have excluded 'data/lichess_db_puzzle.csv' from this repository as it is rather large. I found it at "https://database.lichess.org/#puzzles". It could, in theory, be replaced by any csv with chess puzzles. The format is "PuzzleId,FEN,Moves,Rating,RatingDeviation,Popularity,NbPlays,Themes,GameUrl,OpeningTags", and I don't use all of these values. I only use FEN, Moves, Rating, and Popularity. Moves are seperated by spaces, and the first move is the opponents move.
 - create your "gamebotconfig.json" file like so:
+    - Add the channel id you wan't the bot to run in
+    - Add your bot's discord api token
+    - Add your players with their user id's (the name you give them in the player map doesn't actually matter in the code)
 
-''' json
-{
-    "token" : "<your discord bot's api token here>",
-    "channel_id" : <the channel id your game will run in>,
-    "log_file": "gamebotlog.txt",
-    "log_level":10,
-    "players": {
-        "<player1 name>" : <player1's id>,
-        "<player2 name>" : <player2's id>,
-        "<player3 name>" : <player3's id>,
-        "<player4 name>" : <player4's id>,
-    },
-    "temp_path":"temp",
-    "data_path":"data",
-}
-'''
+``` json
+    {
+        "token" : "<your discord bot's api token here>",
+        "channel_id" : 00000,
+        "log_file": "gamebotlog.txt",
+        "log_level": 10,
+        "players": {
+            "<player1 name>" : 000000,
+            "<player2 name>" : 000000,
+            "<player3 name>" : 000000,
+            "<player4 name>" : 000000,
+        },
+        "temp_path":"temp",
+        "data_path":"data",
+    }
+```
