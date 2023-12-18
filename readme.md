@@ -10,7 +10,7 @@ So be warned.
 
 To begin using it:
 - install all nessasary python libraries
-    - 'fogleman_TWL06_scrabble' is not an available library, but is merely the twl.py file from "https://github.com/fogleman/TWL06" by Michael fogleman
+    - "fogleman_TWL06_scrabble" is not an available library, but is merely the "twl.py" file from "https://github.com/fogleman/TWL06" by Michael Fogleman
 - download missing data resources
     - I have excluded 'data/lichess_db_puzzle.csv' from this repository as it is rather large.
         - I found it at "https://database.lichess.org/#puzzles". It could, in theory, be replaced by any csv with chess puzzles.
