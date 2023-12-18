@@ -10,7 +10,7 @@ To begin using it:
     - I have excluded 'data/lichess_db_puzzle.csv' from this repository as it is rather large. I found it at "https://database.lichess.org/#puzzles". It could, in theory, be replaced by any csv with chess puzzles. The format is "PuzzleId,FEN,Moves,Rating,RatingDeviation,Popularity,NbPlays,Themes,GameUrl,OpeningTags", and I don't use all of these values. I only use FEN, Moves, Rating, and Popularity. Moves are seperated by spaces, and the first move is the opponents move.
 - create your "gamebotconfig.json" file like so:
 
-'''json
+''' json
 {
     "token" : "<your discord bot's api token here>",
     "channel_id" : <the channel id your game will run in>,
