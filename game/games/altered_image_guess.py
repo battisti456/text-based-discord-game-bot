@@ -28,6 +28,8 @@ SCRIBBLE_NUM_LINES = 10
 SCRIBBLE_POINTS_PER_LINE = 10
 SCRIBBLE_WIDTH = 5
 
+TILE_RATIO = 0.05
+
 def zoom_crop(image:PIL.Image.Image) -> PIL.Image.Image:
     zoom_range:tuple[int,int,int,int] = (
         int(image.size[0]*ZOOM_CROP_NO_EDGE_PORTION),#tl x
@@ -172,7 +174,39 @@ def scribble(image:PIL.Image.Image) -> PIL.Image.Image:
                 width = SCRIBBLE_WIDTH
             )
     return image
-
+def tileing(image:PIL.Image.Image) -> PIL.Image.Image:
+    tile_size = (
+        int(image.size[0]*TILE_RATIO),
+        int(image.size[1]*TILE_RATIO)
+    )
+    num_tiles = (
+        int(image.size[0]/tile_size[0]),
+        int(image.size[1]/tile_size[1])
+    )
+    new_image = PIL.Image.new(
+        'RGB',
+        (
+            tile_size[0]*num_tiles[0],
+            tile_size[1]*num_tiles[1]
+        )
+    )
+    source_boxes:list[tuple[int,int,int,int]] = []
+    for i in range(num_tiles[0]):
+        for j in range(num_tiles[1]):
+            tile_box = (
+                i*tile_size[0],
+                j*tile_size[1],
+                (i+1)*tile_size[0],
+                (j+1)*tile_size[1]
+            )
+            source_boxes.append(tile_box)
+    dest_boxes = source_boxes.copy()
+    random.shuffle(dest_boxes)
+    for k in range(len(source_boxes)):
+        cropped_image = image.crop(source_boxes[k])
+        new_image.paste(cropped_image,dest_boxes[k])
+    
+    return new_image
         
 
         
@@ -189,7 +223,8 @@ ALTER_METHODS = {#...altered through ____ the image
     "corering the center of" : remove_center,
     "adding polka dots to" : polka_dots,
     "adding some radial rays to" : pattern_radial_rays,
-    "scribbling a bit on" : scribble
+    "scribbling a bit on" : scribble,
+    "tileing" : tileing
 }
 SEARCH_TOPICS = {
     "dog" : '🐶',
