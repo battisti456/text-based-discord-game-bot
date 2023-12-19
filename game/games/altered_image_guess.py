@@ -24,6 +24,10 @@ PIXELS_IN_IMAGE_PER_POLKA_DOT = 5000
 PATTERN_RADIAL_PORTION_VISABLE = 0.2
 PATTERN_RADIAL_NUM_RAYS = 100
 
+SCRIBBLE_NUM_LINES = 10
+SCRIBBLE_POINTS_PER_LINE = 10
+SCRIBBLE_WIDTH = 5
+
 def zoom_crop(image:PIL.Image.Image) -> PIL.Image.Image:
     zoom_range:tuple[int,int,int,int] = (
         int(image.size[0]*ZOOM_CROP_NO_EDGE_PORTION),#tl x
@@ -147,6 +151,27 @@ def pattern_radial_rays(image:PIL.Image.Image) -> PIL.Image.Image:
         )
         current_angle = current_angle + on_angle + off_angle
     return image
+def scribble(image:PIL.Image.Image) -> PIL.Image.Image:
+    image = image.copy()
+    draw = PIL.ImageDraw.Draw(image)
+    for line in SCRIBBLE_NUM_LINES:
+        points = []
+        for i in range(SCRIBBLE_POINTS_PER_LINE):
+            points.append((
+                random.randint(0,image.size[0]),
+                random.randint(0,image.size[1])
+            ))
+            draw.line(
+                points,
+                fill = (
+                    random.randint(0,255),
+                    random.randint(0,255),
+                    random.randint(0,255)
+                ),
+                joint = 'curve',
+                width = SCRIBBLE_WIDTH
+            )
+    return image
 
         
 
@@ -163,7 +188,8 @@ ALTER_METHODS = {#...altered through ____ the image
     "applying an edge highlighting filter to" : edge_highlight,
     "corering the center of" : remove_center,
     "adding polka dots to" : polka_dots,
-    "adding some radial rays to" : pattern_radial_rays
+    "adding some radial rays to" : pattern_radial_rays,
+    "scribbling a bit on" : scribble
 }
 SEARCH_TOPICS = {
     "dog" : '🐶',
