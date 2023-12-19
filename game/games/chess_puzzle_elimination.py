@@ -6,15 +6,13 @@ from game.game_bases import Elimination_Base
 from random import randint
 
 import chessboard.board
-import chess
 import pygame
+import chess
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageOps
 import PIL.ImageFont
 import random
-
-
 
 import pandas
 
