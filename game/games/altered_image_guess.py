@@ -204,7 +204,7 @@ def tileing(image:PIL.Image.Image) -> PIL.Image.Image:
     random.shuffle(dest_boxes)
     for k in range(len(source_boxes)):
         cropped_image = image.crop(source_boxes[k])
-        new_image.paste(cropped_image,dest_boxes[k])
+        new_image.paste(cropped_image,dest_boxes[k][0:2])
     
     return new_image
         
