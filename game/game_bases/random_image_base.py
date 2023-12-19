@@ -2,29 +2,45 @@ import game
 
 from typing import TypedDict
 
-from unsplash.api import Api
-from unsplash.auth import Auth
+import PIL.Image
+import requests
+import io
 
-class RIBConfig(TypedDict):
-    access_key:str
-    secret_key:str
-    app_id:int
-    uri:str
+BASE_URL = "https://source.unsplash.com"
+
 
 class Random_Image_Base(game.Game):
     def __init__(self,gh:game.GH):
         game.Game.__init__(self,gh)
         if not Random_Image_Base in self.initialized_bases:
             self.initialized_bases.append(Random_Image_Base)
-            self.rib_config:RIBConfig = self.gh.config['game_configs']['random_image_base']
-            self.setup_rib()
-    def setup_rib(self):
-        Auth()
-        self.auth = Auth(
-            self.rib_config['app_id'],
-            self.rib_config['secret_key'],
-            self.rib_config['uri'])
-        self.api = Api(self.auth)
+    def random_image_url(self,author:str = None, size:tuple[int,int] = None,search_terms:list[str] = None) -> str:
+        source_text = "/random"
+        if not author is None:
+            source_text = f"/user/{author}"
+        size_text = ""
+        if not size is None:
+            size_text = f"/{size[0]}x{size[1]}"
+        search_text = ""
+        if not search_terms is None:
+            search_text = f"/?{','.join(search_terms)}"
+        return f"{BASE_URL}{source_text}{size_text}{search_text}"
+    def get_image_from_url(self,url:str) -> PIL.Image.Image:
+        request = requests.get(url,stream=True)
+        if request.status_code == 200:
+            return PIL.Image.open(io.BytesIO(request.content))
+        else:
+            self.logger.error(f"Image at '{url}' could not be accessed.")
+            return None
+    def random_image(self,author:str = None, size:tuple[int,int] = None,search_terms:list[str] = None) -> PIL.Image.Image:
+        url = self.random_image_url(author,size,search_terms)
+        image = self.get_image_from_url(url)
+        if not image is None:
+            return image
+        else:
+            return self.random_image(author,size,search_terms)
+            
+        
     
     
         

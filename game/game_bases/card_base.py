@@ -167,7 +167,7 @@ class Poker_Hand(Card_Holder):
         i=0
         while values[i+1] == values[i] +1:
             i += 1
-            if i == len(values):
+            if i == len(values)-1:
                 return True
         return False
     def is_three_of_a_kind(self) -> bool:

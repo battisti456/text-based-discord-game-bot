@@ -24,29 +24,33 @@ class Game(object):
             self.classes_banned_from_speaking:list[type[Game]] = []
             self.config:dict[str,Any] = self.gh.config
     async def run(self)->Iterable[int]:
+        #should be defined in child objects
         pass
     async def on_reaction(self,emoji:str,message_id:messageid,user_id:userid):
-        #on reaction, should be called by gh
+        #called by gh when a reaction is made
         self.logger.debug(f"on_message called for {message_id} from {user_id} with '{emoji}'")
         if message_id in self.reaction_actions:
             await self.reaction_actions[message_id](emoji,user_id)
     async def on_message(self,message:str,reply_id:messageid,user_id:userid,message_id:messageid):
-        #on_message action, should be called by gh
+        #called by gh when a message is sent
         self.logger.debug(f"on_message called in reply to {reply_id} from {user_id} with '{message}' via {message_id}")
         if reply_id in self.message_actions:
             self.logger.debug(f"Calling message action {reply_id} from {user_id} with '{message}'")
             await self.message_actions[reply_id](message,user_id,message_id)
     async def on_unreaction(self,emoji:str,message_id:messageid,user_id:userid):
+        #called by gh when a reaction is removed
         self.logger.debug(f"on_unreaction called for {message_id} from {user_id} with '{emoji}'")
         if message_id in self.unreaction_actions:
             self.logger.debug(f"Calling unreaction action for {message_id} from {user_id} with '{emoji}'")
             await self.unreaction_actions[message_id](emoji,user_id)
     async def on_edit(self,message:str,reply_id:messageid,user_id:userid,message_id:messageid):
+        #called by gh when a message is edidted
         self.logger.debug(f"on_edit called in reply to {reply_id} from {user_id} with '{message}' via {message_id}")
         if reply_id in self.edit_actions:
             self.logger.debug(f"Calling edit action in reply to {reply_id} from {user_id} with '{message}' via {message_id}")
             await self.edit_actions[reply_id](message,user_id,message_id)
     async def on_delete(self,message:str,reply_id:messageid,user_id:userid,message_id:messageid):
+        #callled by gh when a message is deleted
         self.logger.debug(f"on_delete called in reply to {reply_id} from {user_id} with '{message}' via {message_id}")
         if reply_id in self.edit_actions:
             self.logger.debug(f"Calling delete action in reply to {reply_id} from {user_id} with '{message}' via {message_id}")
@@ -144,6 +148,7 @@ class Game(object):
             self,message:str,who_responds:userid|list[userid]|None = None,
             channel_id:channelid = None, allow_answer_change:bool = True, 
             sync_lock:Callable[[str,dict[userid,str],bool],bool] = None) -> str | dict[userid,str]:
+        #prompts a set of users for text based responses and returns them as a dict
         users = self.deduce_players(who_responds)
         responses:dict[userid,str] = self.make_player_dict(None,users)
         if sync_lock is None and len(users) == 1:#no reason to allow answer change
@@ -201,6 +206,7 @@ class Game(object):
         task = asyncio.create_task(wait())
         await asyncio.wait([task],timeout=seconds)
     async def do_nothing(self):
+        #asynchronously does nothing to avoid blocking other tasks while waiting for them to do something
         async def do_nothing():
             pass
         await asyncio.wait([asyncio.Task(do_nothing())])
@@ -229,8 +235,10 @@ class Game(object):
         #removes a function from the dict of responses to message deletions
         del self.delete_actions[message_id]
     def add_unreaction_action(self,message_id:messageid,unreaction_action:Callable[[str,userid],None]):
+        #adds a new unreaction_action, to be called by gh when a reaction is removed by a user
         self.unreaction_actions[message_id] = unreaction_action
     def remove_unreaction_action(self,message_id:messageid):
+        #removes unreaction_action from dict of unreaction_action
         del self.unreaction_actions[message_id]
     async def create_thread(self,name:str = None) -> channelid:
         #creates a private thread
@@ -254,6 +262,7 @@ class Game(object):
         if self.allowed_to_speak():
             return await self.send(content,embed_data,attatchements_data,channel_id,message_id)
     def get_user_name(self,user_id:userid) -> str:
+        #gets string of user's name
         return self.gh.get_user_name(user_id)
     def deduce_players(self,*args:list[list[userid]|userid|dict[userid,Any]]) -> list[userid]:
         #chooses the subset of players that appear in every item
@@ -299,6 +308,7 @@ class Game(object):
                 to_return[player] = item
         return to_return
     async def send_rank(self,rank:list[userid,list[userid]],channel_id:channelid = None,message_id:messageid = None) -> messageid:
+        #takes a list of userids and lists of userids as an idea of ranking them, returns a string describing the placements
         text_list:list[str] = []
         place = 1
         for item in rank:
@@ -311,4 +321,5 @@ class Game(object):
                 place += 1
         return await self.send(f"The placements are: {wordify_iterable(text_list,comma=';')}.")
     async def delete_message(self,message_id:messageid,channel_id:channelid = None):
+        #deletes message from player visability
         await self.gh.delete_message(message_id,channel_id)
