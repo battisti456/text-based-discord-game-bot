@@ -64,6 +64,9 @@ SIDE_LABEL_OFFSET = int(NEW_BOARDER_WIDTH/4)
 BOTTOM_LABEL_OFFSET = SET_IMAGE_SIZE[1]+NEW_BOARDER_WIDTH
 LABEL_FONT_SIZE = 65
 
+LAST_MOVE_HIGHLIGHT = (255,255,204,100)
+CHECK_HIGHLIGHT = (255,0,0,100)
+
 def piece_name(symbol:str):
     color = 'white'
     if symbol.lower() == symbol:
@@ -111,6 +114,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
         capture:chess.Piece = get_piece(move_uci[2:4])
         moves_to:str = 'moves to'
         and_text = ""
+        check_text = ""
 
         if (piece.piece_type == chess.PAWN and #en passant
             capture is None and #not capturing
@@ -120,6 +124,10 @@ class Chess_Puzzle_Elimination(Elimination_Base):
             if piece.color == chess.BLACK:
                 capture_symbol = 'P'
             capture = chess.Piece.from_symbol(capture_symbol)
+        test = self.board.copy()
+        test.push_uci(move_uci)
+        if test.is_check():
+            check_text = " resulting in a check"
 
         if not capture is None:#capturing
             moves_to = f'captures {piece_name(capture.symbol())} {capture.unicode_symbol()} on'
@@ -130,9 +138,58 @@ class Chess_Puzzle_Elimination(Elimination_Base):
         elif piece.piece_type == chess.KING and move_uci in CASTLE_UCI_DICT:
               return f"{move_uci} - *{CASTLE_UCI_DICT[move_uci]}*"
 
-        return f"{move_uci} - {piece_name(piece.symbol())} {piece.unicode_symbol()} on {move_uci[0:2]} {moves_to} {move_uci[2:4]}{and_text}"
+        return f"{move_uci} - {piece_name(piece.symbol())} {piece.unicode_symbol()} on {move_uci[0:2]} {moves_to} {move_uci[2:4]}{and_text}{check_text}"
+    def game_over_text(self) -> str:
+        #ending the game in ___
+        if self.board.is_checkmate():
+            return "checkmate"
+        elif self.board.is_stalemate():
+            return "stalemate"
+        elif self.board.is_fifty_moves():
+            return "a draw, since 100 moves have taken place without a pawn move or a capture, and a draw was claimed"
+        elif self.board.is_seventyfive_moves():
+            return "a draw, since 150 moves have taken place without a pawn move or a capture"
+        elif self.board.is_insufficient_material():
+            return "a draw due to insufficient material for either side to checkmate"
+        return ""
     def make_board_image(self) -> str:
+        tile_size = (int((ORIGINAL_BOARD_SIZE[0]-ORIGINAL_BOARDER_WIDTH*2)/NUM_TILES),
+                         int((ORIGINAL_BOARD_SIZE[1]-ORIGINAL_BOARDER_WIDTH*2)/NUM_TILES))
+        def uci_to_coord(uci:str) -> tuple[int,int]:
+            coord = (COL_LABELS.index(uci[0]),ROW_LABELS.index(uci[1]))
+            if self.display_board.flipped:
+                coord = (NUM_TILES-coord[0]-1,NUM_TILES-coord[1]-1)
+            return coord
+        def coord_to_square(coord:tuple[int,int]) -> tuple[int,int,int,int]:
+            return (
+                    ORIGINAL_BOARDER_WIDTH + coord[0]*tile_size[0],
+                    ORIGINAL_BOARDER_WIDTH + coord[1]*tile_size[1],
+                    ORIGINAL_BOARDER_WIDTH + (coord[0]+1)*tile_size[0],
+                    ORIGINAL_BOARDER_WIDTH + (coord[1]+1)*tile_size[1]
+                )
+        def uci_to_square(uci:str)->tuple[int,int,int,int]:
+            return coord_to_square(uci_to_coord(uci))
         fen:str = self.board.fen()
+        self.board.num
+        if self.board.move_stack:
+            last_move:chess.Move = self.board.peek()
+            last_move_uci = last_move.uci()
+            for uci in (last_move_uci[0:2],last_move_uci[2:4]):
+                self.display_surface.fill(
+                    LAST_MOVE_HIGHLIGHT,
+                    uci_to_square(uci)
+                )
+        if self.board.is_check():
+            king_pos:chess.Square = self.board.king(self.board.turn)
+            square_index = chess.SQUARES.index(king_pos)
+            coord = (
+                square_index%NUM_TILES,
+                int(square_index/NUM_TILES)
+            )
+            self.display_surface.fill(
+                CHECK_HIGHLIGHT,
+                coord_to_square(coord)
+            )
         self.display_board.display_board()
         self.display_board.update_pieces(fen)
         image_bytes = pygame.image.tobytes(self.display_surface,'RGBA')
@@ -266,9 +323,12 @@ class Chess_Puzzle_Elimination(Elimination_Base):
                 move_right_text = f"{self.mention(correct_players)} got the move correct!"
             
             self.board.push_uci(moves[move_index])
+            end_text = ""
+            if self.board.is_game_over(claim_draw=True):
+                end_text = f" This ends the game in {self.game_over_text()}."
             
             await self.send(
-                f"{move_right_text} {best_move_text}",
+                f"{move_right_text} {best_move_text}{end_text}",
                 attatchements_data=[self.make_board_image()]
             )
             move_index += 1
@@ -278,14 +338,16 @@ class Chess_Puzzle_Elimination(Elimination_Base):
                 return
             
             mt = self.move_text(moves[move_index])
-            self.board.push_uci(moves[move_index])
-            
             respond_text = "responds with their best move in this position, "
             if len(list(self.board.legal_moves)) == 1:
                 respond_text = "was forced to respond with "
+            self.board.push_uci(moves[move_index])
+            end_text = ""
+            if self.board.is_game_over(claim_draw=True):
+                end_text = f" This ends the game in {self.game_over_text()}."
 
             await self.send(
-                f"The opponent, {oppo_color}, {respond_text} {mt}.",
+                f"The opponent, {oppo_color}, {respond_text} {mt}.{end_text}",
                 attatchements_data=[self.make_board_image()]
             )
             move_index += 1
@@ -295,8 +357,11 @@ class Chess_Puzzle_Elimination(Elimination_Base):
         while move_index != len(moves):
             move_text = self.move_text(moves[move_index])
             self.board.push_uci(moves[move_index])
+            end_text = ""
+            if self.board.is_game_over(claim_draw=True):
+                end_text = f" This ends the game in {self.game_over_text()}."
             await self.send(
-                f"{begin_text}{COLOR_NAMES[self.board.turn]} plays {move_text}.",
+                f"{begin_text}{COLOR_NAMES[self.board.turn]} plays {move_text}.{end_text}",
                 attatchements_data=self.make_board_image()
             )
             begin_text = ""
