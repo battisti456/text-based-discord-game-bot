@@ -243,7 +243,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
 
         while len(remaining_players) > 1:
             legal_moves:list[str] = list(move.uci() for move in self.board.legal_moves)
-            move_options = random.choices(legal_moves,k=NUM_MOVE_OPTIONS)
+            move_options = (random.sample(legal_moves,k=NUM_MOVE_OPTIONS))
             if not moves[move_index] in move_options:
                 move_options[random.randint(0,NUM_MOVE_OPTIONS-1)] = moves[move_index]
             option_text_list:list[str] = list(self.move_text(move_option) for move_option in move_options)
@@ -293,9 +293,10 @@ class Chess_Puzzle_Elimination(Elimination_Base):
         begin_text = "To finish of the puzzle:\n"
         
         while move_index != len(moves):
+            move_text = self.move_text(moves[move_index])
             self.board.push_uci(moves[move_index])
             await self.send(
-                f"{begin_text}{COLOR_NAMES[self.board.turn]} plays {self.move_text(moves[move_index])}.",
+                f"{begin_text}{COLOR_NAMES[self.board.turn]} plays {move_text}.",
                 attatchements_data=self.make_board_image()
             )
             begin_text = ""

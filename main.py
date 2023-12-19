@@ -17,9 +17,9 @@ def testing(config):
     config['players'] = config['test_players']
 
 config = grab_json(CONFIG_PATH)
-#testing(config)
+testing(config)
 gh = game_handler.Game_Handler(config)
-gh.next_game= Prediction_Texas_Holdem(gh)
+gh.next_game= Altered_Image_Guess(gh)
 gh.run()
 
 """
@@ -44,8 +44,8 @@ change format a bit
 -minor
 fix gitignore so git only includes files I made
 test bidding base- will anything even use it?
-finish testing texas holdem
 retest letter adder
+test aig
 
 
 -priorities!
