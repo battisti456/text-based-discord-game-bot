@@ -3,7 +3,6 @@ from game import userid
 from typing import TypedDict
 
 from game.game_bases import Elimination_Base
-from random import randint
 
 import chessboard.board
 import pygame
