@@ -2,7 +2,6 @@ import game
 from game import userid
 from game.game_bases import Trivia_Base, Secret_Message_Base, Rounds_With_Points_Base
 from game.game_bases.trivia_base import TriviaDict
-import asyncio
 import random
 
 POINTS_FOOL = 1
