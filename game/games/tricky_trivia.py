@@ -9,14 +9,14 @@ POINTS_FOOL = 1
 POINTS_GUESS = 3
 NUM_QUESTIONS = 3
 
-class Fibbage_At_Home(Secret_Message_Base,Trivia_Base,Rounds_With_Points_Base):
+class Tricky_Trivia(Secret_Message_Base,Trivia_Base,Rounds_With_Points_Base):
     def __init__(self,gh:game.GH):
         Secret_Message_Base.__init__(self,gh)
         Trivia_Base.__init__(self,gh)
         Rounds_With_Points_Base.__init__(self,gh)
     async def game_intro(self):
         await self.send(
-            f"# Today we are playing a game of fibbage at home!\n" +
+            f"# Today we are playing a game of tricky trivia!\n" +
             "In this game you will be presented with trivia questions and each player will secretly craft their own possiple answer.\n" +
             "Then, the trivia question will be asked at large.\n" +
             f"You get {POINTS_FOOL} point for every person you fool, and {POINTS_GUESS} for getting it right yourself.\n" +
