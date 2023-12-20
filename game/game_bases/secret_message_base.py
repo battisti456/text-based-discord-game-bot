@@ -3,6 +3,7 @@ import game.emoji_groups
 import asyncio
 
 from game import userid,channelid,messageid
+from typing import Callable, Awaitable
 
 class Secret_Message_Base(game.Game):
     def __init__(self,gh:game.GH):
@@ -64,63 +65,84 @@ class Secret_Message_Base(game.Game):
             return to_return[player]
         else:
             return to_return
-    async def secret_text_response(self,player:userid|list[userid] = None,message:str|dict[userid,str] = None) -> str|dict[userid,str]:
+    async def secret_text_response(self,player:userid|list[userid] = None,message:str|dict[userid,str] = None, allow_answer_change:bool = True,
+                                   sync_lock:Callable[[bool],Awaitable[bool]] = None,store_in:dict[userid,str] = None) -> str|dict[userid,str]:
         message = self.make_player_dict(message)
         d_players:list[userid] = self.deduce_players(player,message)
         if not isinstance(player,int):
-            return await self.multi_secret_text_response(d_players,message)
+            return await self.multi_secret_text_response(d_players,message,allow_answer_change,sync_lock,store_in)
         thread_id = await self.get_secret_thread(d_players[0])
-        return await self.text_response(message[d_players[0]],d_players[0],thread_id)
+        return await self.text_response(message[d_players[0]],d_players[0],thread_id,allow_answer_change,sync_lock,store_in)
     async def secret_multiple_choice(self,player:userid|list[userid] = None,message:str|dict[userid,str] = None,options:list[str]|dict[userid,list[str]] = None,
-                                     emojis:list[str]|dict[userid,list[str]] = None) -> int|dict[userid,int]:
+                                     emojis:list[str]|dict[userid,list[str]] = None,allow_answer_change:bool=True,
+                                     sync_lock:Callable[[bool],Awaitable[bool]] = None, store_in:dict[userid,int] = None) -> int|dict[userid,int]:
         message = self.make_player_dict(message)
         options = self.make_player_dict(options)
         emojis = self.make_player_dict(emojis)
         d_players:list[userid] = self.deduce_players(player,message,options,emojis)
         if not isinstance(player,int):
-            return await self.multi_secret_multiple_choice(d_players,message,options,emojis)
+            return await self.multi_secret_multiple_choice(d_players,message,options,emojis,allow_answer_change,sync_lock,store_in)
         thread_id = await self.get_secret_thread(d_players[0])
-        return await self.multiple_choice(message[d_players[0]],options[d_players[0]],d_players[0],emojis[d_players[0]],thread_id)
-    async def secret_no_yes(self,player:userid|list[userid] = None,message:str|dict[userid|str] = None) -> int|dict[userid,int]:
+        return await self.multiple_choice(message[d_players[0]],options[d_players[0]],d_players[0],emojis[d_players[0]],thread_id,allow_answer_change,sync_lock,store_in)
+    async def secret_no_yes(self,player:userid|list[userid] = None,message:str|dict[userid|str] = None,allow_answer_change:bool = True,
+                            sync_lock:Callable[[bool],Awaitable[bool]] = None, store_in:dict[userid,int] = None) -> int|dict[userid,int]:
         message = self.make_player_dict(message)
         d_players:list[userid] = self.deduce_players(player,message)
         if not isinstance(player,int):
-            return await self.multi_secret_no_yes(d_players,message)
+            return await self.multi_secret_no_yes(d_players,message,allow_answer_change,sync_lock,store_in)
         thread_id = await self.get_secret_thread(d_players[0])
-        return await self.no_yes(message[d_players[0]],d_players[0],thread_id)
-    @game.police_messaging
-    async def multi_secret_text_response(self,players:list[userid],messages:dict[userid,str]) -> dict[userid,str]:
-        responses:dict[userid,str] = self.make_player_dict(None,players)
+        return await self.no_yes(message[d_players[0]],d_players[0],thread_id,allow_answer_change,sync_lock,store_in)
+    async def multi_secret_text_response(
+        self,players:list[userid],messages:dict[userid,str],allow_answer_change:bool,
+        sync_lock:Callable[[bool],Awaitable[bool]],store_in:dict[userid,int]) -> dict[userid,str]:
+        responses:dict[userid,str] = {}
+        if store_in is None:
+            responses:dict[userid,str] = self.make_player_dict(None,players)
+        else:
+            responses = store_in
+            for user in players:
+                if not user in responses:
+                    responses[user] = None
+        all_done:game.IsDone = game.IsDone(False)
+        sub_sync_lock:Callable[[bool],Awaitable[bool]] = game.sub_sync_lock_maker(sync_lock,all_done,responses,players)
         def generate_task(player:userid) -> asyncio.Task:
             async def task():
-                responses[player] = await self.text_response(messages[player],player,await self.get_secret_thread(player))
-                if self.allowed_to_speak():
-                    not_responded = list(p for p in players if responses[player] is None)
-                    other_text = ""
-                    if not_responded:
-                        other_text = f" Still waiting on {self.mention(not_responded)}."
-                    await self.send(f"{self.mention(player)} has responded.{other_text}")
+                await self.text_response(messages[player],player,await self.get_secret_thread(player),
+                                         allow_answer_change,sub_sync_lock,responses)
             return asyncio.Task(task())
         task_list:list[asyncio.Task] = list(generate_task(player) for player in players)
         await asyncio.wait(task_list)
         return responses
     @game.police_messaging
-    async def multi_secret_multiple_choice(self,players:list[userid],messages:dict[userid,str],options:dict[userid,list[str]],
-                                           emojis:dict[userid,list[str]]) -> dict[userid,int]:
-        responses:dict[userid,str] = self.make_player_dict(None,players)
+    async def multi_secret_multiple_choice(
+        self,players:list[userid],messages:dict[userid,str],options:dict[userid,list[str]],
+        emojis:dict[userid,list[str]],allow_answer_change:bool,sync_lock:Callable[[bool],Awaitable[bool]],
+        store_in:dict[userid,int]) -> dict[userid,int]:
+
+        responses:dict[userid,str] = {}
+        if store_in is None:
+            responses = self.make_player_dict(None,players)
+        else:
+            responses = store_in
+            for player in players:
+                if not player in responses:
+                    responses[player] = None
+        
+        all_done:game.IsDone = game.IsDone(False)
+        sub_sync_lock:Callable[[bool],Awaitable[bool]] = game.sub_sync_lock_maker(sync_lock,all_done,responses,players)
+        
         def generate_task(player:userid) -> asyncio.Task:
             async def task():
-                responses[player] = await self.multiple_choice(messages[player],options[player],player,emojis[player],await self.get_secret_thread(player))
-                if self.allowed_to_speak():
-                    not_responded = list(p for p in players if responses[players] is None)
-                    other_text = ""
-                    if not_responded:
-                        other_text = f" Still waiting on {self.mention(not_responded)}."
-                    await self.send(f"{self.mention(player)} has responded.{other_text}")
+                await self.multiple_choice(
+                    messages[player],options[player],player,emojis[player],
+                    await self.get_secret_thread(player),allow_answer_change,sub_sync_lock,responses)
             return asyncio.Task(task())
         task_list:list[asyncio.Task] = list(generate_task(player) for player in players)
         await asyncio.wait(task_list)
         return responses
-    async def multi_secret_no_yes(self,players:list[userid],messages:dict[userid,str]) -> dict[userid,int]:
-        return await self.multi_secret_multiple_choice(players,messages,("no","yes"),game.emoji_groups.NO_YES_EMOJI)    
+    async def multi_secret_no_yes(self,players:list[userid],messages:dict[userid,str],allow_answer_change:bool,
+                                  sync_lock:Callable[[bool],Awaitable[bool]],store_in:dict[userid,int]) -> dict[userid,int]:
+        return await self.multi_secret_multiple_choice(
+            players,messages,("no","yes"),game.emoji_groups.NO_YES_EMOJI,
+            allow_answer_change,sync_lock,store_in)    
 

@@ -4,7 +4,7 @@ import game.emoji_groups
 import asyncio
 import uuid
 
-from typing import Sequence
+from typing import Sequence, Any, Awaitable
 
 MULTIPLE_CHOICE_LINE_THRESHOLD = 30
 
@@ -63,7 +63,7 @@ class Game(object):
             return wordify_iterable(self.mention(uid) for uid in user_id)
     async def multiple_choice(self,message:str = None,options:list[str] = [],who_chooses:userid|list[userid] = None,
                               emojis:str|list[str] = None, channel_id:channelid = None, allow_answer_change:bool = True,
-                              sync_lock:Callable[[str,dict[userid,int],bool],bool] = None) -> int | dict[userid,int]:
+                              sync_lock:Callable[[bool],Awaitable[bool]] = None, store_in:dict[userid,int] = None) -> int | dict[userid,int]:
         #returns the indexof the choice a user would like from choices, waits for user to respond
         if isinstance(who_chooses,list):
             wc = who_chooses
@@ -83,9 +83,13 @@ class Game(object):
             allow_answer_change = False
         emj = emj[0:len(options)]
         self.logger.info(f"Beggining multiple choice monitoring for answers {options} via emojis {emj} from users {wc}.")
-        choice_response:dict[userid,int] = {}
-        for user_id in wc:
-            choice_response[user_id] = None
+        if store_in is None:
+            choice_response:dict[userid,int] = self.make_player_dict(None,wc)
+        else:
+            choice_response:dict[userid,int] = store_in
+            for user in wc:
+                if not user in choice_response:
+                    choice_response[user] = None
         
         if any(len(option) > MULTIPLE_CHOICE_LINE_THRESHOLD for option in options):
             option_text = (
@@ -132,7 +136,7 @@ class Game(object):
             if sync_lock is None:
                 keep_going = not is_done
             else:
-                keep_going = not await sync_lock(message,choice_response,is_done)
+                keep_going = not await sync_lock(is_done)
             #self.logger.debug(f"Waiting for emoji responses on {message_id} from {wc}. Currently {choice_response}.")
         self.remove_reaction_action(message_id)
         self.remove_unreaction_action(message_id)
@@ -141,16 +145,24 @@ class Game(object):
         else:
             return choice_response
     async def no_yes(self,message:str = None,who_chooses:userid|list[userid] = None,channel_id:channelid = None,
-                     allow_answer_change:bool = True, sync_lock:Callable[[str,dict[userid,int]],bool] = None) -> int | dict[userid,int]:
+                     allow_answer_change:bool = True, sync_lock:Callable[[bool],Awaitable[bool]] = None,
+                     store_in:dict[userid,int] = None) -> int | dict[userid,int]:
         #returns 0 for no and 1 for yes to a yes or no question, waits for user to respond
-        return await self.multiple_choice(message,("no","yes"),who_chooses,game.emoji_groups.NO_YES_EMOJI,channel_id,allow_answer_change,sync_lock)
+        return await self.multiple_choice(message,("no","yes"),who_chooses,game.emoji_groups.NO_YES_EMOJI,channel_id,allow_answer_change,sync_lock,store_in)
     async def text_response(
             self,message:str,who_responds:userid|list[userid]|None = None,
             channel_id:channelid = None, allow_answer_change:bool = True, 
-            sync_lock:Callable[[str,dict[userid,str],bool],bool] = None) -> str | dict[userid,str]:
+            sync_lock:Callable[[bool],Awaitable[bool]] = None,
+            store_in:dict[userid,str] = None) -> str | dict[userid,str]:
         #prompts a set of users for text based responses and returns them as a dict
         users = self.deduce_players(who_responds)
-        responses:dict[userid,str] = self.make_player_dict(None,users)
+        if store_in is None:
+            responses:dict[userid,str] = self.make_player_dict(None,users)
+        else:
+            responses = store_in
+            for user in users:
+                if not user in responses:
+                    responses[user] = None
         if sync_lock is None and len(users) == 1:#no reason to allow answer change
             allow_answer_change = False
         allow_answer_change_text = ""
@@ -190,7 +202,7 @@ class Game(object):
             if sync_lock is None:
                 keep_going = not is_done
             else:
-                keep_going = not await sync_lock(message,responses,is_done)
+                keep_going = not await sync_lock(is_done)
             #self.logger.debug(f"Waiting for text responses on {message_id} from {users}. Currently {responses}.")
         self.remove_message_action(message_id)
         self.remove_edit_action(message_id)

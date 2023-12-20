@@ -1,6 +1,6 @@
 import game_handler
 from time import sleep
-from typing import Callable, Iterable, TypeVar, ParamSpec, NewType, Any
+from typing import Callable, Iterable, TypeVar, ParamSpec, NewType, Any, Awaitable
 import functools
 
 
@@ -14,7 +14,14 @@ R = TypeVar('R')
 
 GH = game_handler.Game_Handler
 CHECK_TIME = 0.1
-      
+
+class IsDone(object):
+    def __init__(self,value = False):
+        self.value = False
+    def set_done(self,value = True):
+        self.value = value
+    def __bool__(self):
+        return self.value  
 def police_messaging(func:Callable[P,R]) -> Callable[P,R]:
     #Adds the class the function was first defined in to current_class_execution, only to be used on asynchronous game.Game methods
     @functools.wraps(func)
@@ -94,5 +101,19 @@ def ordinate(num:int|str) -> str:
     if num in (11,12,13):
         ordinal = 'th'
     return num + ordinal
-    
+
+def sub_sync_lock_maker(
+        master_sync_lock:Callable[[bool],Awaitable[bool]],all_done:IsDone,
+        responses:dict[userid,Any],users:list[userid]) -> Callable[[bool],Awaitable[bool]]:
+    async def sub_sync_lock(is_done:bool) -> bool:
+        if master_sync_lock is None:
+            if all_done:
+                return True
+            else:
+                all_done.set_done(not responses[user] is None for user in users)
+                return all_done
+        else:
+            all_done.set_done(not responses[user] is None for user in users)
+            return await master_sync_lock(all_done)
+    return sub_sync_lock
 from game.game import Game as Game

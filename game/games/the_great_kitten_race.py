@@ -6,7 +6,7 @@ from game.emoji_groups import NUMBERED_KEYCAP_EMOJI
 import json
 import asyncio
 
-from typing import TypedDict
+from typing import TypedDict, Callable, Awaitable
 
 DATA_PATH = "kitten_race_obstacles.json"
 NUM_OBSTACLES = 5
@@ -60,27 +60,31 @@ class The_Great_Kitten_Race(game.Game):
         question_storage_dict:dict[str,str|int] = {}
         tasks:list[asyncio.Task] = []
         options = list(f"{point}" for point in range(self.kitten_config['stat_limit']+1))
-        self.is_done = False
-        async def sync_lock(question:str,responses:dict[userid,int|str],is_done:bool) -> bool:
-            if self.is_done:
-                return True
-            if not question in question_storage_dict:
-                question_storage_dict[question] = responses
-            
-            question_is_done_dict[question] = is_done
-            if all(question_is_done_dict[question] for question in question_is_done_dict):
-                self.is_done = True
-                return True
-            return False
+        
+        questions_finished:dict[str|int,bool] = {
+            0: False
+        }
+        def make_sync_lock(question:str) -> Callable[[bool],Awaitable[bool]] :
+            questions_finished[question] = False
+            async def sync_lock(is_done:bool) -> bool:
+                if questions_finished[0]:
+                    return True
+                else:
+                    questions_finished[question] = is_done
+                    questions_finished[0] = all(questions_finished[q] for q in questions_finished if q != 0)
+                    if questions_finished[0]:
+                        return True
+                return False
+            return sync_lock()
 
         for stat in self.kitten_config['stats']:
             question = f"How did you train your cat's **{stat}** stat?"
             question_stat_dict[question] = stat
             question_is_done_dict[question] = False
-            tasks.append(asyncio.Task(self.multiple_choice(question,options,self.players,NUMBERED_KEYCAP_EMOJI,sync_lock=sync_lock)))
+            tasks.append(asyncio.Task(self.multiple_choice(question,options,self.players,NUMBERED_KEYCAP_EMOJI,sync_lock=make_sync_lock(question))))
         name_question:str = "Also, what was you kitten's name again?"
         question_is_done_dict[name_question] = False
-        tasks.append(asyncio.Task(self.text_response(name_question,self.players,sync_lock=sync_lock)))
+        tasks.append(asyncio.Task(self.text_response(name_question,self.players,sync_lock=make_sync_lock(name_question))))
         await asyncio.wait(tasks)
 
         kittens:dict[userid,Kitten] = {}
