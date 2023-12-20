@@ -104,7 +104,7 @@ class Game(object):
         if allow_answer_change:
             allow_answer_change_text = "You may change your answers."
         def question_text() -> str:
-            players_not_answered:list = list(player for player in choice_response if choice_response[player] is None)
+            players_not_answered:list = list(player for player in wc if choice_response[player] is None)
             waiting_on_text = "All players have reacted."
             if players_not_answered:
                 waiting_on_text = f"Awaiting reaction from {self.mention(players_not_answered)}. {allow_answer_change_text}"
@@ -112,7 +112,7 @@ class Game(object):
         message_id = await self.send(question_text(),channel_id = channel_id)
         async def reaction_action(emoji:str,user_id:int):
             self.logger.debug(f"Reaction action called by {user_id} with {emoji}.")
-            if user_id in choice_response and emoji in emj:
+            if user_id in wc and emoji in emj:
                 if allow_answer_change or choice_response[user_id] is None:
                     choice_response[user_id] = emj.index(emoji)
                     await self.send(question_text(),message_id=message_id)
@@ -120,7 +120,7 @@ class Game(object):
                         self.logger.info(
                             f"User {user_id} added reaction {emoji} to multiple choice response, selecting '{options[choice_response[user_id]]}'")
         async def unreaction_action(emoji:str,user_id:userid):
-            if user_id in choice_response:
+            if user_id in wc:
                 if emoji == emj[choice_response[user_id]] and allow_answer_change:
                     choice_response[user_id] = None
                     await self.send(question_text(),message_id=message_id)
@@ -169,7 +169,7 @@ class Game(object):
         if allow_answer_change:
             allow_answer_change_text = "You may change your answer."
         def question_text() -> str:
-            players_not_answered:list = list(player for player in responses if responses[player] is None)
+            players_not_answered:list = list(player for player in users if responses[player] is None)
             waiting_on_text = "All players have responded."
             if players_not_answered:
                 waiting_on_text = f"Awaiting reply from {self.mention(players_not_answered)}. {allow_answer_change_text}"

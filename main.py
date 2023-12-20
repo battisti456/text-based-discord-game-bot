@@ -19,7 +19,7 @@ def testing(config):
 config = grab_json(CONFIG_PATH)
 #testing(config)
 gh = game_handler.Game_Handler(config)
-gh.next_game= Altered_Image_Guess(gh)
+gh.next_game= Guess_The_Word(gh)
 gh.run()
 
 """

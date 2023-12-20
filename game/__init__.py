@@ -110,10 +110,10 @@ def sub_sync_lock_maker(
             if all_done:
                 return True
             else:
-                all_done.set_done(not responses[user] is None for user in users)
+                all_done.set_done(all(not responses[user] is None for user in users))
                 return all_done
         else:
-            all_done.set_done(not responses[user] is None for user in users)
+            all_done.set_done(all(not responses[user] is None for user in users))
             return await master_sync_lock(all_done)
     return sub_sync_lock
 from game.game import Game as Game
