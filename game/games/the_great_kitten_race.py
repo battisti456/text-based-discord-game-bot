@@ -61,21 +61,18 @@ class The_Great_Kitten_Race(game.Game):
         tasks:list[asyncio.Task] = []
         options = list(f"{point}" for point in range(self.kitten_config['stat_limit']+1))
         
-        questions_finished:dict[str|int,bool] = {
-            0: False
-        }
+        questions_finished:dict[str|int,bool] = {}
+        all_done:game.IsDone = game.IsDone(False)
         def make_sync_lock(question:str) -> Callable[[bool],Awaitable[bool]] :
             questions_finished[question] = False
             async def sync_lock(is_done:bool) -> bool:
-                if questions_finished[0]:
+                if all_done:
                     return True
                 else:
                     questions_finished[question] = is_done
-                    questions_finished[0] = all(questions_finished[q] for q in questions_finished if q != 0)
-                    if questions_finished[0]:
-                        return True
-                return False
-            return sync_lock()
+                    all_done.set_done(all(questions_finished[q] for q in questions_finished))
+                    return all_done
+            return sync_lock
 
         for stat in self.kitten_config['stats']:
             question = f"How did you train your cat's **{stat}** stat?"
