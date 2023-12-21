@@ -335,3 +335,23 @@ class Game(object):
     async def delete_message(self,message_id:messageid,channel_id:channelid = None):
         #deletes message from player visability
         await self.gh.delete_message(message_id,channel_id)
+    async def wait_message(self,response:dict[userid,int],players:list[int],sync_lock:Callable[[bool],Awaitable[bool]]) -> Callable[[],Awaitable]:
+        def generate_message() -> str:
+            not_responded = list(player for player in players if response[player] is None)
+            if not_responded:
+                return f"Waiting for {self.mention(not_responded)} to respond."
+            else:
+                return f"Not currently waiting for anyone to respond."
+        last_text = generate_message()
+        message_id = await self.send(last_text)
+
+        async def update_message():
+            while not await sync_lock(None):
+                new_text = generate_message()
+                if new_text != last_text:
+                    await self.send(new_text,message_id=message_id)
+                    last_text = new_text
+                await self.do_nothing()
+        
+        return update_message
+

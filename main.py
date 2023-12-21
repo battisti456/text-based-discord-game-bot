@@ -24,10 +24,7 @@ gh.run()
 
 """
 things to work on:
-- add better support for changing or not changing answers in multiple choice questions
-    -add to secret base?
-
--rewrite secret text response from scratch to avoid taske ending prematurely bug? I added something. We'll see.
+-add who hasn't responded message to secret base main thread
 
 add while waiting message prompts - sorta done. Won't notify, but now updates dynamcally
 

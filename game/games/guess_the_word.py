@@ -6,8 +6,8 @@ from game.game_bases import Dictionary_Base, Secret_Message_Base, Rounds_With_Po
 import random
 
 NUM_ROUNDS = 1
-MIN_WORD_LEN = 4
-MAX_WORD_LEN = 10
+MIN_WORD_LEN = 6
+MAX_WORD_LEN = 12
 NUM_DEFINITIONS = 6
 
 GUESS_FEEDBACK = True

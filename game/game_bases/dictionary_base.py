@@ -2,6 +2,7 @@ import game
 
 import PyDictionary
 import fogleman_TWL06_scrabble as scrabble
+import wonderwords
 import random
 from typing import Literal
 
@@ -48,6 +49,8 @@ class Dictionary_Base(game.Game):
         if not Dictionary_Base in self.initialized_bases:
             self.initialized_bases.append(Dictionary_Base)
             self.dictionary = PyDictionary.PyDictionary()
+            self.ww_word = wonderwords.RandomWord()
+            self.ww_sentence = wonderwords.RandomSentence()
     def is_word(self,word:str) -> bool:
         return scrabble.check(word)
     def define(self,word:str) -> definitiondict:

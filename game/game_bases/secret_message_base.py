@@ -111,6 +111,9 @@ class Secret_Message_Base(game.Game):
                                          allow_answer_change,sub_sync_lock,responses)
             return asyncio.Task(task())
         task_list:list[asyncio.Task] = list(generate_task(player) for player in players)
+
+        task_list.append(self.wait_message(responses,players,sub_sync_lock)())
+            
         await asyncio.wait(task_list)
         return responses
     @game.police_messaging
@@ -138,6 +141,9 @@ class Secret_Message_Base(game.Game):
                     await self.get_secret_thread(player),allow_answer_change,sub_sync_lock,responses)
             return asyncio.Task(task())
         task_list:list[asyncio.Task] = list(generate_task(player) for player in players)
+
+        task_list.append(self.wait_message(responses,players,sub_sync_lock)())
+
         await asyncio.wait(task_list)
         return responses
     async def multi_secret_no_yes(self,players:list[userid],messages:dict[userid,str],allow_answer_change:bool,
