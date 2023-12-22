@@ -24,11 +24,11 @@ PIXELS_IN_IMAGE_PER_POLKA_DOT = 5000
 PATTERN_RADIAL_PORTION_VISABLE = 0.2
 PATTERN_RADIAL_NUM_RAYS = 100
 
-SCRIBBLE_NUM_LINES = 10
+SCRIBBLE_NUM_LINES = 40
 SCRIBBLE_POINTS_PER_LINE = 10
-SCRIBBLE_WIDTH = 5
+SCRIBBLE_WIDTH = 20
 
-TILE_RATIO = 0.05
+TILE_RATIO = 0.03
 
 def zoom_crop(image:PIL.Image.Image) -> PIL.Image.Image:
     zoom_range:tuple[int,int,int,int] = (
@@ -156,7 +156,7 @@ def pattern_radial_rays(image:PIL.Image.Image) -> PIL.Image.Image:
 def scribble(image:PIL.Image.Image) -> PIL.Image.Image:
     image = image.copy()
     draw = PIL.ImageDraw.Draw(image)
-    for line in SCRIBBLE_NUM_LINES:
+    for line in range(SCRIBBLE_NUM_LINES):
         points = []
         for i in range(SCRIBBLE_POINTS_PER_LINE):
             points.append((
@@ -216,13 +216,13 @@ def tileing(image:PIL.Image.Image) -> PIL.Image.Image:
 
 
 ALTER_METHODS = {#...altered through ____ the image
-    #"zooming into a random point on" : zoom_crop,
-    #"blurring" : blur,
-    #"applying a poorly implemented conversion to black and white to" : black_and_white,
-    #"applying an edge highlighting filter to" : edge_highlight,
-    #"corering the center of" : remove_center,
-    #"adding polka dots to" : polka_dots,
-    #"adding some radial rays to" : pattern_radial_rays,
+    "zooming into a random point on" : zoom_crop,
+    "blurring" : blur,
+    "applying a poorly implemented conversion to black and white to" : black_and_white,
+    "applying an edge highlighting filter to" : edge_highlight,
+    "corering the center of" : remove_center,
+    "adding polka dots to" : polka_dots,
+    "adding some radial rays to" : pattern_radial_rays,
     "scribbling a bit on" : scribble,
     "tileing" : tileing
 }
