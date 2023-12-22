@@ -116,7 +116,6 @@ class Secret_Message_Base(game.Game):
             
         await asyncio.wait(task_list)
         return responses
-    @game.police_messaging
     async def multi_secret_multiple_choice(
         self,players:list[userid],messages:dict[userid,str],options:dict[userid,list[str]],
         emojis:dict[userid,list[str]],allow_answer_change:bool,sync_lock:Callable[[bool],Awaitable[bool]],
