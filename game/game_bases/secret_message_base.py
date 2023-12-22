@@ -112,7 +112,7 @@ class Secret_Message_Base(game.Game):
             return asyncio.Task(task())
         task_list:list[asyncio.Task] = list(generate_task(player) for player in players)
 
-        task_list.append(self.wait_message(responses,players,sub_sync_lock)())
+        task_list.append(asyncio.Task((await self.wait_message(responses,players,sub_sync_lock))()))
             
         await asyncio.wait(task_list)
         return responses
@@ -142,7 +142,7 @@ class Secret_Message_Base(game.Game):
             return asyncio.Task(task())
         task_list:list[asyncio.Task] = list(generate_task(player) for player in players)
 
-        task_list.append(self.wait_message(responses,players,sub_sync_lock)())
+        task_list.append(asyncio.Task((await self.wait_message(responses,players,sub_sync_lock))()))
 
         await asyncio.wait(task_list)
         return responses

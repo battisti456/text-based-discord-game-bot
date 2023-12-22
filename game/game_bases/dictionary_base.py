@@ -73,7 +73,7 @@ class Dictionary_Base(game.Game):
                 defs += def_
         for def_ in defs:
             if '(' in def_[1] and not ')' in def_[1]:
-                def_[1] += ")"
+                def_ += ")"
         return "\n".join(f"> {def_[0].lower()}: **{def_[1]}**" for def_ in defs)
         
     def random_word(self,length:int = 5) -> str:
