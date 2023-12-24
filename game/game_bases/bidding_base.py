@@ -1,5 +1,5 @@
 import game
-from game import userid, messageid, channelid
+from game import PlayerId, MessageId, ChannelId
 
 from typing import Callable
 
@@ -19,9 +19,9 @@ class Bidding_Base(game.Game):
             self.initialized_bases.append(Bidding_Base)
             self.min_bid:int = 1
             self.bid_unit_function:Callable[[int],str] = moneyfy
-    async def get_bid(self,players:list[userid],starting_bid:int,bid_thread_id:channelid = None) -> tuple[userid,int]:
-        highest_bid:tuple[userid,int] = (None,starting_bid)
-        players_done:dict[userid,bool] = self.make_player_dict(False,players)
+    async def get_bid(self,players:list[PlayerId],starting_bid:int,bid_thread_id:ChannelId = None) -> tuple[PlayerId,int]:
+        highest_bid:tuple[PlayerId,int] = (None,starting_bid)
+        players_done:dict[PlayerId,bool] = self.make_player_dict(False,players)
         def generate_text() -> str:
             text = f"Let's bid! Please react to this message with {ACCEPT_EMOJI} to signal you are done bidding."
             if highest_bid[0] is None:
@@ -30,11 +30,11 @@ class Bidding_Base(game.Game):
                 text += f"\n{self.mention(highest_bid[0])} has the highest bid at {self.bid_unit_function(highest_bid[1])}."
                 if self.min_bid > 1:
                     text += f"\nRemember, you must exceed the previous bid by at least {self.min_bid} to place a new one."
-        message_id:messageid = await self.send(generate_text(),channel_id=bid_thread_id)
-        async def on_reaction(emoji:str,player:userid):
+        message_id:MessageId = await self.send(generate_text(),channel_id=bid_thread_id)
+        async def on_reaction(emoji:str,player:PlayerId):
             if emoji == ACCEPT_EMOJI and player in players:
                 players_done[player] = True
-        async def on_message(message:str,player:userid):
+        async def on_message(message:str,player:PlayerId):
             if player in players:
                 if message.isdigit():
                     if int(message) >= highest_bid[1] + self.min_bid or highest_bid[0] == None and int(message) >= highest_bid[1]:

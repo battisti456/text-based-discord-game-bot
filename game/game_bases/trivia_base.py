@@ -1,5 +1,5 @@
 import game
-from game import userid
+from game import PlayerId
 import pytrivia
 
 from typing import Iterable, TypedDict
@@ -54,20 +54,20 @@ class Trivia_Base(game.Game):
             self.trivia_client = pytrivia.Trivia(True)
             raw = self.trivia_client.request(1,category,difficulty,type_)
         return raw['results'][0]
-    async def ask_trivia(self,players:list[userid],category:pytrivia.Category = None,difficulty:pytrivia.Diffculty = None,type_:pytrivia.Type = None) -> dict[userid,bool]:
+    async def ask_trivia(self,players:list[PlayerId],category:pytrivia.Category = None,difficulty:pytrivia.Diffculty = None,type_:pytrivia.Type = None) -> dict[PlayerId,bool]:
         question = await self.get_trivia(category,difficulty,type_)
         options:list[str] = []
         if question['type'] == 'multiple':
             options += question['incorrect_answers']
             options.append(question['correct_answer'])
             random.shuffle(options)
-            choices:list[userid,int] = await self.multiple_choice(question['question'],options,players)
+            choices:list[PlayerId,int] = await self.multiple_choice(question['question'],options,players)
         else:#boolean
             options = ['False','True']
-            choices:list[userid,int] = await self.no_yes(question['question'],players)
+            choices:list[PlayerId,int] = await self.no_yes(question['question'],players)
         await self.send(f"The correct answer was '{question['correct_answer']}'.")
         correct_index = options.index(question['correct_answer'])
-        player_correct:dict[userid,bool] = {}
+        player_correct:dict[PlayerId,bool] = {}
         for player in players:
             player_correct[player] = choices[player] == correct_index
         return player_correct

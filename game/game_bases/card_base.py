@@ -7,7 +7,7 @@ import PIL.Image
 import PIL.ImageOps
 
 from typing import Iterable, Callable
-from game import userid
+from game import PlayerId
 
 from itertools import combinations
 from collections import Counter
@@ -309,7 +309,7 @@ class Card_Base(game.Game):
         message_id = await self.send_ch(self.hands[player],contents,self.hand_threads[player],message_id)
         self.hand_message[player] = message_id
     @game.police_messaging
-    async def player_draw(self,player:int|Iterable[int],num:int = 1,text_for_player:Callable[[userid],str] = None):
+    async def player_draw(self,player:int|Iterable[int],num:int = 1,text_for_player:Callable[[PlayerId],str] = None):
         if isinstance(player,int):
             players = [player]
         else:

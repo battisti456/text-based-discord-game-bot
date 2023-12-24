@@ -1,5 +1,5 @@
 import game
-from game import userid
+from game import PlayerId
 import random
 from game.emoji_groups import NUMBERED_KEYCAP_EMOJI
 
@@ -32,7 +32,7 @@ class The_Great_Kitten_Race(game.Game):
         game.Game.__init__(self,gh)
         with open(self.config['data_path'] + "\\" + DATA_PATH,'r') as file:
             self.kitten_config:KittenConfig = json.load(file)
-    async def run(self) -> list[userid|list[userid]]:
+    async def run(self) -> list[PlayerId|list[PlayerId]]:
         await self.send(
             "# Here y'all are, finally, at the great kitten race!\n" +
             "You have each spent the past year training your kitten to compete in our randomized obstacle course!\n" +
@@ -84,7 +84,7 @@ class The_Great_Kitten_Race(game.Game):
         tasks.append(asyncio.Task(self.text_response(name_question,self.players,sync_lock=make_sync_lock(name_question))))
         await asyncio.wait(tasks)
 
-        kittens:dict[userid,Kitten] = {}
+        kittens:dict[PlayerId,Kitten] = {}
         for player in self.players:
             kittens[player] = {}
             kittens[player]['name'] = question_storage_dict[name_question][player]
@@ -116,7 +116,7 @@ class The_Great_Kitten_Race(game.Game):
                 '\n'.join(kitten_text_list)
             )
         
-        placements:list[userid] = list(self.players).copy()
+        placements:list[PlayerId] = list(self.players).copy()
         placements.sort(key=lambda player:kittens[player]['time'])
 
         cross_finish_text_list:list[str] = list(

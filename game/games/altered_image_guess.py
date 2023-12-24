@@ -1,5 +1,5 @@
 import game
-from game import userid
+from game import PlayerId
 from game.game_bases import Rounds_With_Points_Base,Random_Image_Base
 
 import random

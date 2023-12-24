@@ -1,5 +1,5 @@
 import game
-from game import userid,messageid
+from game import PlayerId,MessageId
 from game.game_bases import Dictionary_Base,Rounds_With_Points_Base
 
 NUM_LETTERS = 10
@@ -23,14 +23,14 @@ class Longest_Word(Dictionary_Base,Rounds_With_Points_Base):
                   "Then you must give the longest valid word that can be made from only those letters.\n" +
                   "You will get as many points as the word is long squared.\n" +
                   "Then the letters are passed on to the next player.")
-    async def longest_word_question(self,player:userid) -> str:
-        change_letters:messageid = await self.send(f"The current letters are '{self.current_letters}'.\n" + 
+    async def longest_word_question(self,player:PlayerId) -> str:
+        change_letters:MessageId = await self.send(f"The current letters are '{self.current_letters}'.\n" + 
                                                    "*Respond here with the letters you want to change, if any*.\n" + 
                                                    f"You have {NUM_LETTERS_CAN_REFRESH} letter changes left.")
-        choose_word:messageid = await self.send(f"*Respond here with your word when you have decided.*")
+        choose_word:MessageId = await self.send(f"*Respond here with your word when you have decided.*")
 
         amount_refreshed:list[int] = []
-        async def change_letter_action(message:str,user_id:userid):
+        async def change_letter_action(message:str,user_id:PlayerId):
             num_letters_refreshed_so_far = sum(amount for amount in amount_refreshed)
             if user_id == player and num_letters_refreshed_so_far < NUM_LETTERS_CAN_REFRESH:
                 num_refreshed = 0
@@ -52,7 +52,7 @@ class Longest_Word(Dictionary_Base,Rounds_With_Points_Base):
                                     "You have used all of your letter refreshes.",
                                     message_id=change_letters)
         word_holder:list[str] = []
-        async def choose_word_action(message:str,user_id:userid):
+        async def choose_word_action(message:str,user_id:PlayerId):
             if user_id == player:
                 word = message.lower()
                 warning:str = None

@@ -1,5 +1,5 @@
 import game
-from game import userid
+from game import PlayerId
 from game.game_bases import Elimination_Base, Trivia_Base
 
 class Elimination_Trivia(Elimination_Base,Trivia_Base):
@@ -14,6 +14,6 @@ class Elimination_Trivia(Elimination_Base,Trivia_Base):
             "Feel free to respond even once you are eliminated, but I will not be counting those.\n" +
             "Let's begin!"
         )
-    async def core_game(self,remaining_players:list[userid]) -> list[userid]:
-        player_correct:dict[userid,bool] = await self.ask_trivia(remaining_players)
+    async def core_game(self,remaining_players:list[PlayerId]) -> list[PlayerId]:
+        player_correct:dict[PlayerId,bool] = await self.ask_trivia(remaining_players)
         return list(player for player in remaining_players if not player_correct[player])

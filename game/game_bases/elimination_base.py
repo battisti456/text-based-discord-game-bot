@@ -1,5 +1,5 @@
 import game
-from game import userid
+from game import PlayerId
 from typing import Iterable
 
 import game_handler
@@ -9,9 +9,9 @@ class Elimination_Base(game.Game):
         game.Game.__init__(self,gh)
         if not Elimination_Base in self.initialized_bases:
             self.initialized_bases.append(Elimination_Base)
-            self.players_eliminated:list[userid|list[userid]] = []
+            self.players_eliminated:list[PlayerId|list[PlayerId]] = []
     @game.police_messaging
-    async def eliminate_players(self,players:userid|list[userid]) -> bool:
+    async def eliminate_players(self,players:PlayerId|list[PlayerId]) -> bool:
         """Returns True to tell core_game that another round should be started after calling this.
         Either because all players would have been eliminated, or because someone won."""
         if isinstance(players,int):
@@ -28,7 +28,7 @@ class Elimination_Base(game.Game):
             if self.get_num_eliminated() == len(self.players) -1 :
                 return True #winner decided
         return False #nothing happens
-    def player_is_eliminated(self,player:userid) -> bool:
+    def player_is_eliminated(self,player:PlayerId) -> bool:
         not_eliminated = True
         for elimination in self.players_eliminated:
             if isinstance(elimination,int):
@@ -36,7 +36,7 @@ class Elimination_Base(game.Game):
             else:
                 not_eliminated = not_eliminated and not (player in elimination)
         return not not_eliminated
-    def get_remaining_players(self) -> list[userid]:
+    def get_remaining_players(self) -> list[PlayerId]:
         return list(player for player in self.players if not self.player_is_eliminated(player))
     def get_num_eliminated(self) -> int:
         num = 0
@@ -47,7 +47,7 @@ class Elimination_Base(game.Game):
                 num += len(elimination)
         return num
     @game.police_messaging
-    async def run(self) -> list[userid|list[userid]]:
+    async def run(self) -> list[PlayerId|list[PlayerId]]:
         await self.game_intro()
         await self.game_setup()
         while self.get_num_eliminated() < len(self.players) - 1:

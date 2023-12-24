@@ -5,7 +5,7 @@ from game.game_bases import Elimination_Base
 from math import ceil
 
 from typing import Iterable
-from game import userid
+from game import PlayerId
 
 HAND_LIMIT = 21
 NUM_PLAYERS_PER_DECK = 7
@@ -46,13 +46,13 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
         players_passed:list[int] = []
         players_still_drawing = remaining_players.copy()
         while players_still_drawing:
-            will_draw:dict[userid,int] = await self.no_yes(f"Will you draw another card?",players_still_drawing)
-            players_who_drew:list[userid] = list(player for player in will_draw if will_draw[player])
+            will_draw:dict[PlayerId,int] = await self.no_yes(f"Will you draw another card?",players_still_drawing)
+            players_who_drew:list[PlayerId] = list(player for player in will_draw if will_draw[player])
             players_passed += list(player for player in will_draw if not will_draw[player])
             await self.player_draw(
                 players_who_drew,1,
                 lambda player:f"Your hand has a score of {self.player_points(player)}.")
-            players_eliminated_this_draw:list[userid] = list(player for player in players_who_drew if self.player_points(player) > HAND_LIMIT)
+            players_eliminated_this_draw:list[PlayerId] = list(player for player in players_who_drew if self.player_points(player) > HAND_LIMIT)
             if players_eliminated_this_draw:
                 have_text = "have"
                 if len(players_eliminated_this_draw) == 1:
@@ -63,7 +63,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
                     return
             players_still_drawing = list(player for player in self.get_remaining_players() if not player in players_passed)
         remaining_players = self.get_remaining_players()
-        scores:dict[userid,int] = {}
+        scores:dict[PlayerId,int] = {}
         for player in remaining_players:
             player_score = self.player_points(player)
             await self.send_ch(self.hands[player],f"{self.mention(player)} had a hand worth {player_score}.")

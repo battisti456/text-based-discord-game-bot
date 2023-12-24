@@ -1,5 +1,5 @@
 import game
-from game import userid
+from game import PlayerId
 from typing import TypedDict
 
 from game.game_bases import Elimination_Base
@@ -269,7 +269,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
             "If you pick the wrong move, you are eliminated (unless no one gets it right).\n" +
             "Last player standing wins!"
         )
-    async def core_game(self, remaining_players: list[userid])->list[userid]:
+    async def core_game(self, remaining_players: list[PlayerId])->list[PlayerId]:
         puzzle:ChessPuzzleDict = self.random_puzzle(self.rating_range,POPULARITY_RANGE)
         self.rating_range = (self.rating_range[0],self.rating_range[1]+PUZZLE_RATING_CAP_ESCALATION)
         self.board.set_fen(puzzle['FEN'])
@@ -302,7 +302,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
                 move_options[random.randint(0,NUM_MOVE_OPTIONS-1)] = moves[move_index]
             option_text_list:list[str] = list(self.move_text(move_option) for move_option in move_options)
             
-            responses:dict[userid,int] = await self.multiple_choice(
+            responses:dict[PlayerId,int] = await self.multiple_choice(
                 f"What is the best move for {player_color} in this position?",
                 who_chooses=remaining_players,
                 options = option_text_list

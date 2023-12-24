@@ -1,5 +1,5 @@
 import game
-from game import userid
+from game import PlayerId
 from typing import Callable
 
 class Rounds_With_Points_Base(game.Game):
@@ -15,10 +15,10 @@ class Rounds_With_Points_Base(game.Game):
             self.round_name = "round"
             self.reverse_scoring = False
     @game.police_messaging
-    async def score(self,player:int|list[int] = None, num:int|dict[userid,int] = None, mute:bool = False):
+    async def score(self,player:int|list[int] = None, num:int|dict[PlayerId,int] = None, mute:bool = False):
         n = self.make_player_dict(num)
         p = self.deduce_players(player,n)
-        now_text:dict[userid,str] = self.make_player_dict("")
+        now_text:dict[PlayerId,str] = self.make_player_dict("")
         if not num is None:
             for player in p:
                 if not n[player] is None and not n[player] == 0:
@@ -31,13 +31,13 @@ class Rounds_With_Points_Base(game.Game):
             if frmt:
                 await self.send(game.wordify_iterable(frmt))
     @game.police_messaging
-    async def run(self) -> list[userid|list[userid]]:
+    async def run(self) -> list[PlayerId|list[PlayerId]]:
         await self.game_intro()
         await self.game_setup()
         for round in range(self.num_rounds):
             if self.num_rounds != 1:
                 await self.policed_send(f"Now beggining {self.round_name} #{round+1} of {self.num_rounds}.")
-            points_to_add:dict[userid,int] = await self.core_game()
+            points_to_add:dict[PlayerId,int] = await self.core_game()
             if points_to_add:
                 await self.score(num=points_to_add)#announces score if core_game returned none, changes score if core_game returned values
         await self.game_cleanup()
@@ -45,7 +45,7 @@ class Rounds_With_Points_Base(game.Game):
         scores.sort()
         if not self.reverse_scoring:
             scores.reverse()
-        rank:list[userid|list[userid]] = []
+        rank:list[PlayerId|list[PlayerId]] = []
         for score in scores:
             players_at_score = list(player for player in self.players if self.points[player] == score)
             if len(players_at_score) == 1:

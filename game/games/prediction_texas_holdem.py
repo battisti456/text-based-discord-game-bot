@@ -5,7 +5,7 @@ from game.game_bases import Rounds_With_Points_Base, Card_Base
 from game.game_bases.card_base import Card_Holder,best_poker_hand, Poker_Hand, name_poker_hand_by_rank
 from game.emoji_groups import NUMBERED_KEYCAP_EMOJI
 
-from game import userid
+from game import PlayerId
 
 NUM_ROUNDS = 3
 
@@ -29,7 +29,7 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
             "The further you are from guessing your rank correctly, the more penalties you accrue.\n" +
             "Lowest penalties at the end of the game wins!"
         )
-    async def core_game(self) -> list[userid]:
+    async def core_game(self) -> list[PlayerId]:
         await self.setup_cards()
         shared:Card_Holder = Card_Holder("Shared cards.")
         await self.player_draw(self.players,PLAYER_CARDS)
@@ -41,15 +41,15 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
             self.players,
             NUMBERED_KEYCAP_EMOJI[1:]
         )
-        players_best_poker_hands:dict[userid,Poker_Hand] = dict()
-        player_hand_ranks:dict[userid,int] = dict()
+        players_best_poker_hands:dict[PlayerId,Poker_Hand] = dict()
+        player_hand_ranks:dict[PlayerId,int] = dict()
         for player in self.players:
             players_best_poker_hands[player],player_hand_ranks[player] = best_poker_hand(self.hands[player],shared)
         ranking=list(self.players)
         ranking.sort(key = lambda player: player_hand_ranks[player],reverse=True)
         sorted_ranks = list(player_hand_ranks[player] for player in self.players)
         sorted_ranks.sort(reverse=True)
-        player_diffs:dict[userid,int] = self.make_player_dict(0)
+        player_diffs:dict[PlayerId,int] = self.make_player_dict(0)
         for player in self.players:
             diff = -1
             up_check = False

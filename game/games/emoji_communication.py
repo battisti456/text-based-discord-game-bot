@@ -1,5 +1,5 @@
 import game
-from game import userid
+from game import PlayerId
 from game.game_bases import Secret_Message_Base,Rounds_With_Points_Base
 import wonderwords
 import emoji
@@ -36,7 +36,7 @@ class Emoji_Communication(Secret_Message_Base,Rounds_With_Points_Base):
             "That's about it. Lets get started!"
         )
     async def core_game(self):
-        player_prompts:dict[userid,str] = {}
+        player_prompts:dict[PlayerId,str] = {}
         for current_player in self.players:
             player_prompts[current_player] = self.ww_sentence.sentence()
         player_questions = {}

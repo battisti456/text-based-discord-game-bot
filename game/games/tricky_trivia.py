@@ -1,5 +1,5 @@
 import game
-from game import userid
+from game import PlayerId
 from game.game_bases import Trivia_Base, Secret_Message_Base, Rounds_With_Points_Base
 from game.game_bases.trivia_base import TriviaDict
 import random
@@ -30,19 +30,19 @@ class Tricky_Trivia(Secret_Message_Base,Trivia_Base,Rounds_With_Points_Base):
             trivia_dict = await self.get_trivia(type_ = self.type_.Multiple_Choice)
         question_text = f"*{trivia_dict['question']}*\nAn example answer might be '*{trivia_dict['incorrect_answers'][0]}*'."
         await self.send(question_text)
-        responses:dict[userid,str] = await self.secret_text_response(
+        responses:dict[PlayerId,str] = await self.secret_text_response(
             message = f"{question_text}\nWhat is a possible answer to this qustion that might fool your competitors?")
         options = [trivia_dict['correct_answer']]+list(responses[player] for player in responses)
         options = list(set(options))#remove duplicates
         random.shuffle(options)
-        choices:dict[userid,int] = await self.multiple_choice(question_text,options,self.players)
+        choices:dict[PlayerId,int] = await self.multiple_choice(question_text,options,self.players)
         for option in (option for option in options if not option is trivia_dict['correct_answer']):
             players_who_gave = list(player for player in self.players if responses[player] == option)
             players_who_chose = list(player for player in self.players if options[choices[player]] == option and not player in players_who_gave)
             if not players_who_chose == []:
                 await self.send(f"{self.mention(players_who_gave)} provided the answer:\n'{option}'\n and fooled {self.mention(players_who_chose)}.")
                 await self.score(players_who_gave,len(players_who_chose)*POINTS_FOOL)
-        bonus:dict[userid,int] = {}
+        bonus:dict[PlayerId,int] = {}
         for player_who_gave in (player for player in self.players if responses[player] == trivia_dict['correct_answer']):
             bonus[player_who_gave] = sum(1 for player in self.players if options[choices[player]] == trivia_dict['correct_answer'] and not player == player_who_gave)
         bonus_text = ""

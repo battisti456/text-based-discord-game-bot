@@ -1,12 +1,13 @@
 import game_handler
 from time import sleep
-from typing import Callable, Iterable, TypeVar, ParamSpec, NewType, Any, Awaitable
+from typing import Callable, Iterable, TypeVar, ParamSpec, NewType, Any, Awaitable, TypedDict, Hashable
 import functools
 
 
-userid = NewType("userid",int)
-messageid = NewType("messageid",int)
-channelid = NewType("channelid",int)
+PlayerId = Any
+MessageId = Any
+ChannelId = Any
+InteractionId = Any
 
 P = ParamSpec('P')
 R = TypeVar('R')
@@ -21,7 +22,14 @@ class IsDone(object):
     def set_done(self,value = True):
         self.value = value
     def __bool__(self):
-        return self.value  
+        return self.value
+class MessageDict(TypedDict):
+    message:str
+    message_id:MessageId
+    channel_id:ChannelId
+    files:list[str]
+
+    
 def police_messaging(func:Callable[P,R]) -> Callable[P,R]:
     #Adds the class the function was first defined in to current_class_execution, only to be used on asynchronous game.Game methods
     @functools.wraps(func)
@@ -104,7 +112,7 @@ def ordinate(num:int|str) -> str:
 
 def sub_sync_lock_maker(
         master_sync_lock:Callable[[bool],Awaitable[bool]],all_done:IsDone,
-        responses:dict[userid,Any],users:list[userid]) -> Callable[[bool],Awaitable[bool]]:
+        responses:dict[PlayerId,Any],users:list[PlayerId]) -> Callable[[bool],Awaitable[bool]]:
     async def sub_sync_lock(is_done:bool) -> bool:
         if master_sync_lock is None:
             if all_done:
@@ -116,4 +124,46 @@ def sub_sync_lock_maker(
             all_done.set_done(all(not responses[user] is None for user in users))
             return await master_sync_lock(all_done)
     return sub_sync_lock
+
+def userid_to_string(user_id:PlayerId):
+    if isinstance(user_id,int):
+        return f"<@{user_id}>"
+    else:#it is an iterable
+        return wordify_iterable(userid_to_string(uid) for uid in user_id)
+def make_message_dict(*args,**kwargs:MessageDict) -> MessageDict:
+    to_return:MessageDict = {}
+    for arg in args:
+        if isinstance(arg,str):
+            if "message" not in to_return:
+                to_return["message"] = arg
+            else:
+                raise Exception("Too many strings assigned in make_message_dict")
+        elif isinstance(arg,int):
+            if not "channel_id" in to_return:
+                to_return["channel_id"] = arg
+            elif not "message_id" in to_return:
+                to_return["message_id"] = arg
+            else:
+                raise Exception("Too many intigers assigned in make_message_dict")
+        elif isinstance(arg,list):
+            if not "files" in to_return:
+                to_return["files"] = arg
+            else:
+                raise Exception("Too many lists assigned in make_message_dict")
+    for kwarg in kwargs:
+        if not kwarg in to_return:
+            to_return[kwarg] = kwargs[kwarg]
+        else:
+            raise Exception(f"Tried to assign '{kwarg}' when it was already defined in make_message_dict")
+    if not "message" in to_return:
+        to_return["message"] = ""
+    if not "message_id" in to_return:
+        to_return["message_id"] = None
+    if not "channel_id" in to_return:
+        to_return["channel_id"] = None
+    if not "files" in to_return:
+        to_return["files"] = []
+    return to_return
+        
+
 from game.game import Game as Game

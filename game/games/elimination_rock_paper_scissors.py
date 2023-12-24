@@ -1,5 +1,5 @@
 import game
-from game import userid
+from game import PlayerId
 from game.game_bases import Elimination_Base
 from game.emoji_groups import ROCK_PAPER_SCISSORS_EMOJI
 import random
@@ -7,7 +7,7 @@ import random
 class Elimination_Rock_Paper_Scissors(Elimination_Base):
     def __init__(self,gh:game.GH):
         Elimination_Base.__init__(self,gh)
-        self.guns:list[userid,int] = self.make_player_dict(0)
+        self.guns:list[PlayerId,int] = self.make_player_dict(0)
         self.announced_guns:bool = False
     async def game_intro(self):
         await self.send(
@@ -21,7 +21,7 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
         gun_text = ""
         if players_with_guns:
             options.append('gun')
-            gun_owners:list[list[userid]] = []
+            gun_owners:list[list[PlayerId]] = []
             for player in self.guns:
                 while len(gun_owners) < self.guns[player]:
                     gun_owners.append([])
@@ -37,12 +37,12 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
                     gun_text_list.append(f"{self.mention(gun_owners[num_guns])} have {num_guns + 1} gun{s} each.")
             gun_text= '\n'.join(gun_text_list)
             gun_text = f"\n{gun_text}\nRemember that if you choose gun without having one, you lose!\n"
-        responses:dict[userid,int] = await self.multiple_choice(
+        responses:dict[PlayerId,int] = await self.multiple_choice(
             f"What move will you choose?{gun_text}",
             options,remaining_players,ROCK_PAPER_SCISSORS_EMOJI)
         my_pick = random.randint(0,2)
-        players_eliminated:list[userid] = []
-        players_who_won_guns:list[userid] = []
+        players_eliminated:list[PlayerId] = []
+        players_who_won_guns:list[PlayerId] = []
         for player in remaining_players:
             if responses[player] < 3:
                 if responses[player] == my_pick:#tie

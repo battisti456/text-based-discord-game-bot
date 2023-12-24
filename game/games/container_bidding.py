@@ -1,6 +1,6 @@
 import game
 from typing import TypedDict
-from game import userid
+from game import PlayerId
 from game.game_bases import Rounds_With_Points_Base, Secret_Message_Base, Bidding_Base
 import json
 import random
@@ -92,11 +92,11 @@ class Container_Bidding(Rounds_With_Points_Base,Secret_Message_Base):
             f"So, {int(total_bid_threshold/len(self.players))}.\n" +
             "How much are you willing to contribute?")
         await self.send(f"{question_text}\nPlease respond in your private channel.")
-        individual_message:dict[userid,str] = {}
+        individual_message:dict[PlayerId,str] = {}
         for player in self.players:
             individual_message[player] = f"{question_text}\nYou currently have {moneyfy(self.money[player])} available to contribute."
         responses = await self.secret_text_response(self.players,individual_message)
-        player_bids:dict[userid,int] = self.make_player_dict(0)
+        player_bids:dict[PlayerId,int] = self.make_player_dict(0)
         for player in self.players:
             response:str = responses[player]
             response_only_num:str = "".join(list(num for num in response if num.isdigit()))

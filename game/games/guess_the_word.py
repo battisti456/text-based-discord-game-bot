@@ -1,5 +1,5 @@
 import game
-from game import userid
+from game import PlayerId
 
 from game.game_bases import Dictionary_Base, Secret_Message_Base, Rounds_With_Points_Base
 
@@ -64,7 +64,7 @@ class Guess_The_Word(Dictionary_Base,Secret_Message_Base, Rounds_With_Points_Bas
                             else:
                                 feedback += "\_"
                         await self.secret_send(player,f"Your current feedback is '{feedback}'.")
-            responses:dict[userid,str] = await self.secret_text_response(players_not_guessed,f"What word{len_text} is this definition for?\n{def_str}")
+            responses:dict[PlayerId,str] = await self.secret_text_response(players_not_guessed,f"What word{len_text} is this definition for?\n{def_str}")
             correct_players:list[int] = list(player for player in players_not_guessed if responses[player].lower() == secret_word)
             if GUESS_FEEDBACK:
                 no_success = (len(correct_players) == 0)
