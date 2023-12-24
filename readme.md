@@ -8,20 +8,21 @@ Several discalimers!
 
 So be warned.
 
-To begin using it:
-- install all nessasary python libraries
+Here are the steps to set the code up.
+- Install all nessasary python libraries.
     - "fogleman_TWL06_scrabble" is not an available library, but is merely the "twl.py" file from "https://github.com/fogleman/TWL06" by Michael Fogleman
-- download missing data resources
+- Download missing data resources.
     - I have excluded 'data/lichess_db_puzzle.csv' from this repository as it is rather large.
-        - I found it at "https://database.lichess.org/#puzzles". It could, in theory, be replaced by any csv with chess puzzles.
-        - The format is "PuzzleId,FEN,Moves,Rating, RatingDeviation,Popularity,NbPlays,Themes,GameUrl,OpeningTags", and I don't use all of these values.
+        - I found this chess puzzle .csv at "https://database.lichess.org/#puzzles". 
+        - It could, in theory, be replaced by any csv with chess puzzles in the correct format.
+        - The format is 
+        > "PuzzleId,FEN,Moves,Rating, RatingDeviation,Popularity,NbPlays,Themes,GameUrl,OpeningTags"
         - I only use FEN, Moves, Rating, and Popularity.
         - Moves are seperated by spaces, and the first move is the opponents move.
-- create your "gamebotconfig.json" file like so:
-    - Add the channel id you wan't the bot to run in
-    - Add your bot's discord api token
-    - Add your players with their user id's (the name you give them in the player map doesn't actually matter in the code)
-
+- Create your "gamebotconfig.json" file like so:
+    - add the channel id you want the bot to run in,
+    - add your bot's discord api token, and
+    - add your players with their user id's (the name you give them in the player map doesn't actually matter in the code).
 ``` json
     {
         "token" : "<your discord bot's api token here>",
@@ -32,11 +33,10 @@ To begin using it:
             "<player1 name>" : 000000,
             "<player2 name>" : 000000,
             "<player3 name>" : 000000,
-            "<player4 name>" : 000000,
+            "<player4 name>" : 000000
         },
         "temp_path":"temp",
         "data_path":"data",
     }
 ```
-
-- And the run 'main.py'
+- Run 'main.py' to launch a game!
