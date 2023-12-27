@@ -20,7 +20,7 @@ class Message(object):
             message_id = self.message_id
         else:
             message_id = None
-        return Message(self.content,self.attach_paths,self.channel_id,message_id)
+        return Message(self.content,self.attach_paths,self.channel_id,message_id,self.keep_id_on_copy,self.players_who_can_see)
     def is_sent(self) -> bool:
         return not self.message_id is None
     def split(self,deliminator:Optional[str] = None,length:Optional[int] = None,add_join:str = "") -> list['Message']:
