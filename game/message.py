@@ -5,7 +5,7 @@ from math import ceil
 from typing import Optional
 
 class Message(object):
-    def __init__(self,content:Optional[str] = None,attach_paths:list[str] = [],channel_id:Optional[ChannelId] = None,message_id:Optional[MessageId] = None,keep_id_on_copy = False):
+    def __init__(self,content:Optional[str] = None,attach_paths:list[str] = [],channel_id:Optional[ChannelId] = None,message_id:Optional[MessageId] = None,keep_id_on_copy:bool = False):
         self.content = content
         self.attach_paths = attach_paths
         self.channel_id = channel_id
