@@ -4,10 +4,10 @@ from typing import Callable, Iterable, TypeVar, ParamSpec, NewType, Any, Awaitab
 import functools
 
 
-PlayerId = Any
-MessageId = Any
-ChannelId = Any
-InteractionId = Any
+PlayerId = int|str|bytes
+MessageId = int|str|bytes
+ChannelId = int|str|bytes
+InteractionId = int|str|bytes
 
 P = ParamSpec('P')
 R = TypeVar('R')

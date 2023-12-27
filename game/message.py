@@ -5,12 +5,16 @@ from math import ceil
 from typing import Optional
 
 class Message(object):
-    def __init__(self,content:Optional[str] = None,attach_paths:list[str] = [],channel_id:Optional[ChannelId] = None,message_id:Optional[MessageId] = None,keep_id_on_copy:bool = False):
+    def __init__(
+            self,content:Optional[str] = None,attach_paths:list[str] = [],
+            channel_id:Optional[ChannelId] = None,message_id:Optional[MessageId] = None,
+            keep_id_on_copy:bool = False, players_who_can_see:Optional[list[PlayerId]] = None):
         self.content = content
         self.attach_paths = attach_paths
         self.channel_id = channel_id
         self.message_id = message_id
         self.keep_id_on_copy = keep_id_on_copy
+        self.players_who_can_see = players_who_can_see
     def copy(self) -> 'Message':
         if self.keep_id_on_copy:
             message_id = self.message_id

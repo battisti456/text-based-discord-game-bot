@@ -1,4 +1,5 @@
-from game.game_interface import Game_Interface, Interface_Sender
+from typing import Optional
+from game.game_interface import Channel_Limited_Game_Interface, Channel_Limited_Interface_Sender
 from game.message import Message
 from game.interaction import Interaction
 
@@ -20,9 +21,9 @@ def discord_message_populate_interaction(
             interaction.reply_to_message_id = payload.reference.cached_message.id
     return interaction
 
-class Discord_Sender(Interface_Sender):
+class Discord_Sender(Channel_Limited_Interface_Sender):
     def __init__(self,gi:'Discord_Game_Interface'):
-        Interface_Sender.__init__(self,gi)
+        Channel_Limited_Interface_Sender.__init__(self,gi)
         self.client = gi.client
         self.default_channel = gi.channel_id
     async def _send(self, message: Message):
@@ -36,8 +37,10 @@ class Discord_Sender(Interface_Sender):
         else:
             await self.client.wait_until_ready()
             if message.channel_id is None:
+                assert isinstance(self.default_channel,int)
                 channel = self.client.get_channel(self.default_channel)
             else:
+                assert isinstance(message.channel_id,int)
                 channel = self.client.get_channel(message.channel_id)
             assert isinstance(channel,discord.TextChannel)
             attachments= []
@@ -48,13 +51,14 @@ class Discord_Sender(Interface_Sender):
                 discord_message = await channel.send(content=message.content,files = attachments)
                 message.message_id = discord_message.id
             else:#edit old message
+                assert isinstance(message.message_id,int)
                 discord_message:discord.Message = await channel.fetch_message(message.message_id)
                 await discord_message.edit(content=message.content,attachments=attachments)
                 message.message_id = discord_message.id
 
-class Discord_Game_Interface(Game_Interface):
+class Discord_Game_Interface(Channel_Limited_Game_Interface):
     def __init__(self,channel_id:ChannelId,players:list[PlayerId]):
-        Game_Interface.__init__(self)
+        Channel_Limited_Game_Interface.__init__(self)
         self.channel_id = channel_id
         self.players = players
         
@@ -100,7 +104,26 @@ class Discord_Game_Interface(Game_Interface):
         @self.client.event
         async def on_raw_reaction_remove(payload:discord.RawReactionActionEvent):
             pass
-            
     async def run(self):
         pass
+    async def new_channel(self, name: Optional[str] = None, who_can_see: Optional[list[PlayerId]] = None) -> ChannelId | None:
+        assert isinstance(self.channel_id,int)
+        main_channel = self.client.get_channel(self.channel_id)
+        assert isinstance(main_channel,discord.TextChannel)
+        thread = None
+        while thread is None:
+            if name is None:
+                name = ""
+            await self.client.wait_until_ready()
+            thread = await main_channel.create_thread(name = name)
+        if not who_can_see is None:
+            for player in who_can_see:
+                assert isinstance(player,int)
+                user = self.client.get_user(player)
+                assert not user is None
+                await self.client.wait_until_ready()
+                await thread.add_user(user)
+        return thread.id
+
+        
         
