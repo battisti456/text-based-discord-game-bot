@@ -42,7 +42,7 @@ class Emoji_Communication(Secret_Message_Base,Rounds_With_Points_Base):
         player_questions = {}
         for current_player in self.players:
             player_questions[current_player] = f"Please do your best to convey this sentence through emoji.\n'{player_prompts[current_player]}'"
-        emoji_responses = self.secret_text_response(self.players,player_questions)
+        emoji_responses = await self.secret_text_response(self.players,player_questions)
         emoji_prompts = {}
         for current_player in self.players:
             emoji_prompts[current_player] = only_emoji(emoji_responses[current_player])
@@ -54,7 +54,7 @@ class Emoji_Communication(Secret_Message_Base,Rounds_With_Points_Base):
             options.append(player_prompts[current_player])
             random.shuffle(options)
             responses = await self.multiple_choice(
-                f"{self.mention(current_player)} emoted '{emoji_prompts[current_player]} to convey their sentence.\n" +
+                f"{self.mention(current_player)} emoted '{emoji_prompts[current_player]}' to convey their sentence.\n" +
                 "Which sentence was it?",
                 options,
                 players_to_ask

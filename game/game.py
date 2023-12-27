@@ -342,15 +342,15 @@ class Game(object):
                 return f"Waiting for {self.mention(not_responded)} to respond."
             else:
                 return f"Not currently waiting for anyone to respond."
-        last_text = generate_message()
+        last_text:list[str] = [generate_message()]
         message_id = await self.send(last_text)
 
         async def update_message():
             while not await sync_lock(None):
                 new_text = generate_message()
-                if new_text != last_text:
+                if new_text != last_text[0]:
                     await self.send(new_text,message_id=message_id)
-                    last_text = new_text
+                    last_text[0] = new_text
                 await self.do_nothing()
         
         return update_message
