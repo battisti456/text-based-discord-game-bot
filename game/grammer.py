@@ -1,6 +1,6 @@
-from typing import Iterable
+from typing import Iterable, Any
 
-def wordify_iterable(values:Iterable[str],operator:str = 'and',comma:str = ",") -> str:
+def wordify_iterable(values:Iterable[str|Any],operator:str = 'and',comma:str = ",") -> str:
     #returns a string comma comma anding an iterator of strings
     to_return = ""
     if not isinstance(values,list):
