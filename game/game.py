@@ -343,7 +343,7 @@ class Game(object):
             else:
                 return f"Not currently waiting for anyone to respond."
         last_text:list[str] = [generate_message()]
-        message_id = await self.send(last_text)
+        message_id = await self.send(last_text[0])
 
         async def update_message():
             while not await sync_lock(None):

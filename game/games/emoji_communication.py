@@ -12,12 +12,17 @@ POINTS_FOR_GUESS = 2
 POINTS_PER_GUESSER = 1
 POINTS_FOR_ALL_GUESS = 1
 
+BONUS_NUM = 3
+BONUS_POINTS_PER_GUESSER = 2
+
 MAX_EMOJI = 10
 
 def only_emoji(text:str) -> str:
-    emj:list[str] = list(token.chars for token in emoji.analyze(text))
+    emj:list[str] = list(token.chars for token in emoji.analyze(text,False,False))
     emj = emj[0:MAX_EMOJI]
     return "".join(emj)
+def num_emoji(text:str) -> int:
+    return len(list(token for token in emoji.analyze(text,False,False)))
 
 class Emoji_Communication(Secret_Message_Base,Rounds_With_Points_Base):
     def __init__(self,gh:game.GH):
@@ -33,6 +38,7 @@ class Emoji_Communication(Secret_Message_Base,Rounds_With_Points_Base):
             f"Then we will go through each players emoji message, and you will attempt to distiguish its orginating sentence from several false ones.\n" +
             f"It is {POINTS_FOR_GUESS} for guessing it correct with {POINTS_PER_GUESSER} for the writer per person who guessed it, but" +
             f"beware! If all players guess it successfully they each get {POINTS_FOR_ALL_GUESS} while the person who wrote it gets none.\n" +
+            f"In addition, if the writer used {BONUS_NUM} or less emojis, they earn {BONUS_POINTS_PER_GUESSER} points per person to guess it, if not all do.\n" +
             "That's about it. Lets get started!"
         )
     async def core_game(self):
@@ -69,12 +75,17 @@ class Emoji_Communication(Secret_Message_Base,Rounds_With_Points_Base):
                     f"{POINTS_FOR_ALL_GUESS}, except {self.mention(current_player)} who gets none.")
                 await self.score(correct_players,POINTS_FOR_ALL_GUESS,mute = True)
             else:
+                points = POINTS_PER_GUESSER*len(correct_players)
+                bonus_text = ""
+                if num_emoji(emoji_prompts[current_player]) <= BONUS_NUM:
+                    points = BONUS_POINTS_PER_GUESSER*len(correct_players)
+                    bonus_text = f", and achieving the bonus for using less than {BONUS_NUM} emojis,"
                 await self.send(
                     f"{correct_text}{self.mention(correct_players)} got it right each earning {POINTS_FOR_GUESS} point(s).\n" +
-                    f"For guiding them so well {self.mention(current_player)} earned {POINTS_PER_GUESSER*len(correct_players)} point(s)."
+                    f"For guiding them so well{bonus_text} {self.mention(current_player)} earned {points} point(s)."
                 )
                 await self.score(correct_players,POINTS_FOR_GUESS,mute = True)
-                await self.score(current_player,POINTS_PER_GUESSER*len(correct_players),mute = True)
+                await self.score(current_player,points,mute = True)
                 
 
 
