@@ -13,21 +13,13 @@ class Interface_Sender(Sender):
         Sender.__init__(self)
         self.gi = gi
     async def __call__(self,message:Message) -> Any:
-        self.gi.track_message(message)
         return await self._send(message)
 
 class Game_Interface(object):
     def __init__(self):
-        self.tracked_messages:list[Message] = []
         self.actions:dict[InteractionType,list[Action]] = {}
         self.clear_actions()
         self.default_sender = Interface_Sender(self)
-    def track_message(self,message:Message):
-        self.tracked_messages.append(message)
-    def untrack_message(self,message:Message):
-        self.tracked_messages.remove(message)
-    def clear_tracked_messages(self):
-        self.tracked_messages = []
     def clear_actions(self):
         for action in INTERACTION_TYPES:
             self.actions[action] = []
@@ -44,13 +36,10 @@ class Game_Interface(object):
             self.actions[action_type].append(func)
             return func
         return wrapper
-    def find_message_by_id(self,message_id:MessageId) -> Message|None:
-        for message in self.tracked_messages:
-            if message.message_id == message_id:
-                return message
-        return None
     def player_id_to_str(self,player:PlayerId) -> str:
         return str(player)
+    def get_players(self) -> list[PlayerId]:
+        return []
     async def new_channel(self,name:Optional[str] = None, who_can_see:Optional[list[PlayerId]] = None) -> ChannelId|None:
         pass
 
@@ -58,7 +47,6 @@ class Channel_Limited_Interface_Sender(Interface_Sender):
     def __init__(self,gi:'Channel_Limited_Game_Interface'):
         Interface_Sender.__init__(self,gi)
     async def __call__(self,message:Message):
-        self.gi.track_message(message)
         if not message.players_who_can_see is None and message.channel_id is None:
             assert isinstance(self.gi,Channel_Limited_Game_Interface)
             message.channel_id = await self.gi.who_can_see_channel(message.players_who_can_see)

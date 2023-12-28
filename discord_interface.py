@@ -1,10 +1,11 @@
 from typing import Optional
 from game.game_interface import Channel_Limited_Game_Interface, Channel_Limited_Interface_Sender
-from game.message import Message
+from game.message import Message, Add_Bullet_Points_To_Content_Alias_Message
 from game.interaction import Interaction
 
 import discord
 from math import ceil
+from random import shuffle
 
 from game import PlayerId, MessageId, ChannelId
 
@@ -29,13 +30,17 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
     async def _send(self, message: Message):
         if not message.content is None:
             if len(message.content) > MESSAGE_MAX_LENGTH:
-                sub_messages = message.split(length=MESSAGE_MAX_LENGTH,add_join="\n--SPLIT--")
-                sub_messages[-1].message_id = message.message_id
+                sub_messages = message.split(
+                    length=MESSAGE_MAX_LENGTH,
+                    add_start="--MESSAGE TOO LONG. WAS SPLIT--\n",
+                    add_end="\n--END MESSAGE--",
+                    add_join_end="\n--SPLIT END--",
+                    add_join_start="\n--SPLIT START--")
                 for sub_message in sub_messages:
                     await self._send(sub_message)
-                message.message_id = sub_messages[-1].message_id
         else:
-            await self.client.wait_until_ready()
+            if message.bullet_points:
+                message = Add_Bullet_Points_To_Content_Alias_Message(message)
             if message.channel_id is None:
                 assert isinstance(self.default_channel,int)
                 channel = self.client.get_channel(self.default_channel)
@@ -46,15 +51,22 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
             attachments= []
             for path in message.attach_paths:
                 attachments.append(discord.File(path))
-
             if message.message_id is None:#new message
+                await self.client.wait_until_ready()
                 discord_message = await channel.send(content=message.content,files = attachments)
                 message.message_id = discord_message.id
             else:#edit old message
                 assert isinstance(message.message_id,int)
+                await self.client.wait_until_ready()
                 discord_message:discord.Message = await channel.fetch_message(message.message_id)
                 await discord_message.edit(content=message.content,attachments=attachments)
                 message.message_id = discord_message.id
+            if message.bullet_points:
+                for bp in message.bullet_points:
+                    if not bp.emoji is None:
+                        emoji = discord.PartialEmoji(name = bp.emoji)
+                        await self.client.wait_until_ready()
+                        await discord_message.add_reaction(emoji)
 
 class Discord_Game_Interface(Channel_Limited_Game_Interface):
     def __init__(self,channel_id:ChannelId,players:list[PlayerId]):
@@ -124,6 +136,10 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 await self.client.wait_until_ready()
                 await thread.add_user(user)
         return thread.id
+    def get_players(self) -> list[PlayerId]:
+        players = self.players.copy()
+        shuffle(players)
+        return players
 
         
         
