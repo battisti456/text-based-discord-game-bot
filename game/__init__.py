@@ -5,12 +5,12 @@ import functools
 
 DataType = TypeVar('DataType')
 
-PlayerId = int|str|bytes
-MessageId = int|str|bytes
-ChannelId = int|str|bytes
-InteractionId = int|str|bytes
+type PlayerId = int|str|bytes
+type MessageId = int|str|bytes
+type ChannelId = int|str|bytes
+type InteractionId = int|str|bytes
 
-PlayerDict = dict[PlayerId,DataType|None]
+type PlayerDict[DataType] = dict[PlayerId,DataType|None]
 
 P = ParamSpec('P')
 R = TypeVar('R')

@@ -1,11 +1,11 @@
-from typing import Any,Callable,Awaitable, Optional
+from typing import Any,Callable,Awaitable, Optional, Hashable
 from game import PlayerId, MessageId, ChannelId
 from game.sender import Sender
 from game.message import Message
 from game.interaction import Interaction, InteractionType, INTERACTION_TYPES
 from game.grammer import wordify_iterable
 
-Action = Callable[[Interaction],Awaitable]
+type Action = Callable[[Interaction],Awaitable]
 
 
 class Interface_Sender(Sender):
@@ -18,11 +18,20 @@ class Interface_Sender(Sender):
 class Game_Interface(object):
     def __init__(self):
         self.actions:dict[InteractionType,list[Action]] = {}
+        self.action_owners:dict[Action,Hashable] = {}
         self.clear_actions()
         self.default_sender = Interface_Sender(self)
     def clear_actions(self):
-        for action in INTERACTION_TYPES:
-            self.actions[action] = []
+        for interaction_type in INTERACTION_TYPES:
+            self.actions[interaction_type] = []
+        self.action_owners = {}
+    def purge_actions(self, owner:Hashable = None):
+        actions_to_purge:set[Action] = set(action for action in self.action_owners if self.action_owners[action] == owner)
+        for action in actions_to_purge:
+            for interaction_type in self.actions:
+                while action in self.actions[interaction_type]:
+                    self.actions[interaction_type].remove(action)
+            del self.action_owners[action]
     async def run(self):
         pass
     def get_sender(self) -> Interface_Sender:
@@ -31,9 +40,10 @@ class Game_Interface(object):
             self,interaction:Interaction):
         for action in self.actions[interaction.interaction_type]:
             await action(interaction)
-    def on_action(self,action_type:InteractionType) -> Callable[[Action],Action]:
+    def on_action(self,action_type:InteractionType,owner:Hashable = None) -> Callable[[Action],Action]:
         def wrapper(func:Action) -> Action:
             self.actions[action_type].append(func)
+            self.action_owners[func] = owner
             return func
         return wrapper
     def player_id_to_str(self,player:PlayerId) -> str:
