@@ -38,7 +38,7 @@ class Player_Input[T](object):
         return func
     def response_status(self) -> str:
         #returns text describing which players have not responded to this input
-        player_text = self.sender.format_players(player for player in self.players if self._response_validator(player,self.responses[player]))
+        player_text = self.sender.format_players_md(player for player in self.players if self._response_validator(player,self.responses[player]))
         if player_text:
             return f"Waiting for {player_text} to respond to {self.name}."
         else:

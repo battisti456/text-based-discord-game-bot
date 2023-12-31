@@ -30,7 +30,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
             num_aces -= 1
         return sum
     async def game_intro(self):
-        await self.send(
+        await self.basic_send(
             "# This will be a game of elimination blackjack!\n" +
             "We will play a round of blackjack, and, at the end, those with the lowest score are eliminated.\n" +
             "On your turn you may either choose to draw or pass. If you draw another card is added to your hand.\n" +
@@ -46,7 +46,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
         players_passed:list[int] = []
         players_still_drawing = remaining_players.copy()
         while players_still_drawing:
-            will_draw:dict[PlayerId,int] = await self.no_yes(f"Will you draw another card?",players_still_drawing)
+            will_draw:dict[PlayerId,int] = await self.basic_no_yes(f"Will you draw another card?",players_still_drawing)
             players_who_drew:list[PlayerId] = list(player for player in will_draw if will_draw[player])
             players_passed += list(player for player in will_draw if not will_draw[player])
             await self.player_draw(
@@ -57,7 +57,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
                 have_text = "have"
                 if len(players_eliminated_this_draw) == 1:
                     have_text = "has"
-                await self.send(f"{self.mention(players_eliminated_this_draw)} {have_text} overdrawn.")
+                await self.basic_send(f"{self.format_players_md(players_eliminated_this_draw)} {have_text} overdrawn.")
                 exit_core = await self.eliminate_players(players_eliminated_this_draw)
                 if exit_core:
                     return
@@ -66,7 +66,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
         scores:dict[PlayerId,int] = {}
         for player in remaining_players:
             player_score = self.player_points(player)
-            await self.send_ch(self.hands[player],f"{self.mention(player)} had a hand worth {player_score}.")
+            await self.send_ch(self.hands[player],f"{self.format_players_md(player)} had a hand worth {player_score}.")
             scores[player] = player_score
         score_list:list[int] = list(set(scores[player] for player in scores))
         score_list.sort()

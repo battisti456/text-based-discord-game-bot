@@ -262,7 +262,7 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
         Random_Image_Base.__init__(self,gh)
         self.num_rounds = NUM_ROUNDS
     async def game_intro(self):
-        await self.send(
+        await self.basic_send(
             "# Welcome to a game of guess what I searched!\n" +
             "In this game, I will search through an online image database via a random search term.\n" +
             "I will then take that image, and alter it to make it harder to guess.\n" +
@@ -282,12 +282,12 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
         image.save(image_path)
         altered_image.save(altered_path)
 
-        await self.send(
+        await self.basic_send(
             f"I have found a random image from a search prompt, here is a version I have altered through {alter_method} the image.",
             attatchements_data=[altered_path]
         )
         
-        responses = await self.multiple_choice(
+        responses = await self.basic_multiple_choice(
             f"Which of these search prompts does this image correspond to?",
             search_options,
             emojis = list(SEARCH_TOPICS[topic] for topic in search_options)
@@ -295,7 +295,7 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
 
         correct_players = list(player for player in self.players if search_options[responses[player]] == actual_search)
 
-        await self.send(
+        await self.basic_send(
             f"I actually searched for '{actual_search}'.",
             attatchements_data=[image_path]
         )

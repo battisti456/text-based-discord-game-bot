@@ -260,7 +260,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
                 puzzle_diffs = row_diffs
         return puzzle
     async def game_intro(self):
-        await self.send(
+        await self.basic_send(
             "# Welcome to a game of elimination chess puzzles!\n" + 
             "In this game you will be presented with chess puzzles.\n" +
             f"These puzzles will start with a chess rating between {RATING_RANGE[0]} and {RATING_RANGE[1]}, but may escalate if y'all do well.\n" +
@@ -282,7 +282,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
             self.display_board.flip()
 
         move_index = 1
-        await self.send(
+        await self.basic_send(
             f"Here is the start of the puzzle! You will be playing for {player_color}.",
             attatchements_data=[self.make_board_image()]
         )
@@ -302,7 +302,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
                 move_options[random.randint(0,NUM_MOVE_OPTIONS-1)] = moves[move_index]
             option_text_list:list[str] = list(self.move_text(move_option) for move_option in move_options)
             
-            responses:dict[PlayerId,int] = await self.multiple_choice(
+            responses:dict[PlayerId,int] = await self.basic_multiple_choice(
                 f"What is the best move for {player_color} in this position?",
                 who_chooses=remaining_players,
                 options = option_text_list
@@ -317,21 +317,21 @@ class Chess_Puzzle_Elimination(Elimination_Base):
             if correct_players:
                 await self.eliminate_players(incorrect_players)
                 remaining_players = correct_players
-                move_right_text = f"{self.mention(correct_players)} got the move correct!"
+                move_right_text = f"{self.format_players_md(correct_players)} got the move correct!"
             
             self.board.push_uci(moves[move_index])
             end_text = ""
             if self.board.is_game_over(claim_draw=True):
                 end_text = f" This ends the game in {self.game_over_text()}."
             
-            await self.send(
+            await self.basic_send(
                 f"{move_right_text} {best_move_text}{end_text}",
                 attatchements_data=[self.make_board_image()]
             )
             move_index += 1
 
             if move_index == len(moves):
-                await self.send("And that's that for this puzzle!\nLet's do another one.")
+                await self.basic_send("And that's that for this puzzle!\nLet's do another one.")
                 return
             
             mt = self.move_text(moves[move_index])
@@ -343,7 +343,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
             if self.board.is_game_over(claim_draw=True):
                 end_text = f" This ends the game in {self.game_over_text()}."
 
-            await self.send(
+            await self.basic_send(
                 f"The opponent, {oppo_color}, {respond_text} {mt}.{end_text}",
                 attatchements_data=[self.make_board_image()]
             )
@@ -357,7 +357,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
             end_text = ""
             if self.board.is_game_over(claim_draw=True):
                 end_text = f" This ends the game in {self.game_over_text()}."
-            await self.send(
+            await self.basic_send(
                 f"{begin_text}{COLOR_NAMES[self.board.turn]} plays {move_text}.{end_text}",
                 attatchements_data=self.make_board_image()
             )

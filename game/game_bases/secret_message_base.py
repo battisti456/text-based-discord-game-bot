@@ -11,13 +11,13 @@ class Secret_Message_Base(game.Game):
         if not Secret_Message_Base in self.initialized_bases:
             self.initialized_bases.append(Secret_Message_Base)
             self.player_threads:dict[PlayerId,ChannelId] = {}
-    @game.police_messaging
+    @game.police_game_callable
     async def get_secret_thread(self,player:PlayerId,name:str = None) -> ChannelId:
         if player in self.player_threads:
             thread_id = self.player_threads[player]
         else:
             if self.allowed_to_speak() and name is None:
-                name = f"{self.get_user_name(player)}'s secret messages:"
+                name = f"{self.format_players(player)}'s secret messages:"
             elif name is None:
                 name = ""
             thread_id = await self.create_thread(name)
@@ -59,7 +59,7 @@ class Secret_Message_Base(game.Game):
         to_return:dict[PlayerId,MessageId] = {}
         for u in p:
             thread_id = await self.get_secret_thread(u)
-            m_id = await self.send(content,embed_data,attatchements_data,thread_id,message_id)
+            m_id = await self.basic_send(content,embed_data,attatchements_data,thread_id,message_id)
             to_return[u] = m_id
         if isinstance(player,int):
             return to_return[player]
@@ -72,7 +72,7 @@ class Secret_Message_Base(game.Game):
         if not isinstance(player,int):
             return await self.multi_secret_text_response(d_players,message,allow_answer_change,sync_lock,store_in)
         thread_id = await self.get_secret_thread(d_players[0])
-        return await self.text_response(message[d_players[0]],d_players[0],thread_id,allow_answer_change,sync_lock,store_in)
+        return await self.basic_text_response(message[d_players[0]],d_players[0],thread_id,allow_answer_change,sync_lock,store_in)
     async def secret_multiple_choice(self,player:PlayerId|list[PlayerId] = None,message:str|dict[PlayerId,str] = None,options:list[str]|dict[PlayerId,list[str]] = None,
                                      emojis:list[str]|dict[PlayerId,list[str]] = None,allow_answer_change:bool=True,
                                      sync_lock:Callable[[bool],Awaitable[bool]] = None, store_in:dict[PlayerId,int] = None) -> int|dict[PlayerId,int]:
@@ -83,7 +83,7 @@ class Secret_Message_Base(game.Game):
         if not isinstance(player,int):
             return await self.multi_secret_multiple_choice(d_players,message,options,emojis,allow_answer_change,sync_lock,store_in)
         thread_id = await self.get_secret_thread(d_players[0])
-        return await self.multiple_choice(message[d_players[0]],options[d_players[0]],d_players[0],emojis[d_players[0]],thread_id,allow_answer_change,sync_lock,store_in)
+        return await self.basic_multiple_choice(message[d_players[0]],options[d_players[0]],d_players[0],emojis[d_players[0]],thread_id,allow_answer_change,sync_lock,store_in)
     async def secret_no_yes(self,player:PlayerId|list[PlayerId] = None,message:str|dict[PlayerId|str] = None,allow_answer_change:bool = True,
                             sync_lock:Callable[[bool],Awaitable[bool]] = None, store_in:dict[PlayerId,int] = None) -> int|dict[PlayerId,int]:
         message = self.make_player_dict(message)
@@ -91,7 +91,7 @@ class Secret_Message_Base(game.Game):
         if not isinstance(player,int):
             return await self.multi_secret_no_yes(d_players,message,allow_answer_change,sync_lock,store_in)
         thread_id = await self.get_secret_thread(d_players[0])
-        return await self.no_yes(message[d_players[0]],d_players[0],thread_id,allow_answer_change,sync_lock,store_in)
+        return await self.basic_no_yes(message[d_players[0]],d_players[0],thread_id,allow_answer_change,sync_lock,store_in)
     async def multi_secret_text_response(
         self,players:list[PlayerId],messages:dict[PlayerId,str],allow_answer_change:bool,
         sync_lock:Callable[[bool],Awaitable[bool]],store_in:dict[PlayerId,int]) -> dict[PlayerId,str]:
@@ -107,7 +107,7 @@ class Secret_Message_Base(game.Game):
         sub_sync_lock:Callable[[bool],Awaitable[bool]] = game.sub_sync_lock_maker(sync_lock,all_done,responses,players)
         def generate_task(player:PlayerId) -> asyncio.Task:
             async def task():
-                await self.text_response(messages[player],player,await self.get_secret_thread(player),
+                await self.basic_text_response(messages[player],player,await self.get_secret_thread(player),
                                          allow_answer_change,sub_sync_lock,responses)
             return asyncio.Task(task())
         task_list:list[asyncio.Task] = list(generate_task(player) for player in players)
@@ -135,7 +135,7 @@ class Secret_Message_Base(game.Game):
         
         def generate_task(player:PlayerId) -> asyncio.Task:
             async def task():
-                await self.multiple_choice(
+                await self.basic_multiple_choice(
                     messages[player],options[player],player,emojis[player],
                     await self.get_secret_thread(player),allow_answer_change,sub_sync_lock,responses)
             return asyncio.Task(task())

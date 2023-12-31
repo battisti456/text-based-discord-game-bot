@@ -12,6 +12,8 @@ class Sender(object):
         return await self._send(message)
     async def _send(self,message:Message):
         pass
+    def format_players_md(self,players:Iterable[PlayerId]) -> str:
+        return wordify_iterable(players)
     def format_players(self,players:Iterable[PlayerId]) -> str:
         return wordify_iterable(players)
 class Multiple_Sender(Sender):

@@ -61,11 +61,11 @@ class Trivia_Base(game.Game):
             options += question['incorrect_answers']
             options.append(question['correct_answer'])
             random.shuffle(options)
-            choices:list[PlayerId,int] = await self.multiple_choice(question['question'],options,players)
+            choices:list[PlayerId,int] = await self.basic_multiple_choice(question['question'],options,players)
         else:#boolean
             options = ['False','True']
-            choices:list[PlayerId,int] = await self.no_yes(question['question'],players)
-        await self.send(f"The correct answer was '{question['correct_answer']}'.")
+            choices:list[PlayerId,int] = await self.basic_no_yes(question['question'],players)
+        await self.basic_send(f"The correct answer was '{question['correct_answer']}'.")
         correct_index = options.index(question['correct_answer'])
         player_correct:dict[PlayerId,bool] = {}
         for player in players:

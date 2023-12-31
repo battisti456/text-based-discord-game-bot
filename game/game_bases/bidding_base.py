@@ -27,10 +27,10 @@ class Bidding_Base(game.Game):
             if highest_bid[0] is None:
                 text += f"\nBid {self.bid_unit_function(highest_bid[1])} to start the bidding."
             else:
-                text += f"\n{self.mention(highest_bid[0])} has the highest bid at {self.bid_unit_function(highest_bid[1])}."
+                text += f"\n{self.format_players_md(highest_bid[0])} has the highest bid at {self.bid_unit_function(highest_bid[1])}."
                 if self.min_bid > 1:
                     text += f"\nRemember, you must exceed the previous bid by at least {self.min_bid} to place a new one."
-        message_id:MessageId = await self.send(generate_text(),channel_id=bid_thread_id)
+        message_id:MessageId = await self.basic_send(generate_text(),channel_id=bid_thread_id)
         async def on_reaction(emoji:str,player:PlayerId):
             if emoji == ACCEPT_EMOJI and player in players:
                 players_done[player] = True
@@ -39,10 +39,10 @@ class Bidding_Base(game.Game):
                 if message.isdigit():
                     if int(message) >= highest_bid[1] + self.min_bid or highest_bid[0] == None and int(message) >= highest_bid[1]:
                         highest_bid = (player,int(message))
-                        await self.send(generate_text(),channel_id=bid_thread_id,message_id=message_id)         
+                        await self.basic_send(generate_text(),channel_id=bid_thread_id,message_id=message_id)         
         self.add_reaction_action(on_reaction)
         self.add_message_action(on_message)
-        await self.gh.add_reaction(ACCEPT_EMOJI,message_id)
+        await self.gi.add_reaction(ACCEPT_EMOJI,message_id)
         while not all(players_done[player] for player in players):
             await self.wait(game.CHECK_TIME)
         if highest_bid[0] is None:

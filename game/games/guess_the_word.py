@@ -20,7 +20,7 @@ class Guess_The_Word(Dictionary_Base,Secret_Message_Base, Rounds_With_Points_Bas
         Rounds_With_Points_Base.__init__(self,gh)
         self.num_rounds = NUM_ROUNDS
     async def game_intro(self):
-        await self.send("# This is a game of guessing the word!\n" +
+        await self.basic_send("# This is a game of guessing the word!\n" +
                         f"I will generate a random secret word of a length from {MIN_WORD_LEN}-{MAX_WORD_LEN}.\n" +
                         f"Then I will give you {NUM_DEFINITIONS} different definitions for it.\n" +
                         "After each definintion, you will be given a chance to guess the word being defined.\n" +
@@ -50,10 +50,10 @@ class Guess_The_Word(Dictionary_Base,Secret_Message_Base, Rounds_With_Points_Bas
             len_text = f" of length {len(secret_word)} and type(s) {game.wordify_iterable(type_set)}"
         random.shuffle(definition_list)
         players_not_guessed:list[int] = list(self.players)
-        await self.send(f"The secret word{len_text} has been chosen!")
+        await self.basic_send(f"The secret word{len_text} has been chosen!")
         for sub_round in range(NUM_DEFINITIONS):
             def_str = self.definition_string(definition_list[sub_round])
-            await self.send(f"Here is definition #{sub_round + 1} of the word{len_text}:\n{def_str}")
+            await self.basic_send(f"Here is definition #{sub_round + 1} of the word{len_text}:\n{def_str}")
             if GUESS_FEEDBACK:
                 for player in self.players:
                     if player in players_not_guessed and (any(player_hint_letter[player]) or any(global_hint_letter)):
@@ -86,21 +86,21 @@ class Guess_The_Word(Dictionary_Base,Secret_Message_Base, Rounds_With_Points_Bas
                             slot_text += secret_word[j]
                         else:
                             slot_text += "\_"
-                    await self.send(f"Not a single person got new feedback this round, so I will be providing everyone some.\n" + 
+                    await self.basic_send(f"Not a single person got new feedback this round, so I will be providing everyone some.\n" + 
                                     f"Our current public feedback is '{slot_text}'.")
             if any(correct_players):
-                await self.send(f"{self.mention(correct_players)} got it correct!")
+                await self.basic_send(f"{self.format_players_md(correct_players)} got it correct!")
                 for player in correct_players:
                     players_not_guessed.remove(player)
                 await self.score(correct_players,NUM_DEFINITIONS-sub_round)
             else:
-                await self.send("No one got it correct.")
+                await self.basic_send("No one got it correct.")
             if len(players_not_guessed) == 0:
-                await self.send("Everyone has guessed the word!")
+                await self.basic_send("Everyone has guessed the word!")
                 break
-        await self.send(f"The word was '{secret_word}'.")
+        await self.basic_send(f"The word was '{secret_word}'.")
         if(len(definition_list) > NUM_DEFINITIONS):
-            await self.send(f"Some unused definitions included:\n" +
+            await self.basic_send(f"Some unused definitions included:\n" +
                             self.definition_string(definition_list[NUM_DEFINITIONS:]))
                 
         

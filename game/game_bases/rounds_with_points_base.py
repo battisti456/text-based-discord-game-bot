@@ -14,7 +14,7 @@ class Rounds_With_Points_Base(game.Game):
             self.points_format:Callable = lambda x: f"{x} points"
             self.round_name = "round"
             self.reverse_scoring = False
-    @game.police_messaging
+    @game.police_game_callable
     async def score(self,player:int|list[int] = None, num:int|dict[PlayerId,int] = None, mute:bool = False):
         n = self.make_player_dict(num)
         p = self.deduce_players(player,n)
@@ -25,18 +25,18 @@ class Rounds_With_Points_Base(game.Game):
                     self.points[player] += n[player]
                     now_text[player] = "now "
         if len(p) == 1 and not mute:
-            await self.policed_send(f"{self.mention(p[0])} {now_text[p[0]]}has {self.points_format(self.points[p[0]])}.")
+            await self.basic_policed_send(f"{self.format_players_md(p[0])} {now_text[p[0]]}has {self.points_format(self.points[p[0]])}.")
         elif self.allowed_to_speak() and not mute:
-            frmt = list(f"{self.mention(player)} {now_text[player]}has {self.points_format(self.points[player])}" for player in p)
+            frmt = list(f"{self.format_players_md(player)} {now_text[player]}has {self.points_format(self.points[player])}" for player in p)
             if frmt:
-                await self.send(game.wordify_iterable(frmt))
-    @game.police_messaging
+                await self.basic_send(game.wordify_iterable(frmt))
+    @game.police_game_callable
     async def run(self) -> list[PlayerId|list[PlayerId]]:
         await self.game_intro()
         await self.game_setup()
         for round in range(self.num_rounds):
             if self.num_rounds != 1:
-                await self.policed_send(f"Now beggining {self.round_name} #{round+1} of {self.num_rounds}.")
+                await self.basic_policed_send(f"Now beggining {self.round_name} #{round+1} of {self.num_rounds}.")
             points_to_add:dict[PlayerId,int] = await self.core_game()
             if points_to_add:
                 await self.score(num=points_to_add)#announces score if core_game returned none, changes score if core_game returned values

@@ -78,8 +78,19 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
                         emoji = discord.PartialEmoji(name = bp.emoji)
                         await self.client.wait_until_ready()
                         await discord_message.add_reaction(emoji)
-    def format_players(self, players: Iterable[PlayerId]) -> str:
+    def format_players_md(self, players: Iterable[PlayerId]) -> str:
         return wordify_iterable(f"<@{player}>" for player in players)
+    def format_players(self,players:Iterable[PlayerId]) -> str:
+        player_names:list[str] = []
+        for player in players:
+            assert isinstance(player,int)
+            user = self.client.get_user(player)
+            if not user is None:
+                player_names.append(user.display_name)
+            else:
+                player_names.append(str(player))
+        return wordify_iterable(player_names)
+
 
 class Discord_Game_Interface(Channel_Limited_Game_Interface):
     def __init__(self,channel_id:ChannelId,players:list[PlayerId]):

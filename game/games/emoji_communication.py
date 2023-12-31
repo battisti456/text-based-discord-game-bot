@@ -26,7 +26,7 @@ class Emoji_Communication(Secret_Message_Base,Rounds_With_Points_Base):
         self.num_rounds = NUM_ROUNDS
         self.ww_sentence = wonderwords.RandomSentence()
     async def game_intro(self):
-        await self.send(
+        await self.basic_send(
             "# Welcome to a game of emoji communication!\n" +
             f"In this game I will give each of you a sentence in secret and you will do your best to translate it into emojis.\n" +
             f"Please note you can only use at max {MAX_EMOJI}, and all non-emoji characters in your responses will be ignored.\n" +
@@ -53,8 +53,8 @@ class Emoji_Communication(Secret_Message_Base,Rounds_With_Points_Base):
                 options.append(self.ww_sentence.sentence())
             options.append(player_prompts[current_player])
             random.shuffle(options)
-            responses = await self.multiple_choice(
-                f"{self.mention(current_player)} emoted '{emoji_prompts[current_player]} to convey their sentence.\n" +
+            responses = await self.basic_multiple_choice(
+                f"{self.format_players_md(current_player)} emoted '{emoji_prompts[current_player]} to convey their sentence.\n" +
                 "Which sentence was it?",
                 options,
                 players_to_ask
@@ -62,16 +62,16 @@ class Emoji_Communication(Secret_Message_Base,Rounds_With_Points_Base):
             correct_players = list(player for player in players_to_ask if options[responses[player]] == player_prompts[current_player])
             correct_text = f"The actual scentence was:\n{player_prompts[current_player]}\n"
             if len(correct_players) == 0:#no one was correct
-                await self.send(f"{correct_text}No one got it right. No points.")
+                await self.basic_send(f"{correct_text}No one got it right. No points.")
             elif len(correct_players) == len(players_to_ask):#all right
-                await self.send(
+                await self.basic_send(
                     f"{correct_text}Since everyone got it right, each player only gets " +
-                    f"{POINTS_FOR_ALL_GUESS}, except {self.mention(current_player)} who gets none.")
+                    f"{POINTS_FOR_ALL_GUESS}, except {self.format_players_md(current_player)} who gets none.")
                 await self.score(correct_players,POINTS_FOR_ALL_GUESS,mute = True)
             else:
-                await self.send(
-                    f"{correct_text}{self.mention(correct_players)} got it right each earning {POINTS_FOR_GUESS} point(s).\n" +
-                    f"For guiding them so well {self.mention(current_player)} earned {POINTS_PER_GUESSER*len(correct_players)} point(s)."
+                await self.basic_send(
+                    f"{correct_text}{self.format_players_md(correct_players)} got it right each earning {POINTS_FOR_GUESS} point(s).\n" +
+                    f"For guiding them so well {self.format_players_md(current_player)} earned {POINTS_PER_GUESSER*len(correct_players)} point(s)."
                 )
                 await self.score(correct_players,POINTS_FOR_GUESS,mute = True)
                 await self.score(current_player,POINTS_PER_GUESSER*len(correct_players),mute = True)

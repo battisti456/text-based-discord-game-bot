@@ -10,7 +10,7 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
         self.guns:list[PlayerId,int] = self.make_player_dict(0)
         self.announced_guns:bool = False
     async def game_intro(self):
-        await self.send(
+        await self.basic_send(
             "# Welcome to a game of elimination rock paper scizzors!\n" +
             "In this game you can choose to throw rock paper or scizzors.\n" +
             "Then I will tell you what I picked.\n" +
@@ -32,12 +32,12 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
                 if num_guns == 0:
                     s = ""
                 if len(gun_owners[num_guns]) == 1:
-                    gun_text_list.append(f"{self.mention(gun_owners[num_guns])} has {num_guns + 1} gun{s}.")
+                    gun_text_list.append(f"{self.format_players_md(gun_owners[num_guns])} has {num_guns + 1} gun{s}.")
                 elif gun_owners[num_guns]:
-                    gun_text_list.append(f"{self.mention(gun_owners[num_guns])} have {num_guns + 1} gun{s} each.")
+                    gun_text_list.append(f"{self.format_players_md(gun_owners[num_guns])} have {num_guns + 1} gun{s} each.")
             gun_text= '\n'.join(gun_text_list)
             gun_text = f"\n{gun_text}\nRemember that if you choose gun without having one, you lose!\n"
-        responses:dict[PlayerId,int] = await self.multiple_choice(
+        responses:dict[PlayerId,int] = await self.basic_multiple_choice(
             f"What move will you choose?{gun_text}",
             options,remaining_players,ROCK_PAPER_SCISSORS_EMOJI)
         my_pick = random.randint(0,2)
@@ -57,14 +57,14 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
                     self.guns[player] -= 1
                 else:#they tried to use a gun, but didn't have one
                     players_eliminated.append(player)
-        await self.send(f"I threw a {ROCK_PAPER_SCISSORS_EMOJI[my_pick]}.")
+        await self.basic_send(f"I threw a {ROCK_PAPER_SCISSORS_EMOJI[my_pick]}.")
         if players_who_won_guns and len(remaining_players) - len(players_eliminated) > 1:
-            await self.send(
-                f"{self.mention(players_who_won_guns)} picked {ROCK_PAPER_SCISSORS_EMOJI[(my_pick+1)%3]} " +
+            await self.basic_send(
+                f"{self.format_players_md(players_who_won_guns)} picked {ROCK_PAPER_SCISSORS_EMOJI[(my_pick+1)%3]} " +
                 "thereby defeating me and winning a gun!")
             if not self.announced_guns:
                 self.announced_guns = True
-                await self.send(
+                await self.basic_send(
                     "Woah, plot twist!. If you beat me you get a gun you can pick instead in the next round. It will gurantee you a pass for the round!")
         return players_eliminated
         

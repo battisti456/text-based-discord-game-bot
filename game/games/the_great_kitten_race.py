@@ -33,7 +33,7 @@ class The_Great_Kitten_Race(game.Game):
         with open(self.config['data_path'] + "\\" + DATA_PATH,'r') as file:
             self.kitten_config:KittenConfig = json.load(file)
     async def run(self) -> list[PlayerId|list[PlayerId]]:
-        await self.send(
+        await self.basic_send(
             "# Here y'all are, finally, at the great kitten race!\n" +
             "You have each spent the past year training your kitten to compete in our randomized obstacle course!\n" +
             f"You have made sure to allocate each of those {self.kitten_config['point_limit']} skill points gained into the stats you believe will be most valuable.\n" +
@@ -51,7 +51,7 @@ class The_Great_Kitten_Race(game.Game):
             obstacle_text_list.append(
                 f"An obstacle of **{obstacle_name}** which involves {game.wordify_iterable(formatted_stats)}."
             )
-        await self.send(
+        await self.basic_send(
             f"Before you began training you were told which obstacles would show up in today's competition.\n" +
             "\n".join(obstacle_text_list) + '\n' + 
             "So let's have you introduce your kittens!")
@@ -78,10 +78,10 @@ class The_Great_Kitten_Race(game.Game):
             question = f"How did you train your cat's **{stat}** stat?"
             question_stat_dict[question] = stat
             question_is_done_dict[question] = False
-            tasks.append(asyncio.Task(self.multiple_choice(question,options,self.players,NUMBERED_KEYCAP_EMOJI,sync_lock=make_sync_lock(question))))
+            tasks.append(asyncio.Task(self.basic_multiple_choice(question,options,self.players,NUMBERED_KEYCAP_EMOJI,sync_lock=make_sync_lock(question))))
         name_question:str = "Also, what was you kitten's name again?"
         question_is_done_dict[name_question] = False
-        tasks.append(asyncio.Task(self.text_response(name_question,self.players,sync_lock=make_sync_lock(name_question))))
+        tasks.append(asyncio.Task(self.basic_text_response(name_question,self.players,sync_lock=make_sync_lock(name_question))))
         await asyncio.wait(tasks)
 
         kittens:dict[PlayerId,Kitten] = {}
@@ -111,7 +111,7 @@ class The_Great_Kitten_Race(game.Game):
                     time_penalty = random.randint(self.kitten_config['loss_penalty'][0],self.kitten_config['loss_penalty'][1])
                 kitten_text_list.append(f"{text} lost {time_penalty} seconds because of it.")
                 kittens[player]['time'] += time_penalty
-            await self.send(
+            await self.basic_send(
                 f"Our kittens come across an obstacle of **{obstacle_name}**.\n" +
                 '\n'.join(kitten_text_list)
             )
@@ -121,9 +121,9 @@ class The_Great_Kitten_Race(game.Game):
 
         cross_finish_text_list:list[str] = list(
             f"Crossing {game.ordinate(i+1)} we have __*{kittens[placements[i]]['name']}*__ " + 
-            f"racing for {self.mention(placements[i])} with a final time of " +
+            f"racing for {self.format_players_md(placements[i])} with a final time of " +
             f"{kittens[placements[i]]['time']} seconds!" for i in range(len(placements)))
-        await self.send(
+        await self.basic_send(
             f"Anxiously we await at the finish line. Who will be first? Then coming over the hill we see...\n"+
             '\n'.join(cross_finish_text_list)
             )

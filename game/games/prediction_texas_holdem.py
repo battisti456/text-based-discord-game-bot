@@ -20,7 +20,7 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
         self.points_format = lambda points: f"{points} penalties"
         self.num_rounds = NUM_ROUNDS
     async def game_intro(self):
-        await self.send(
+        await self.basic_send(
             "# Welcome to a game of prediction Texas Holdem!\n" +
             "This isn't going to work like most games of Texas Holdem.\n" +
             f"In this game, you get {PLAYER_CARDS} to yourself while there are {SHARED_CARDS} shared.\n" +
@@ -35,7 +35,7 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
         await self.player_draw(self.players,PLAYER_CARDS)
         self.deck.give(shared,SHARED_CARDS)
         await self.send_ch(shared,"Here are the shared cards.")
-        responses = await self.multiple_choice(
+        responses = await self.basic_multiple_choice(
             "Judging from your own cards and the shared cards, where do you think you will place amongst your fellow players?",
             list(game.ordinate(num+1) for num in range(len(self.players))),
             self.players,
@@ -68,14 +68,14 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
         for player in self.players:
             await self.send_ch(
                 self.hands[player],
-                f"{self.mention(player)}'s hand was:"
+                f"{self.format_players_md(player)}'s hand was:"
             )
             await self.send_ch(
                 players_best_poker_hands[player],
-                f"Meaning {self.mention(player)}'s best poker hand with the shared cards was:"
+                f"Meaning {self.format_players_md(player)}'s best poker hand with the shared cards was:"
             )
-            await self.send(
-                f"This placed {self.mention(player)} {game.ordinate(1+ranking.index(player))} "+
+            await self.basic_send(
+                f"This placed {self.format_players_md(player)} {game.ordinate(1+ranking.index(player))} "+
                 f"in the hand rankings with a {name_poker_hand_by_rank(player_hand_ranks[player])}, "+
                 f"and they predicted they would be {game.ordinate(responses[player]+1)}."
             )
