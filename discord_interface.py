@@ -22,6 +22,16 @@ def discord_message_populate_interaction(
             not (payload.reference.cached_message is None)):
             interaction.reply_to_message_id = payload.reference.cached_message.id
     return interaction
+async def discord_message_emoji_order(
+        payload:discord.Message, user_id:int) -> list[str]:
+    emoji:list[str] = []
+    for reaction in payload.reactions:
+        async for user in reaction.users():
+            if user.id == user_id:
+                emoji.append(str(reaction.emoji))
+                break
+    return emoji
+
 
 class Discord_Sender(Channel_Limited_Interface_Sender):
     def __init__(self,gi:'Discord_Game_Interface'):
@@ -97,7 +107,7 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
             if (not payload.cached_message is None and
                 (self.client.user is None or 
                  payload.cached_message.author.id != self.client.user.id)):
-                interaction = Interaction('edit_message')
+                interaction = Interaction('send_message')
                 discord_message_populate_interaction(
                     payload.cached_message,interaction)
                 interaction.content = payload.data['content']
@@ -115,10 +125,50 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 await self._trigger_action(interaction)
         @self.client.event
         async def on_raw_reaction_add(payload:discord.RawReactionActionEvent):
-            pass
+            if (self.client.user is None or not payload.user_id != self.client.user.id):
+                emoji:str = str(payload.emoji)
+                interaction = Interaction('select_option')
+                interaction.content = emoji
+                interaction.player_id = payload.user_id
+                interaction.reply_to_message_id = payload.message_id
+                interaction.interaction_id = payload.emoji.id#maybe?
+                
+                emoji_order = await self._infer_option_order(payload.channel_id,payload.message_id)
+                if emoji in emoji_order:
+                    interaction.choice_index = emoji_order.index(emoji)
+                    await self._trigger_action(interaction)
+
         @self.client.event
         async def on_raw_reaction_remove(payload:discord.RawReactionActionEvent):
-            pass
+            if (self.client.user is None or payload.user_id != self.client.user.id):
+                emoji:str = str(payload.emoji)
+                interaction = Interaction('deselect_option')
+                interaction.content = emoji
+                interaction.player_id = payload.user_id
+                interaction.reply_to_message_id = payload.message_id
+                interaction.interaction_id = payload.emoji.id#maybe?
+                
+                emoji_order = await self._infer_option_order(payload.channel_id,payload.message_id)
+                if emoji in emoji_order:
+                    interaction.choice_index = emoji_order.index(emoji)
+                    await self._trigger_action(interaction)
+    async def _infer_option_order(self,channel_id:ChannelId,message_id:MessageId) -> list[str]:
+        assert isinstance(channel_id,int)
+        await self.client.wait_until_ready()
+        channel = await self.client.fetch_channel(channel_id)
+        assert isinstance(message_id,int)
+        assert isinstance(channel,discord.TextChannel)
+        await self.client.wait_until_ready()
+        message = await channel.fetch_message(message_id)
+
+        assert not self.client.user is None
+        emoji:list[str] = []
+        for reaction in message.reactions:
+            async for user in reaction.users():
+                if user.id == self.client.user.id:
+                    emoji.append(str(reaction.emoji))
+                    break
+        return emoji
     async def run(self):
         pass
     async def new_channel(self, name: Optional[str] = None, who_can_see: Optional[list[PlayerId]] = None) -> ChannelId | None:

@@ -3,7 +3,6 @@ from typing import Optional, Literal, get_args
 
 InteractionType = Literal[
     'send_message',
-    'edit_message',
     'delete_message',
     'select_option',
     'reselect_option',
@@ -19,4 +18,6 @@ class Interaction(object):
 
         self.content:Optional[str] = None
         self.interaction_type:InteractionType = interaction_type
+
+        self.choice_index:Optional[int] = None
         

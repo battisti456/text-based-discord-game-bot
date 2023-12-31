@@ -3,72 +3,85 @@ from game.sender import Sender
 from game.message import Message, Alias_Message
 from game.game_interface import Game_Interface
 from game.interaction import Interaction
-from game.grammer import wordify_iterable
 
-from typing import Optional, Generic, Any, Callable, TypeVar, ParamSpec
+from typing import Optional, Any, Callable, TypeVar, Awaitable
 
 import asyncio
-DataType = TypeVar('DataType',str,int,dict)
+T = TypeVar('T',str,int,set)
 type ResponseValidator[DataType] = Callable[[PlayerId,DataType|None],bool]
 type Condition = dict[Player_Input,bool]
 
+SLEEP_TIME = 10
+
 not_none:ResponseValidator[Any] = lambda player, data: not data is None
-class Player_Input[DataType](object):
+class Player_Input[T](object):
     def __init__(
-            self,gi:Game_Interface,sender:Sender,players:Optional[list[PlayerId]] = None,
-            response_validator:ResponseValidator[DataType] = not_none):
+            self,name:str, gi:Game_Interface,sender:Sender,players:Optional[list[PlayerId]] = None,
+            response_validator:ResponseValidator[T] = not_none):
+        self.name = name
         self.gi = gi
         self.sender = sender
         if players is None:
             self.players = self.gi.get_players()
         else:
             self.players = players
-        self.responses:PlayerDict[DataType] = {}
+        self.responses:PlayerDict[T] = dict()
         for player in self.players:
             self.responses[player] = None
         self._receive_inputs = False
-        self._response_validator:ResponseValidator[DataType] = response_validator
+        self._response_validator:ResponseValidator[T] = response_validator
         self.status_message = Alias_Message(
             Message(),lambda content: self.response_status())
+        self.funcs_to_call_on_update:list[Callable[[],Awaitable]] = []
+    def on_update(self,func:Callable[[],Awaitable]) -> Callable[[],Awaitable]:
+        self.funcs_to_call_on_update.append(func)
+        return func
     def response_status(self) -> str:
         #returns text describing which players have not responded to this input
         player_text = self.sender.format_players(player for player in self.players if self._response_validator(player,self.responses[player]))
         if player_text:
-            return f"Waiting for {player_text} to respond in this input."
+            return f"Waiting for {player_text} to respond to {self.name}."
         else:
-            return "Not waiting for anyone to respond in this input."
+            return f"Not waiting for anyone to {self.name}."
     async def _setup(self):
+        pass
+    async def _core(self):
         pass
     async def _unsetup(self):
         pass
+    async def _update(self):
+        await self.update_response_status()
+        for func in self.funcs_to_call_on_update:
+            await func()
     async def update_response_status(self):
         #to be called only one something has changed
         await self.sender(self.status_message)
     def recieved_responses(self) -> bool:
         #returns weather all responses in this input are no longer None
         return all(self._response_validator(player,self.responses[player]) for player in self.players)
-    async def _run(self):
-        pass
-    async def wait_until_received_all(self):
-        while not self.recieved_responses():
-            pass
-        self._receive_inputs = False
-    async def run(self,await_task:Optional[asyncio.Task] = None) -> PlayerDict[DataType]:
-        if await_task is None:
-            await_task = asyncio.create_task(self.wait_until_received_all())
+    async def _run(self,await_task:asyncio.Task[Any]):
         await self._setup()
         self._receive_inputs = True
-        _run = asyncio.create_task(self._run())
+        _core = asyncio.create_task(self._core())
         await asyncio.wait([await_task])
-        _run.cancel()
+        _core.cancel()
         await self._unsetup()
+    async def wait_until_received_all(self):
+        #wait until all responses meet response validator
+        while not self.recieved_responses():
+            await asyncio.sleep(SLEEP_TIME)
+        self._receive_inputs = False
+    async def run(self) -> PlayerDict[T]:
+        #runs input until response validator is satisfied
+        await_task = asyncio.create_task(self.wait_until_received_all())
+        await self._run(await_task)
         return self.responses
-class Player_Input_In_Response_To_Message[DataType](Player_Input):
+class Player_Input_In_Response_To_Message[T](Player_Input[T]):
     def __init__(
-            self, gi:Game_Interface, sender :Sender, 
-            players:Optional[list[PlayerId]] = None, response_validator:ResponseValidator[DataType] = not_none,
+            self, name:str, gi:Game_Interface, sender :Sender, 
+            players:Optional[list[PlayerId]] = None, response_validator:ResponseValidator[T] = not_none,
             message:Optional[Message] = None, allow_edits:bool = True):
-        Player_Input[DataType].__init__(self,gi,sender,players,response_validator)
+        Player_Input.__init__(self,name,gi,sender,players,response_validator)
         if message is None:
             self.message:Message = Message("Respond here.",players_who_can_see=players)
         else:
@@ -81,65 +94,103 @@ class Player_Input_In_Response_To_Message[DataType](Player_Input):
                 interaction.player_id in self.players and
                 self.allow_edits or self.responses[interaction.player_id] is None)
         
-class Player_Text_Input(Player_Input_In_Response_To_Message):
+class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
     def __init__(
-            self, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
+            self, name:str, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
             response_validator:ResponseValidator[str] = not_none, message:Optional[Message] = None,
             allow_edits:bool = True):
-        Player_Input_In_Response_To_Message[str].__init__(self,gi,sender,players,response_validator,message,allow_edits)
-        self.allow_edits = allow_edits
+        Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,message,allow_edits)
     async def _setup(self):
         @self.gi.on_action('send_message',self)
-        @self.gi.on_action('edit_message',self)
         async def on_message_action(interaction:Interaction):
             if self.allow_interaction(interaction):
                 assert not interaction.player_id is None
                 self.responses[interaction.player_id] = interaction.content
-                await self.update_response_status()
+                await self._update()
         @self.gi.on_action('delete_message',self)
         async def on_delete_action(interaction:Interaction):
             if self.allow_interaction(interaction):
                 assert not interaction.player_id is None
                 self.responses[interaction.player_id] = None
-                await self.update_response_status()
+                await self._update()
     async def _unsetup(self):
         self.gi.purge_actions(self)
 
-class Player_Multiple_Input(Player_Input):
-    def __init__(self, gi:Game_Interface,sender:Sender,players:Optional[list[PlayerId]] = None):
-        Player_Input.__init__(self,gi,sender,players)
-class Multiple_Player_Inputs(Player_Input[dict[Player_Input[Any],Any]]):
+class Player_Single_Choice_Input(Player_Input_In_Response_To_Message[int]):
     def __init__(
-            self,gi:Game_Interface,sender:Sender,
-            player_inputs:list[Player_Input],
-            conditions:Optional[list[Condition]] = None):
-        Player_Input.__init__(self,gi,sender)
-        self.player_inputs = player_inputs
-        self.conditions:list[Condition] = []
-        if conditions is None:
-            self.conditions = [{player_input:True for player_input in self.player_inputs}]
-        else:
-            self.conditions = conditions
-    def response_status(self) -> str:
-        not_responded:set[PlayerId] = set()
-        for player_input in self.player_inputs:
-            not_responded.intersection_update(set(player for player in player_input.players if player_input.responses[player] is None))
-        player_text = self.sender.format_players(not_responded)
-        if player_text:
-            return f"Waiting for {player_text} to respond amongst multiple inputs."
-        else:
-            return "Not waiting for anyone to respond amongst multiple inputs."
-    def recieved_responses(self) -> bool:
-        inputs_done = {player_input:player_input.recieved_responses() for player_input in self.player_inputs}
-        for condition in self.conditions:
-            if all(inputs_done[player_input] or not condition[player_input] for player_input in self.player_inputs):
-                return True
-        return False
-    async def _run(self) -> PlayerDict[dict[Player_Input,Any]]:
-        tasks:list[asyncio.Task] = []
-        for player_input in self.player_inputs:
-            tasks.append(asyncio.create_task(player_input._run()))
-        await asyncio.wait(tasks)
-        for player in self.players:#---------add condition to protect for player inputs not alway containingthe same players
-            self.responses[player] = {player_input:player_input.responses[player] for player_input in self.player_inputs}
-        return self.responses
+            self, name:str, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
+            response_validator:ResponseValidator[int] = not_none, message:Optional[Message] = None,
+            allow_edits:bool = True):
+        Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,message,allow_edits)
+    async def _setup(self):
+        @self.gi.on_action('select_option',self)
+        async def on_reaction_action(interaction:Interaction):
+            if self.allow_interaction(interaction):
+                assert not interaction.player_id is None
+                self.responses[interaction.player_id] = interaction.choice_index
+                await self._update()
+        @self.gi.on_action('deselect_option',self)
+        async def on_unreaction_action(interaction:Interaction):
+            if self.allow_interaction(interaction):
+                assert not interaction.player_id is None
+                if self.responses[interaction.player_id] == interaction.choice_index:
+                    self.responses[interaction.player_id] = None
+                    await self._update()
+    async def _unsetup(self):
+        self.gi.purge_actions(self)
+class Player_Multiple_Choice_Input(Player_Input_In_Response_To_Message[set[int]]):
+    def __init__(
+            self, name:str, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
+            response_validator:ResponseValidator[set[int]] = not_none, message:Optional[Message] = None):
+        Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,message,True)
+    async def _setup(self):
+        @self.gi.on_action('select_option',self)
+        async def on_reaction_action(interaction:Interaction):
+            if self.allow_interaction(interaction) and not interaction.choice_index is None:
+                assert not interaction.player_id is None
+                if self.responses[interaction.player_id] is None:
+                    self.responses[interaction.player_id] = set()
+                proxy = self.responses[interaction.player_id]
+                assert isinstance(proxy,set)
+                proxy.add(interaction.choice_index)
+                await self._update()
+        @self.gi.on_action('deselect_option',self)
+        async def on_unreaction_action(interaction:Interaction):
+            if self.allow_interaction(interaction):
+                assert not interaction.player_id is None
+                if not self.responses[interaction.player_id] is None:
+                    assert not interaction.choice_index is None
+                    proxy = self.responses[interaction.player_id]
+                    assert isinstance(proxy,set)
+                    if interaction.choice_index in proxy:
+                        proxy.remove(interaction.choice_index)
+                        await self._update()
+    async def _unsetup(self):
+        self.gi.purge_actions(self)
+
+async def run_inputs(inputs:list[Player_Input],completion_sets:Optional[set[set[Player_Input]]] = None,sender:Optional[Sender] = None):
+    if completion_sets is None:
+        completion_sets = set([set(inputs)])
+    def check_is_completion() -> bool:
+        completed_inputs = set(input for input in inputs if input.recieved_responses())
+        return any(completed_inputs == sub_set for sub_set in completion_sets)
+    async def wait_until_completion():
+        while not check_is_completion():
+            await asyncio.sleep(SLEEP_TIME)
+    if not sender is None:
+        def feedback_text() -> str:
+            feedback = ""
+            for input in inputs:
+                feedback += input.response_status() + '\n'
+            return feedback
+        feedback_message:Message = Alias_Message(
+            Message(),content_modifier=lambda content:feedback_text())
+        await sender(feedback_message)
+        async def on_update():
+            await sender(feedback_message)
+        for input in inputs:
+            input.on_update(on_update)
+        
+    wait_task = asyncio.create_task(wait_until_completion())
+    _runs = list(asyncio.create_task(input._run(wait_task)) for input in inputs)
+    await asyncio.wait(_runs)
