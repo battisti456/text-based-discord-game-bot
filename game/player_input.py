@@ -1,4 +1,4 @@
-from game import PlayerId,PlayerDict,PlayerDictOptional
+from game import PlayerId,PlayerDict,PlayerDictOptional, make_player_dict
 from game.sender import Sender
 from game.message import Message, Alias_Message
 from game.game_interface import Game_Interface
@@ -24,9 +24,7 @@ class Player_Input[T]():
             self.players = self.gi.get_players()
         else:
             self.players = players
-        self.responses:PlayerDictOptional[T] = dict()
-        for player in self.players:
-            self.responses[player] = None
+        self.responses:PlayerDictOptional[T] = make_player_dict(self.players,None)
         self._receive_inputs = False
         self._response_validator:ResponseValidator[T] = response_validator
         self.status_message = Alias_Message(
@@ -49,6 +47,8 @@ class Player_Input[T]():
             return to_return
         else:
             return f"*Not waiting for anyone to respond to {self.name}.*"
+    def reset(self):
+        self.responses = make_player_dict(self.players,None)
     async def _setup(self):
         pass
     async def _core(self):
