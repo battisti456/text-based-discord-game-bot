@@ -1,13 +1,11 @@
-import game.emoji_groups
-import asyncio
 from game.game import Game, police_game_callable
 from game.game_interface import Game_Interface
 from game.message import Message, make_bullet_points
 from game.player_input import Player_Single_Choice_Input, Player_Text_Input, run_inputs
 from game.emoji_groups import COLORED_CIRCLE_EMOJI, NO_YES_EMOJI
 
-from game import PlayerId,ChannelId,MessageId, PlayerDict, make_player_dict, PlayerDictOptional
-from typing import Callable, Awaitable, Optional
+from game import PlayerId,PlayerDict, make_player_dict
+from typing import Optional, overload
 
 class Basic_Secret_Message_Base(Game):
     def __init__(self,gi:Game_Interface):
@@ -36,8 +34,20 @@ class Basic_Secret_Message_Base(Game):
         for pl in p:
             message = Message(c[pl],a[pl],players_who_can_see=[pl])
             await self.sender(message)
+    @overload
+    async def basic_secret_text_response(self,players:PlayerId,
+            content:Optional[str|PlayerDict[str]] = None, allow_answer_change:bool = True,
+            ) -> str:
+        ...
+    @overload
     async def basic_secret_text_response(
-            self,players:Optional[list[PlayerId]|PlayerId] = None,content:Optional[str|PlayerDict[str]] = None, allow_answer_change:bool = True,
+            self,players:Optional[list[PlayerId]] = None,
+            content:Optional[str|PlayerDict[str]] = None, allow_answer_change:bool = True,
+            ) -> PlayerDict[str]:
+        ...
+    async def basic_secret_text_response(
+            self,players:Optional[list[PlayerId]|PlayerId] = None,
+            content:Optional[str|PlayerDict[str]] = None, allow_answer_change:bool = True,
             ) -> str|PlayerDict[str]:
         p:list[PlayerId] = []
         if players is None:
@@ -81,7 +91,24 @@ class Basic_Secret_Message_Base(Game):
             to_return = inputs[players].responses[players]
             assert isinstance(to_return,str)
             return to_return
-            
+    @overload
+    async def basic_secret_multiple_choice(
+            self,players:PlayerId,
+            content:Optional[str|PlayerDict[str]] = None,
+            options:Optional[list[str]|PlayerDict[list[str]]] = None,
+            emojis:Optional[list[str]|PlayerDict[list[str]]] = None,
+            allow_answer_change:bool=True,
+        ) -> int:
+        ...  
+    @overload
+    async def basic_secret_multiple_choice(
+            self,players:list[PlayerId]|None = None,
+            content:Optional[str|PlayerDict[str]] = None,
+            options:Optional[list[str]|PlayerDict[list[str]]] = None,
+            emojis:Optional[list[str]|PlayerDict[list[str]]] = None,
+            allow_answer_change:bool=True,
+        ) -> PlayerDict[int]:
+        ...
     async def basic_secret_multiple_choice(
             self,players:Optional[PlayerId|list[PlayerId]] = None,
             content:Optional[str|PlayerDict[str]] = None,
@@ -146,6 +173,20 @@ class Basic_Secret_Message_Base(Game):
             to_return = inputs[players].responses[players]
             assert isinstance(to_return,str)
             return to_return
+    @overload
+    async def basic_secret_no_yes(
+            self,players:PlayerId,
+            content:Optional[str|PlayerDict[str]] = None,
+            allow_answer_change:bool = True,
+            ) -> int:
+        ...
+    @overload
+    async def basic_secret_no_yes(
+            self,players:Optional[list[PlayerId]] = None,
+            content:Optional[str|PlayerDict[str]] = None,
+            allow_answer_change:bool = True,
+            ) -> PlayerDict[int]:
+        ...
     async def basic_secret_no_yes(
             self,players:Optional[PlayerId|list[PlayerId]] = None,
             content:Optional[str|PlayerDict[str]] = None,
