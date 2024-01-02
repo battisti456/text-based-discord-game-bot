@@ -2,7 +2,8 @@ from game.game_bases.elimination_base import Elimination_Base
 from game.game_bases.dictionary_base import Dictionary_Base
 from game.game_interface import Game_Interface
 from game.message import Message, make_no_yes_bullet_points, make_bullet_points
-from game.player_input import Player_Input, Player_Single_Choice_Input, Player_Text_Input, run_inputs, ResponseValidator, ResponseFeedback
+from game.player_input import Player_Input, Player_Single_Choice_Input, Player_Text_Input, run_inputs
+from game.response_validator import text_validator_maker
 
 from game import PlayerId, PlayerPlacement
 
@@ -13,46 +14,6 @@ import random
 NUM_LETTERS = 4
 START_LETTERS = NUM_LETTERS
 LEFT_RIGHT_EMOJI = ['⬅️','➡️']
-
-def one_letter_validator(player:PlayerId,value:str|None) -> bool:
-    if value is None:
-        return False
-    if len(value) > 1:
-        return False
-    if len(value) == 0:
-        return False
-    return value.isalpha()
-def one_letter_feedback(player:PlayerId,value:str|None) -> str|None:
-    if value is None:
-        return None
-    if len(value) > 1:
-        return f"'{value}' contains too many digits"
-    if not value.isalpha():
-        return f"'{value}' contains non letter characters"
-def word_validator_maker(letters:str) -> ResponseValidator[str]:
-    def word_validator(player:PlayerId,value:str|None) -> bool:
-        if value is None:
-            return False
-        if len(value) <= len(letters):
-            return False
-        if not value.isalpha():
-            return False
-        return letters in value
-    return word_validator
-def word_feedback_maker(letters:str) -> ResponseFeedback[str]:
-    def word_feedback(player:PlayerId,value:str|None):
-        if value is None:
-            return None
-        if not letters in value:
-            return f"'{value}' does not contain '{letters}'"
-        if not value.isalpha():
-            return f"'{value}' contains non letter characters"
-        if letters == value:
-            return f"the entered letters are the same as the given ones"
-        if len(value) <= len(letters):
-            return f"'{value}' does not contain enough letters"
-    return word_feedback
-    
 
 class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
     def __init__(self,gi:Game_Interface):
@@ -114,7 +75,7 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                 self.gi,
                 self.sender,
                 [player],
-                one_letter_validator,
+                text_validator_maker(max_length=1,min_length=1,is_alpha=True),
                 message=left_right_message
             )
             if first_turn:
@@ -159,8 +120,7 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                     self.gi,
                     self.sender,
                     [self.last_player],
-                    word_validator_maker(letters),
-                    word_feedback_maker(letters),
+                    text_validator_maker(is_supstr_of=letters,min_length=NUM_LETTERS,is_alpha=True),
                     message = message
                 )
                 await word_input.run()
