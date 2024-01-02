@@ -127,6 +127,7 @@ class Child_Message(Message):
     def __init__(self,parent_message:'Message'):
         self.parent_message = parent_message
         self.parent_message.children.append(self)
+        self.children:list[Message] = []
 
 class Alias_Message(Child_Message):
     def __init__(

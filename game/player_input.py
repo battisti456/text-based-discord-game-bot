@@ -45,7 +45,7 @@ class Player_Input[T]():
         players_not_responded = list(player for player in self.players if not self._response_validator(player,self.responses[player]))
         player_text = self.sender.format_players_md(players_not_responded)
         if player_text:
-            to_return = f"Waiting for {player_text} to respond to {self.name}."
+            to_return = f"*Waiting for {player_text} to respond to {self.name}.*"
             if not self._response_feedback is None:
                 for player in players_not_responded:
                     feedback = self._response_feedback(player,self.responses[player])
@@ -53,7 +53,7 @@ class Player_Input[T]():
                         to_return += f"\n{self.sender.format_players_md([player])}: __{feedback}__"
             return to_return
         else:
-            return f"Not waiting for anyone to respond to {self.name}."
+            return f"*Not waiting for anyone to respond to {self.name}.*"
     async def _setup(self):
         pass
     async def _core(self):
@@ -111,6 +111,9 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
         return (
             self.allow_edits or 
             self.responses[interaction.player_id] is None)
+    async def _setup(self):
+        if not self.message.is_sent():
+            await self.sender(self.message)
         
 class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
     def __init__(
@@ -122,6 +125,7 @@ class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
             allow_edits:bool = True):
         Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,response_feedback,who_can_see,message,allow_edits)
     async def _setup(self):
+        await Player_Input_In_Response_To_Message._setup(self)
         @self.gi.on_action('send_message',self)
         async def on_message_action(interaction:Interaction):
             if self.allow_interaction(interaction):
@@ -147,6 +151,7 @@ class Player_Single_Choice_Input(Player_Input_In_Response_To_Message[int]):
             allow_edits:bool = True):
         Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,response_feedback,who_can_see,message,allow_edits)
     async def _setup(self):
+        await Player_Input_In_Response_To_Message._setup(self)
         @self.gi.on_action('select_option',self)
         async def on_reaction_action(interaction:Interaction):
             if self.allow_interaction(interaction):
@@ -170,6 +175,7 @@ class Player_Multiple_Choice_Input(Player_Input_In_Response_To_Message[set[int]]
             who_can_see:Optional[list[PlayerId]] = None, message:Optional[Message] = None):
         Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,response_feedback,who_can_see,message,True)
     async def _setup(self):
+        await Player_Input_In_Response_To_Message._setup(self)
         @self.gi.on_action('select_option',self)
         async def on_reaction_action(interaction:Interaction):
             if self.allow_interaction(interaction) and not interaction.choice_index is None:

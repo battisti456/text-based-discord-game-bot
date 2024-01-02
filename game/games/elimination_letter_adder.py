@@ -1,6 +1,10 @@
-import game
 from game.game_bases.elimination_base import Elimination_Base
 from game.game_bases.dictionary_base import Dictionary_Base
+from game.game_interface import Game_Interface
+from game.message import Message, make_no_yes_bullet_points, make_bullet_points
+from game.player_input import Player_Input, Player_Single_Choice_Input, Player_Text_Input, run_inputs, ResponseValidator, ResponseFeedback
+
+from game import PlayerId, PlayerPlacement
 
 from typing import Iterable
 
@@ -8,13 +12,53 @@ import random
 
 NUM_LETTERS = 4
 START_LETTERS = NUM_LETTERS
-LEFT_RIGHT_CHALLENGE_EMOJI = ['⬅️','➡️','📖']
+LEFT_RIGHT_EMOJI = ['⬅️','➡️']
+
+def one_letter_validator(player:PlayerId,value:str|None) -> bool:
+    if value is None:
+        return False
+    if len(value) > 1:
+        return False
+    if len(value) == 0:
+        return False
+    return value.isalpha()
+def one_letter_feedback(player:PlayerId,value:str|None) -> str|None:
+    if value is None:
+        return None
+    if len(value) > 1:
+        return f"'{value}' contains too many digits"
+    if not value.isalpha():
+        return f"'{value}' contains non letter characters"
+def word_validator_maker(letters:str) -> ResponseValidator[str]:
+    def word_validator(player:PlayerId,value:str|None) -> bool:
+        if value is None:
+            return False
+        if len(value) <= len(letters):
+            return False
+        if not value.isalpha():
+            return False
+        return letters in value
+    return word_validator
+def word_feedback_maker(letters:str) -> ResponseFeedback[str]:
+    def word_feedback(player:PlayerId,value:str|None):
+        if value is None:
+            return None
+        if not letters in value:
+            return f"'{value}' does not contain '{letters}'"
+        if not value.isalpha():
+            return f"'{value}' contains non letter characters"
+        if letters == value:
+            return f"the entered letters are the same as the given ones"
+        if len(value) <= len(letters):
+            return f"'{value}' does not contain enough letters"
+    return word_feedback
+    
 
 class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
-    def __init__(self,gh:game.GH):
-        Elimination_Base.__init__(self,gh)
-        Dictionary_Base.__init__(self,gh)
-        self.last_player:int = self.players[0]
+    def __init__(self,gi:Game_Interface):
+        Elimination_Base.__init__(self,gi)
+        Dictionary_Base.__init__(self,gi)
+        self.last_player:PlayerId = self.players[0]
     async def game_intro(self):
         await self.basic_send(
             "# We are playing a game of word creation!\n" +
@@ -25,9 +69,9 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
             "If the challenge was made in haste, however, the challenger is eliminated instead.\n" +
             f"To start us off in a round, I will generate {START_LETTERS} letters which are definitely a part of a word."
         )
-    async def game_outro(self,order:Iterable[int]):
+    async def game_outro(self,order:PlayerPlacement):
         pass
-    async def core_game(self,remaining_players:Iterable[int])->Iterable[int]|int:
+    async def core_game(self,remaining_players:list[PlayerId]) -> list[PlayerId] | None:
         num_letters_in_starting_word = START_LETTERS + random.randint(1,len(remaining_players))
         starting_word = self.random_word(num_letters_in_starting_word)
         offset = random.randint(0,num_letters_in_starting_word-START_LETTERS-1)
@@ -42,59 +86,100 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                 if player in remaining_players:
                     break
             #
-            if first_turn and START_LETTERS == 0:
-                await self.basic_send("Let's start off our word!")
-                choice = 0
+            await self.basic_send(f"The letters are '{letters}'.")
+            will_challenge_message = Message(
+                content=f"Will you challenge {self.sender.format_players_md([self.last_player])}?",
+                bullet_points=make_no_yes_bullet_points()
+            )
+            left_right_message = Message(
+                content = "Which side would you like to put your letter on, and which letter would you like to add?",
+                bullet_points=make_bullet_points(['left','right'],LEFT_RIGHT_EMOJI)
+            )
+            challenge_input = Player_Single_Choice_Input(
+                "choice to challenge",
+                self.gi,
+                self.sender,
+                [player],
+                message=will_challenge_message
+            )
+            left_right_input = Player_Single_Choice_Input(
+                "choice of left or right",
+                self.gi,
+                self.sender,
+                [player],
+                message = left_right_message
+            )
+            letter_input = Player_Text_Input(
+                "choice of letter",
+                self.gi,
+                self.sender,
+                [player],
+                one_letter_validator,
+                message=left_right_message
+            )
+            if first_turn:
+                first_turn = False
+                await self.sender(left_right_message)
+                await run_inputs(
+                    inputs = [left_right_input,letter_input],
+                )
             else:
-                message = f"Our letters are '{letters}' what would you like to do?"
-                choices = ['add to left','add to right']
-                if len(letters) > 1 and not first_turn:
-                    choices.append('challenge')
-                choice = await self.basic_multiple_choice(message,choices,player,LEFT_RIGHT_CHALLENGE_EMOJI)
-            first_turn = False
-    
-            if choice in [0,1]:#add letter
-                letter:str = await self.basic_text_response(f"{self.format_players_md(player)}, which letter would you like?",player)
-                while len(letter) > 1 or not letter.isalpha():
-                    letter:str = await self.basic_text_response(
-                        f"{self.format_players_md(player)}, I am sorry, '{letter}' is not a valid response.",player)
+                await self.sender(will_challenge_message)
+                await self.sender(left_right_message)
+                await run_inputs(
+                    inputs = [challenge_input,left_right_input,letter_input],
+                    completion_sets= [{challenge_input},{left_right_input,letter_input}],
+                )
+
+            if not challenge_input.responses[player]:#add letter
+                letter = letter_input.responses[player]
+                assert not letter is None
                 letter = letter.lower()
-                if choice:#1 is right
+                if left_right_input.responses[player]:#1 is right
                     letters = letters + letter
                 else:
                     letters = letter + letters
                 if len(letters) > NUM_LETTERS and self.is_word(letters):
+                    definition = self.define(letters)
+                    def_text = ""
+                    if not definition is None:
+                        def_text = f"\nHere are some definitions:\n{self.definition_string(definition)}"
                     await self.basic_send(
-                        f"""{self.format_players_md(player)} has spelled the word {letters}.
-                        Here are some definitions:
-                        {self.definition_string(self.define(letters))}""")
+                        f"{self.format_players_md([player])} has spelled the word {letters}.{def_text}")
                     self.last_player = player
-                    return player
+                    return [player]
                 else:
                     self.last_player = player
-                    #await self.send(f"Our letters are now '{letters}'.")
-                    continue#unnessasary but helps with readability for me
             else:#challenge
-                await self.basic_send(
-                    f"{self.format_players_md(player)} has chosen to challenge {self.format_players_md(self.last_player)} on the letters '{letters}'")
-                word = await self.basic_text_response(
-                    f"{self.format_players_md(self.last_player)}, " + 
-                    f"What word do you think you could have spelled with '{letters}'?",
-                    self.last_player)
+                message = Message(
+                    f"{self.format_players_md([player])} has chosen to challenge {self.format_players_md([self.last_player])} on the letters '{letters}'. \n" +
+                    "What word do you think you could have spelled?")
+                word_input = Player_Text_Input(
+                    "word",
+                    self.gi,
+                    self.sender,
+                    [self.last_player],
+                    word_validator_maker(letters),
+                    word_feedback_maker(letters),
+                    message = message
+                )
+                await word_input.run()
+                word = word_input.responses[self.last_player]
+                assert not word is None
                 word = word.lower()
                 word = "".join(word.split())#remove whitespace
                 if self.is_word(word) and letters in word and len(word) > NUM_LETTERS:
-                    await self.basic_send(f"The word {word} is valid!\n{self.definition_string(self.define(word))}")
+                    definition = self.define(word)
+                    definition_text = ""
+                    if not definition is None:
+                        definition_text = f"\n{self.definition_string(definition)}"
+                    await self.basic_send(f"The word {word} is valid!{definition_text}")
                     self.last_player = player
-                    return player
+                    return [player]
                 elif not self.is_word(word):
-                    await self.basic_send(f"I'm sorry, {self.format_players_md(self.last_player)}, '{word}' is not a valid word.")
-                elif not letters in word:
-                    await self.basic_send(f"I'm sorry, '{word}' does not contain '{letters}'.")
-                elif not len(word) <= NUM_LETTERS:
-                    await self.basic_send(f"I'm sorry, '{word}' does not reach our length requirement of {NUM_LETTERS}.")
+                    await self.basic_send(f"I'm sorry, {self.format_players_md([self.last_player])}, '{word}' is not a valid word.")
                 to_eliminate = self.last_player
                 self.last_player = player
-                return to_eliminate
+                return [to_eliminate]
                 
                 
