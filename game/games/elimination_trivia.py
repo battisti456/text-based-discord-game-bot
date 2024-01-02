@@ -1,11 +1,11 @@
-import game
 from game import PlayerId
 from game.game_bases import Elimination_Base, Trivia_Base
+from game.game_interface import Game_Interface
 
 class Elimination_Trivia(Elimination_Base,Trivia_Base):
-    def __init__(self,gh:game.GH):
-        Elimination_Base.__init__(self,gh)
-        Trivia_Base.__init__(self,gh)
+    def __init__(self,gi:Game_Interface):
+        Elimination_Base.__init__(self,gi)
+        Trivia_Base.__init__(self,gi)
     async def game_intro(self):
         await self.basic_send(
             "# This is a game of elimination trivia.\n" +

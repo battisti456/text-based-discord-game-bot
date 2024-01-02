@@ -46,8 +46,6 @@ class Game_Interface(object):
             self.action_owners[func] = owner
             return func
         return wrapper
-    def player_id_to_str(self,player:PlayerId) -> str:
-        return str(player)
     def get_players(self) -> list[PlayerId]:
         return []
     async def new_channel(self,name:Optional[str] = None, who_can_see:Optional[list[PlayerId]] = None) -> ChannelId|None:
@@ -57,7 +55,7 @@ class Channel_Limited_Interface_Sender(Interface_Sender):
     def __init__(self,gi:'Channel_Limited_Game_Interface'):
         Interface_Sender.__init__(self,gi)
     async def __call__(self,message:Message):
-        if not message.players_who_can_see is None and message.channel_id is None:
+        if not (message.players_who_can_see is None) and message.channel_id is None:
             assert isinstance(self.gi,Channel_Limited_Game_Interface)
             message.channel_id = await self.gi.who_can_see_channel(message.players_who_can_see)
         return await self._send(message)
@@ -74,7 +72,7 @@ class Channel_Limited_Game_Interface(Game_Interface):
             return self.who_can_see_dict[fr_players]
         else:
             channel = await self.new_channel(
-                f"{wordify_iterable(self.player_id_to_str(player) for player in players)}'s Private Channel",
+                f"{self.default_sender.format_players(players)}'s Private Channel",
                 players
             )
             assert not channel is None

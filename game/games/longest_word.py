@@ -1,6 +1,6 @@
-import game
 from game import PlayerId,MessageId
 from game.game_bases import Dictionary_Base,Rounds_With_Points_Base
+from game.game_interface import Game_Interface
 
 NUM_LETTERS = 10
 POINT_FUNCTION = lambda word: len(word)**2
@@ -8,9 +8,9 @@ NUMBER_OF_ROUNDS = 3
 NUM_LETTERS_CAN_REFRESH:int = 5
 
 class Longest_Word(Dictionary_Base,Rounds_With_Points_Base):
-    def __init__(self,gh:game.GH):
-        Dictionary_Base.__init__(self,gh)
-        Rounds_With_Points_Base.__init__(self,gh)
+    def __init__(self,gi:Game_Interface):
+        Dictionary_Base.__init__(self,gi)
+        Rounds_With_Points_Base.__init__(self,gi)
 
         self.num_rounds = NUMBER_OF_ROUNDS
         self.words_used = []

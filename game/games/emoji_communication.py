@@ -1,6 +1,6 @@
-import game
 from game import PlayerId
 from game.game_bases import Secret_Message_Base,Rounds_With_Points_Base
+from game.game_interface import Game_Interface
 import wonderwords
 import emoji
 import random
@@ -15,14 +15,14 @@ POINTS_FOR_ALL_GUESS = 1
 MAX_EMOJI = 10
 
 def only_emoji(text:str) -> str:
-    emj:list[str] = list(token.chars for token in emoji.analyze(text))
+    emj:list[str] = list(token.chars for token in emoji.analyze(text,False,False))
     emj = emj[0:MAX_EMOJI]
     return "".join(emj)
 
 class Emoji_Communication(Secret_Message_Base,Rounds_With_Points_Base):
-    def __init__(self,gh:game.GH):
-        Secret_Message_Base.__init__(self,gh)
-        Rounds_With_Points_Base.__init__(self,gh)
+    def __init__(self,gi:Game_Interface):
+        Secret_Message_Base.__init__(self,gi)
+        Rounds_With_Points_Base.__init__(self,gi)
         self.num_rounds = NUM_ROUNDS
         self.ww_sentence = wonderwords.RandomSentence()
     async def game_intro(self):
@@ -42,7 +42,7 @@ class Emoji_Communication(Secret_Message_Base,Rounds_With_Points_Base):
         player_questions = {}
         for current_player in self.players:
             player_questions[current_player] = f"Please do your best to convey this sentence through emoji.\n'{player_prompts[current_player]}'"
-        emoji_responses = self.secret_text_response(self.players,player_questions)
+        emoji_responses = await self.secret_text_response(self.players,player_questions)
         emoji_prompts = {}
         for current_player in self.players:
             emoji_prompts[current_player] = only_emoji(emoji_responses[current_player])

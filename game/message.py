@@ -30,7 +30,7 @@ class Bullet_Point(object):
         self.text = text
         self.emoji = emoji
     def __str__(self):
-        return f"{self.text} ({self.emoji})"
+        return f"{self.emoji} (*{self.text}*)"
 
 class Message(object):
     def __init__(

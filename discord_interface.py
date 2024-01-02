@@ -49,35 +49,35 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
                     add_join_start="\n--SPLIT START--")
                 for sub_message in sub_messages:
                     await self._send(sub_message)
+                return
+        if message.bullet_points:
+            message = Add_Bullet_Points_To_Content_Alias_Message(message)
+        if message.channel_id is None:
+            assert isinstance(self.default_channel,int)
+            channel = self.client.get_channel(self.default_channel)
         else:
-            if message.bullet_points:
-                message = Add_Bullet_Points_To_Content_Alias_Message(message)
-            if message.channel_id is None:
-                assert isinstance(self.default_channel,int)
-                channel = self.client.get_channel(self.default_channel)
-            else:
-                assert isinstance(message.channel_id,int)
-                channel = self.client.get_channel(message.channel_id)
-            assert isinstance(channel,discord.TextChannel)
-            attachments= []
-            for path in message.attach_paths:
-                attachments.append(discord.File(path))
-            if message.message_id is None:#new message
-                await self.client.wait_until_ready()
-                discord_message = await channel.send(content=message.content,files = attachments)
-                message.message_id = discord_message.id
-            else:#edit old message
-                assert isinstance(message.message_id,int)
-                await self.client.wait_until_ready()
-                discord_message:discord.Message = await channel.fetch_message(message.message_id)
-                await discord_message.edit(content=message.content,attachments=attachments)
-                message.message_id = discord_message.id
-            if message.bullet_points:
-                for bp in message.bullet_points:
-                    if not bp.emoji is None:
-                        emoji = discord.PartialEmoji(name = bp.emoji)
-                        await self.client.wait_until_ready()
-                        await discord_message.add_reaction(emoji)
+            assert isinstance(message.channel_id,int)
+            channel = self.client.get_channel(message.channel_id)
+        assert isinstance(channel,(discord.TextChannel,discord.Thread))
+        attachments= []
+        for path in message.attach_paths:
+            attachments.append(discord.File(path))
+        if message.message_id is None:#new message
+            await self.client.wait_until_ready()
+            discord_message = await channel.send(content=message.content,files = attachments)
+            message.message_id = discord_message.id
+        else:#edit old message
+            assert isinstance(message.message_id,int)
+            await self.client.wait_until_ready()
+            discord_message:discord.Message = await channel.fetch_message(message.message_id)
+            await discord_message.edit(content=message.content,attachments=attachments)
+            message.message_id = discord_message.id
+        if message.bullet_points:
+            for bp in message.bullet_points:
+                if not bp.emoji is None:
+                    emoji = discord.PartialEmoji(name = bp.emoji)
+                    await self.client.wait_until_ready()
+                    await discord_message.add_reaction(emoji)
     def format_players_md(self, players: Iterable[PlayerId]) -> str:
         return wordify_iterable(f"<@{player}>" for player in players)
     def format_players(self,players:Iterable[PlayerId]) -> str:
@@ -100,6 +100,7 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
         
         intents = discord.Intents.default()
         intents.message_content = True
+        intents.members = True
         self.client = discord.Client(intents = intents)
         self.default_sender = Discord_Sender(self)
 
@@ -136,7 +137,7 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 await self._trigger_action(interaction)
         @self.client.event
         async def on_raw_reaction_add(payload:discord.RawReactionActionEvent):
-            if (self.client.user is None or not payload.user_id != self.client.user.id):
+            if (self.client.user is None or payload.user_id != self.client.user.id):
                 emoji:str = str(payload.emoji)
                 interaction = Interaction('select_option')
                 interaction.content = emoji
@@ -168,7 +169,7 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
         await self.client.wait_until_ready()
         channel = await self.client.fetch_channel(channel_id)
         assert isinstance(message_id,int)
-        assert isinstance(channel,discord.TextChannel)
+        assert isinstance(channel,(discord.TextChannel,discord.Thread))
         await self.client.wait_until_ready()
         message = await channel.fetch_message(message_id)
 
@@ -196,7 +197,7 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
             for player in who_can_see:
                 assert isinstance(player,int)
                 user = self.client.get_user(player)
-                assert not user is None
+                assert not user is None#user not found
                 await self.client.wait_until_ready()
                 await thread.add_user(user)
         return thread.id

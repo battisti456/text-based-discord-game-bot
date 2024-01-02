@@ -1,6 +1,8 @@
-import game
 import game.emoji_groups
 import random
+
+from game.game import Game, police_game_callable
+from game.game_interface import Game_Interface
 
 
 import PIL.Image
@@ -269,9 +271,9 @@ def name_poker_hand_by_rank(rank:int) -> str:
 
         
 
-class Card_Base(game.Game):
-    def __init__(self,gh:game.GH):
-        game.Game.__init__(self,gh)
+class Card_Base(Game):
+    def __init__(self,gi:Game_Interface):
+        Game.__init__(self,gi)
         if not Card_Base in self.initialized_bases:
             self.initialized_bases.append(Card_Base)
             self.hand_threads:dict[int,int] = {}
@@ -293,7 +295,7 @@ class Card_Base(game.Game):
         path = self.temp_file_path(".png")
         image.save(path)
         return await self.basic_send(content = message,attatchements_data=path,channel_id = thread_id,message_id = message_id)
-    @game.police_game_callable
+    police_game_callable
     async def update_hand(self,player:int,message:str = ""):
         message_id = None
         if player in self.hand_message:
@@ -308,7 +310,7 @@ class Card_Base(game.Game):
                 contents += "Your hand is empty."
         message_id = await self.send_ch(self.hands[player],contents,self.hand_threads[player],message_id)
         self.hand_message[player] = message_id
-    @game.police_game_callable
+    police_game_callable
     async def player_draw(self,player:int|Iterable[int],num:int = 1,text_for_player:Callable[[PlayerId],str] = None):
         if isinstance(player,int):
             players = [player]
@@ -326,7 +328,7 @@ class Card_Base(game.Game):
             if not text_for_player is None:
                 draw_text += text_for_player(player)
             await self.update_hand(player,draw_text)
-    @game.police_game_callable
+    police_game_callable
     async def player_discard(self,player:int,num_random:int = 0,cards:int|Card|Iterable[int]|Iterable[Card] = []):
         cards = self.hands[player].give(self.discard,num_random,cards)
         discard_text = ""
@@ -334,7 +336,7 @@ class Card_Base(game.Game):
         if self.allowed_to_speak():
             discard_text = f"You discarded: {wordify_cards(cards)}."
         await self.update_hand(player,discard_text)
-    @game.police_game_callable#wildly untested....
+    police_game_callable#wildly untested....
     async def shuffle_discord_into_deck(self):
         self.discard.give(self.deck,cards=self.deck.cards)
         self.deck.shuffle()

@@ -14,7 +14,7 @@ type Condition = dict[Player_Input,bool]
 SLEEP_TIME = 10
 
 not_none:ResponseValidator[Any] = lambda player, data: not data is None
-class Player_Input[T](object):
+class Player_Input[T]():
     def __init__(
             self,name:str, gi:Game_Interface,sender:Sender,players:Optional[list[PlayerId]] = None,
             response_validator:ResponseValidator[T] = not_none, who_can_see:Optional[list[PlayerId]] = None):
@@ -38,11 +38,11 @@ class Player_Input[T](object):
         return func
     def response_status(self) -> str:
         #returns text describing which players have not responded to this input
-        player_text = self.sender.format_players_md(player for player in self.players if self._response_validator(player,self.responses[player]))
+        player_text = self.sender.format_players_md(player for player in self.players if not self._response_validator(player,self.responses[player]))
         if player_text:
             return f"Waiting for {player_text} to respond to {self.name}."
         else:
-            return f"Not waiting for anyone to {self.name}."
+            return f"Not waiting for anyone to respond to {self.name}."
     async def _setup(self):
         pass
     async def _core(self):
@@ -61,6 +61,7 @@ class Player_Input[T](object):
         return all(self._response_validator(player,self.responses[player]) for player in self.players)
     async def _run(self,await_task:asyncio.Task[Any]):
         await self._setup()
+        await self._update()
         self._receive_inputs = True
         _core = asyncio.create_task(self._core())
         await asyncio.wait([await_task])
@@ -91,9 +92,13 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
     def allow_interaction(self,interaction:Interaction) -> bool:
         if interaction.player_id is None:
             return False
-        return (self.message.is_response(interaction) and 
-                interaction.player_id in self.players and
-                self.allow_edits or self.responses[interaction.player_id] is None)
+        if not interaction.player_id in self.players:
+            return False
+        if not self.message.is_response(interaction):
+            return False
+        return (
+            self.allow_edits or 
+            self.responses[interaction.player_id] is None)
         
 class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
     def __init__(

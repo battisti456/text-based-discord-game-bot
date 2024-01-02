@@ -1,9 +1,8 @@
 import json
 import asyncio
-
+import game
 from discord_interface import Discord_Game_Interface
 from game.games import *
-
 from typing import TypedDict
 
 class Config(TypedDict):
@@ -29,6 +28,13 @@ config:Config = grab_json(CONFIG_PATH)
 testing(config)
 
 gi = Discord_Game_Interface(config['channel_id'],list(config['players'][player] for player in config['players']))
-gm = Longest_Word(gi)
-asyncio.create_task(gm.run())
+gm = Elimination_Trivia(gi)
+@gi.client.event
+async def on_ready():
+    await gi.client.wait_until_ready()
+    channel = gi.client.get_channel(config['channel_id'])
+    for thread in channel.threads:
+        await thread.delete()
+
+    asyncio.create_task(gm.run())
 gi.client.run(config['token'])
