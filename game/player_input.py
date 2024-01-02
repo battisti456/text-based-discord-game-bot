@@ -9,6 +9,7 @@ from typing import Optional, Any, Callable, TypeVar, Awaitable
 import asyncio
 T = TypeVar('T',str,int,set)
 type ResponseValidator[DataType] = Callable[[PlayerId,DataType|None],bool]
+type ResponseFeedback[DataType] = Callable[[PlayerId,DataType|None],str|None]
 type Condition = dict[Player_Input,bool]
 
 SLEEP_TIME = 10
@@ -17,7 +18,9 @@ not_none:ResponseValidator[Any] = lambda player, data: not data is None
 class Player_Input[T]():
     def __init__(
             self,name:str, gi:Game_Interface,sender:Sender,players:Optional[list[PlayerId]] = None,
-            response_validator:ResponseValidator[T] = not_none, who_can_see:Optional[list[PlayerId]] = None):
+            response_validator:ResponseValidator[T] = not_none, 
+            response_feedback:Optional[ResponseFeedback[T]] = None,
+            who_can_see:Optional[list[PlayerId]] = None):
         self.name = name
         self.gi = gi
         self.sender = sender
@@ -30,6 +33,7 @@ class Player_Input[T]():
             self.responses[player] = None
         self._receive_inputs = False
         self._response_validator:ResponseValidator[T] = response_validator
+        self._response_feedback:Optional[ResponseFeedback[T]] = response_feedback
         self.status_message = Alias_Message(
             Message(players_who_can_see=who_can_see),lambda content: self.response_status())
         self.funcs_to_call_on_update:list[Callable[[],Awaitable]] = []
@@ -38,9 +42,16 @@ class Player_Input[T]():
         return func
     def response_status(self) -> str:
         #returns text describing which players have not responded to this input
-        player_text = self.sender.format_players_md(player for player in self.players if not self._response_validator(player,self.responses[player]))
+        players_not_responded = list(player for player in self.players if not self._response_validator(player,self.responses[player]))
+        player_text = self.sender.format_players_md(players_not_responded)
         if player_text:
-            return f"Waiting for {player_text} to respond to {self.name}."
+            to_return = f"Waiting for {player_text} to respond to {self.name}."
+            if not self._response_feedback is None:
+                for player in players_not_responded:
+                    feedback = self._response_feedback(player,self.responses[player])
+                    if not feedback is None:
+                        to_return += f"\n{self.sender.format_players_md([player])}: __{feedback}__"
+            return to_return
         else:
             return f"Not waiting for anyone to respond to {self.name}."
     async def _setup(self):
@@ -81,9 +92,10 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
     def __init__(
             self, name:str, gi:Game_Interface, sender :Sender, 
             players:Optional[list[PlayerId]] = None, response_validator:ResponseValidator[T] = not_none,
+            response_feedback:Optional[ResponseFeedback[T]] = None,
             who_can_see:Optional[list[PlayerId]] = None,
             message:Optional[Message] = None, allow_edits:bool = True):
-        Player_Input.__init__(self,name,gi,sender,players,response_validator,who_can_see)
+        Player_Input.__init__(self,name,gi,sender,players,response_validator,response_feedback,who_can_see)
         if message is None:
             self.message:Message = Message("Respond here.",players_who_can_see=players)
         else:
@@ -103,10 +115,12 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
 class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
     def __init__(
             self, name:str, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
-            response_validator:ResponseValidator[str] = not_none, who_can_see:Optional[list[PlayerId]] = None,
+            response_validator:ResponseValidator[str] = not_none,
+            response_feedback:Optional[ResponseFeedback[str]] = None,
+            who_can_see:Optional[list[PlayerId]] = None,
             message:Optional[Message] = None,
             allow_edits:bool = True):
-        Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,message,allow_edits)
+        Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,response_feedback,who_can_see,message,allow_edits)
     async def _setup(self):
         @self.gi.on_action('send_message',self)
         async def on_message_action(interaction:Interaction):
@@ -126,10 +140,12 @@ class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
 class Player_Single_Choice_Input(Player_Input_In_Response_To_Message[int]):
     def __init__(
             self, name:str, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
-            response_validator:ResponseValidator[int] = not_none, who_can_see:Optional[list[PlayerId]] = None,
+            response_validator:ResponseValidator[int] = not_none, 
+            response_feedback:Optional[ResponseFeedback[int]] = None,
+            who_can_see:Optional[list[PlayerId]] = None,
             message:Optional[Message] = None,
             allow_edits:bool = True):
-        Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,message,allow_edits)
+        Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,response_feedback,who_can_see,message,allow_edits)
     async def _setup(self):
         @self.gi.on_action('select_option',self)
         async def on_reaction_action(interaction:Interaction):
@@ -149,9 +165,10 @@ class Player_Single_Choice_Input(Player_Input_In_Response_To_Message[int]):
 class Player_Multiple_Choice_Input(Player_Input_In_Response_To_Message[set[int]]):
     def __init__(
             self, name:str, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
-            response_validator:ResponseValidator[set[int]] = not_none, 
+            response_validator:ResponseValidator[set[int]] = not_none,
+            response_feedback:Optional[ResponseFeedback[set[int]]] = None,
             who_can_see:Optional[list[PlayerId]] = None, message:Optional[Message] = None):
-        Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,message,True)
+        Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,response_feedback,who_can_see,message,True)
     async def _setup(self):
         @self.gi.on_action('select_option',self)
         async def on_reaction_action(interaction:Interaction):
@@ -178,10 +195,10 @@ class Player_Multiple_Choice_Input(Player_Input_In_Response_To_Message[set[int]]
         self.gi.purge_actions(self)
 
 async def run_inputs(
-        inputs:list[Player_Input],completion_sets:Optional[set[set[Player_Input]]] = None,
+        inputs:list[Player_Input],completion_sets:Optional[list[set[Player_Input]]] = None,
         sender:Optional[Sender] = None,who_can_see:Optional[list[PlayerId]] = None):
     if completion_sets is None:
-        completion_sets = set([set(inputs)])
+        completion_sets = [set(inputs)]
     def check_is_completion() -> bool:
         completed_inputs = set(input for input in inputs if input.recieved_responses())
         return any(completed_inputs == sub_set for sub_set in completion_sets)

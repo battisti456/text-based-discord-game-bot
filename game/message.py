@@ -1,10 +1,11 @@
 from game import PlayerId, MessageId, ChannelId
 from game.interaction import Interaction
 from game.grammer import wordify_iterable
+from game.emoji_groups import NO_YES_EMOJI
 
 from math import ceil
 
-from typing import Optional, Callable, TypeVar, Literal
+from typing import Optional, Callable, TypeVar, Literal, Sequence
 
 ArgVar = TypeVar('ArgVar')
 def do_not_modify(arg:ArgVar) -> ArgVar:
@@ -68,7 +69,6 @@ class Message(object):
                 check = lambda child: True
             is_response = is_response or any(child.is_response(interaction,sub_text) for child in self.children if check(child))
         return is_response
-
     def split(
             self,deliminator:Optional[str] = None,length:Optional[int] = None,
             add_start = "", add_end = "",
@@ -109,6 +109,19 @@ class Message(object):
                 )
             )
         return to_return
+
+def make_bullet_points(contents:list[str],emojis:Sequence[str]) -> list[Bullet_Point]:
+    to_return:list[Bullet_Point] = []
+    for i in range(len(contents)):
+        to_return.append(
+            Bullet_Point(
+                text = contents[i],
+                emoji = emojis[i]
+            )
+        )
+    return to_return
+def make_no_yes_bullet_points() -> list[Bullet_Point]:
+    return make_bullet_points(['no','yes'],NO_YES_EMOJI)
 
 class Child_Message(Message):
     def __init__(self,parent_message:'Message'):
