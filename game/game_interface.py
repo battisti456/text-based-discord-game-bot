@@ -1,7 +1,7 @@
 from typing import Any,Callable,Awaitable, Optional, Hashable
 from game import PlayerId, MessageId, ChannelId
 from game.sender import Sender
-from game.message import Message
+from game.message import Message, Reroute_Message
 from game.interaction import Interaction, InteractionType, INTERACTION_TYPES
 from game.grammer import wordify_iterable
 
@@ -57,7 +57,10 @@ class Channel_Limited_Interface_Sender(Interface_Sender):
     async def __call__(self,message:Message):
         if not (message.players_who_can_see is None) and message.channel_id is None:
             assert isinstance(self.gi,Channel_Limited_Game_Interface)
-            message.channel_id = await self.gi.who_can_see_channel(message.players_who_can_see)
+            message= Reroute_Message(
+                message,
+                await self.gi.who_can_see_channel(message.players_who_can_see)
+            )
         return await self._send(message)
 
 class Channel_Limited_Game_Interface(Game_Interface):
