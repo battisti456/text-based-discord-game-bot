@@ -1,6 +1,6 @@
 import game
 from game import PlayerId
-from game.game_bases import Trivia_Base, Secret_Message_Base, Rounds_With_Points_Base
+from game.game_bases import Trivia_Base, Basic_Secret_Message_Base, Rounds_With_Points_Base
 from game.game_bases.trivia_base import TriviaDict
 import random
 
@@ -8,9 +8,9 @@ POINTS_FOOL = 1
 POINTS_GUESS = 3
 NUM_QUESTIONS = 3
 
-class Tricky_Trivia(Secret_Message_Base,Trivia_Base,Rounds_With_Points_Base):
+class Tricky_Trivia(Basic_Secret_Message_Base,Trivia_Base,Rounds_With_Points_Base):
     def __init__(self,gh:game.GH):
-        Secret_Message_Base.__init__(self,gh)
+        Basic_Secret_Message_Base.__init__(self,gh)
         Trivia_Base.__init__(self,gh)
         Rounds_With_Points_Base.__init__(self,gh)
     async def game_intro(self):
@@ -30,8 +30,8 @@ class Tricky_Trivia(Secret_Message_Base,Trivia_Base,Rounds_With_Points_Base):
             trivia_dict = await self.get_trivia(type_ = self.type_.Multiple_Choice)
         question_text = f"*{trivia_dict['question']}*\nAn example answer might be '*{trivia_dict['incorrect_answers'][0]}*'."
         await self.basic_send(question_text)
-        responses:dict[PlayerId,str] = await self.secret_text_response(
-            message = f"{question_text}\nWhat is a possible answer to this qustion that might fool your competitors?")
+        responses:dict[PlayerId,str] = await self.basic_secret_text_response(
+            content = f"{question_text}\nWhat is a possible answer to this qustion that might fool your competitors?")
         options = [trivia_dict['correct_answer']]+list(responses[player] for player in responses)
         options = list(set(options))#remove duplicates
         random.shuffle(options)

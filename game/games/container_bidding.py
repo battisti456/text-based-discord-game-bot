@@ -1,7 +1,7 @@
 import game
 from typing import TypedDict
 from game import PlayerId
-from game.game_bases import Rounds_With_Points_Base, Secret_Message_Base, Bidding_Base
+from game.game_bases import Rounds_With_Points_Base, Basic_Secret_Message_Base, Bidding_Base
 import json
 import random
 import logging
@@ -46,10 +46,10 @@ def validate_data(data:DataDict,logger:logging.Logger):
             if not item in data["items"]:
                 logger.error(f"In container data item '{item}' from tier '{tier}'is undefined.")
 
-class Container_Bidding(Rounds_With_Points_Base,Secret_Message_Base):
+class Container_Bidding(Rounds_With_Points_Base,Basic_Secret_Message_Base):
     def __init__(self,gh:game.GH):
         Rounds_With_Points_Base.__init__(self,gh)
-        Secret_Message_Base.__init__(self,gh)
+        Basic_Secret_Message_Base.__init__(self,gh)
         self.num_rounds = NUM_CONTAINERS
         self.round_name = "bidding on container"
         self.points_format = lambda x: f"{moneyfy(x)} of valuables"
@@ -95,7 +95,7 @@ class Container_Bidding(Rounds_With_Points_Base,Secret_Message_Base):
         individual_message:dict[PlayerId,str] = {}
         for player in self.players:
             individual_message[player] = f"{question_text}\nYou currently have {moneyfy(self.money[player])} available to contribute."
-        responses = await self.secret_text_response(self.players,individual_message)
+        responses = await self.basic_secret_text_response(self.players,individual_message)
         player_bids:dict[PlayerId,int] = self.make_player_dict(0)
         for player in self.players:
             response:str = responses[player]
@@ -122,7 +122,7 @@ class Container_Bidding(Rounds_With_Points_Base,Secret_Message_Base):
                 if player_bids[player] > player_return:
                     net_text = "loss"
                 await self.score(player,player_return,True)
-                await self.secret_send(player,
+                await self.basic_secret_send(player,
                                        f"Your portion of the bid was {percentify(player_portion)} making your return {moneyfy(player_return)}.\n" +
                                        f"This means you had a net {net_text} of {moneyfy(abs(player_bids[player] - player_return))}.\n" +
                                        f"You now have {moneyfy(self.money[player])} remaining to bid with and {moneyfy(self.points[player])} in valuables.")

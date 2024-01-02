@@ -1,7 +1,7 @@
 import game
 from game import PlayerId
 
-from game.game_bases import Dictionary_Base, Secret_Message_Base, Rounds_With_Points_Base
+from game.game_bases import Dictionary_Base, Basic_Secret_Message_Base, Rounds_With_Points_Base
 
 import random
 
@@ -13,10 +13,10 @@ NUM_DEFINITIONS = 6
 GUESS_FEEDBACK = True
 LENGTH_HINT = True
 
-class Guess_The_Word(Dictionary_Base,Secret_Message_Base, Rounds_With_Points_Base):
+class Guess_The_Word(Dictionary_Base,Basic_Secret_Message_Base, Rounds_With_Points_Base):
     def __init__(self,gh:game.GH):
         Dictionary_Base.__init__(self,gh)
-        Secret_Message_Base.__init__(self,gh)
+        Basic_Secret_Message_Base.__init__(self,gh)
         Rounds_With_Points_Base.__init__(self,gh)
         self.num_rounds = NUM_ROUNDS
     async def game_intro(self):
@@ -63,8 +63,8 @@ class Guess_The_Word(Dictionary_Base,Secret_Message_Base, Rounds_With_Points_Bas
                                 feedback += secret_word[j]
                             else:
                                 feedback += "\_"
-                        await self.secret_send(player,f"Your current feedback is '{feedback}'.")
-            responses:dict[PlayerId,str] = await self.secret_text_response(players_not_guessed,f"What word{len_text} is this definition for?\n{def_str}")
+                        await self.basic_secret_send(player,f"Your current feedback is '{feedback}'.")
+            responses:dict[PlayerId,str] = await self.basic_secret_text_response(players_not_guessed,f"What word{len_text} is this definition for?\n{def_str}")
             correct_players:list[int] = list(player for player in players_not_guessed if responses[player].lower() == secret_word)
             if GUESS_FEEDBACK:
                 no_success = (len(correct_players) == 0)
