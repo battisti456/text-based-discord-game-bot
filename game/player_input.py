@@ -205,10 +205,10 @@ async def run_inputs(
             await asyncio.sleep(SLEEP_TIME)
     if not sender is None:
         def feedback_text() -> str:
-            feedback = ""
+            feedback_list = []
             for input in inputs:
-                feedback += input.response_status() + '\n'
-            return feedback
+                feedback_list.append("Monitoring: " + input.response_status())
+            return "\n".join(feedback_list)
         feedback_message:Message = Alias_Message(
             Message(players_who_can_see=who_can_see),content_modifier=lambda content:feedback_text())
         await sender(feedback_message)

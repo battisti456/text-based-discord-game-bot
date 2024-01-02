@@ -5,7 +5,7 @@ import PyDictionary
 import fogleman_TWL06_scrabble as scrabble
 import wonderwords
 import random
-from typing import Literal
+from typing import Literal, get_args
 
 LETTER_FREQUENCY = {
     "a" : 9,
@@ -40,7 +40,9 @@ LETTER_WEIGHTS:list[int|float] = list(LETTER_FREQUENCY[letter] for letter in LET
 
 WORD_LIST_LEN_CAP = 100
 
-PartOfSpeach = Literal['Noun','Verb','Adjective','Adverb']
+
+type PartOfSpeach = Literal['Noun','Verb','Adjective','Adverb']
+
 type DefinitionDict = dict[PartOfSpeach,list[str]]
 type DefinitionList = list[tuple[PartOfSpeach,str]]
 
@@ -73,7 +75,7 @@ class Dictionary_Base(Game):
             if "(" in _def[1]:
                 close_paranthesis = ")"
             formatted_strings.append(
-                f"> {_def[0]}: **{_def[1]}{close_paranthesis}**"
+                f"> {_def[0]}: *{_def[1]}{close_paranthesis}*"
             )
         return '\n'.join(formatted_strings)
             

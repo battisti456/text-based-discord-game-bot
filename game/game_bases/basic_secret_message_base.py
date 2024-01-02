@@ -4,7 +4,7 @@ from game.message import Message, make_bullet_points
 from game.player_input import Player_Single_Choice_Input, Player_Text_Input, run_inputs
 from game.emoji_groups import COLORED_CIRCLE_EMOJI, NO_YES_EMOJI
 
-from game import PlayerId,PlayerDict, make_player_dict
+from game import PlayerId,PlayerDict, PlayerDictOptional, make_player_dict
 from typing import Optional, overload
 
 class Basic_Secret_Message_Base(Game):
@@ -14,19 +14,21 @@ class Basic_Secret_Message_Base(Game):
             self.initialized_bases.append(Basic_Secret_Message_Base)
 
     async def basic_secret_send(
-            self,player:Optional[list[PlayerId]] = None,content:Optional[str|PlayerDict[str]] = None,
+            self,player:Optional[list[PlayerId]|PlayerId] = None,content:Optional[str|PlayerDict[str]] = None,
             attatchements_data:Optional[list[str]|PlayerDict[list[str]]] = None):
         p:list[PlayerId] = []
         if player is None:
             p = list(self.players)
-        else:
+        elif isinstance(player,list):
             p = player
+        else:
+            p = [player]
         c:PlayerDict[str] = {}
         if isinstance(content,dict):
             c = content
         elif isinstance(content,str):
             c = make_player_dict(p,content)
-        a:PlayerDict[list[str]] = {}
+        a:PlayerDict[list[str]] = make_player_dict(p,[])
         if isinstance(attatchements_data,list):
             a = make_player_dict(p,attatchements_data)
         elif isinstance(attatchements_data,dict):
@@ -68,7 +70,7 @@ class Basic_Secret_Message_Base(Game):
                 players_who_can_see=[player]
             )
             inpt = Player_Text_Input(
-                "secret text response",
+                "their secret text response",
                 self.gi,
                 self.sender,
                 [player],
@@ -150,7 +152,7 @@ class Basic_Secret_Message_Base(Game):
                 bullet_points=make_bullet_points(o[player],e[player])
             )
             inpt = Player_Single_Choice_Input(
-                "secret text response",
+                "their secret multiple choice response",
                 self.gi,
                 self.sender,
                 [player],

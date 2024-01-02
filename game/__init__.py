@@ -1,5 +1,5 @@
 from typing import TypeVar
-from typing import Hashable, Iterable, Optional, Callable
+from typing import Hashable, Iterable, Optional, Callable, Mapping, Dict
 
 DataType = TypeVar('DataType')
 
@@ -9,7 +9,7 @@ type ChannelId = Hashable
 type InteractionId = Hashable
 type PlayerPlacement = list[list[PlayerId]]
 
-type PlayerDictOptional[DataType] = dict[PlayerId,DataType|None]
+type PlayerDictOptional[DataType] = dict[PlayerId,Optional[DataType]]
 type PlayerDict[DataType] = dict[PlayerId,DataType]
 
 def make_player_dict(players:Iterable[PlayerId],value:DataType|Callable[[],DataType] = None) -> PlayerDict[DataType]:
