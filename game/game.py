@@ -8,7 +8,7 @@ from game.player_input import Player_Single_Choice_Input, Player_Text_Input
 from game.grammer import ordinate, wordify_iterable
 import functools
 
-from typing import Optional, Iterable, TypeVar, Callable, Awaitable, ParamSpec
+from typing import Optional, Iterable, TypeVar, Callable, Awaitable, ParamSpec, overload
 
 MULTIPLE_CHOICE_LINE_THRESHOLD = 30
 
@@ -31,10 +31,22 @@ class Game(object):
     def format_players(self,user_id:list[PlayerId]) -> str:
         #gets string of user's name
         return self.sender.format_players(user_id)
+    @overload
+    async def basic_multiple_choice(
+            self,content:Optional[str],options:list[str],who_chooses:PlayerId,
+            emojis:Optional[list[str]], channel_id:Optional[ChannelId], 
+            allow_answer_change:bool) -> int:
+        ...
+    @overload
+    async def basic_multiple_choice(
+            self,content:Optional[str],options:list[str],who_chooses:Optional[list[PlayerId]],
+            emojis:Optional[list[str]], channel_id:Optional[ChannelId], 
+            allow_answer_change:bool) -> PlayerDict[int]:
+        ...
     async def basic_multiple_choice(
             self,content:Optional[str] = None,options:list[str] = [],who_chooses:Optional[list[PlayerId]|PlayerId] = None,
             emojis:Optional[list[str]] = None, channel_id:Optional[ChannelId] = None, 
-            allow_answer_change:bool = True) -> PlayerDict[int]:
+            allow_answer_change:bool = True) -> PlayerDict[int]|int:
         wc:list[PlayerId] = []
         if isinstance(who_chooses,list):
             wc += who_chooses
@@ -71,15 +83,45 @@ class Game(object):
             allow_edits=allow_answer_change
         )
         await player_input.run()
-        return player_input.responses
+        if isinstance(who_chooses,list) or who_chooses is None:
+            to_return:PlayerDict[int] = {}
+            for player in wc:
+                value = player_input.responses[player]
+                assert not value is None
+                to_return[player] = value
+            return to_return
+        else:
+            value = player_input.responses[who_chooses]
+            assert not value is None
+            return value
+    @overload
+    async def basic_no_yes(
+            self,content:Optional[str],who_chooses:PlayerId,
+            channel_id:Optional[ChannelId], allow_answer_change:bool) -> int:
+        ...
+    @overload
+    async def basic_no_yes(
+            self,content:Optional[str],who_chooses:Optional[list[PlayerId]],
+            channel_id:Optional[ChannelId], allow_answer_change:bool) -> int | PlayerDict[int]:
+        ...
     async def basic_no_yes(
             self,content:Optional[str] = None,who_chooses:Optional[PlayerId|list[PlayerId]] = None,
-            channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True) -> PlayerDict[int]:
+            channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True) -> int | PlayerDict[int]:
         #returns 0 for no and 1 for yes to a yes or no question, waits for user to respond
         return await self.basic_multiple_choice(content,["no","yes"],who_chooses,list(game.emoji_groups.NO_YES_EMOJI),channel_id,allow_answer_change)
+    @overload
+    async def basic_text_response(
+            self,content:str,who_chooses:PlayerId,
+            channel_id:Optional[ChannelId], allow_answer_change:bool) -> str:
+        ...
+    @overload
+    async def basic_text_response(
+            self,content:str,who_chooses:list[PlayerId]|None,
+            channel_id:Optional[ChannelId], allow_answer_change:bool) -> PlayerDict[str]:
+        ...
     async def basic_text_response(
             self,content:str,who_chooses:PlayerId|list[PlayerId]|None = None,
-            channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True) -> PlayerDict[str]:
+            channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True) -> str|PlayerDict[str]:
         #prompts a set of users for text based responses and returns them as a dict
         wc:list[PlayerId] = []
         if isinstance(who_chooses,list):
@@ -98,10 +140,21 @@ class Game(object):
             gi = self.gi,
             sender = self.sender,
             players=wc,
-            message=question
+            message=question,
+            allow_edits=allow_answer_change
         )
         await player_input.run()
-        return player_input.responses
+        if isinstance(who_chooses,list) or who_chooses is None:
+            to_return:PlayerDict[str] = {}
+            for player in wc:
+                value = player_input.responses[player]
+                assert not value is None
+                to_return[player] = value
+            return to_return
+        else:
+            value = player_input.responses[who_chooses]
+            assert not value is None
+            return value
 
     async def basic_send(self,content:Optional[str] = None,attatchements_data:list[str] = [],
                    channel_id:Optional[ChannelId] = None):
