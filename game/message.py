@@ -212,4 +212,6 @@ class Add_Bullet_Points_To_Content_Alias_Message(Alias_Message):
             return f"{content}{bp}"
         Alias_Message.__init__(self,parent_message,add_bullet_points)
             
-                
+class Reroute_Message(Alias_Message):
+    def __init__(self,message:Message,channel_id:ChannelId):
+        Alias_Message.__init__(self,message,channel_id_modifier=lambda channel: channel_id)       

@@ -31,7 +31,8 @@ class Player_Input[T]():
             Message(players_who_can_see=who_can_see),lambda content: self.response_status())
         self.funcs_to_call_on_update:list[Callable[[],Awaitable]] = []
     def on_update(self,func:Callable[[],Awaitable]) -> Callable[[],Awaitable]:
-        self.funcs_to_call_on_update.append(func)
+        if not func in self.funcs_to_call_on_update:
+            self.funcs_to_call_on_update.append(func)
         return func
     def response_status(self) -> str:
         #returns text describing which players have not responded to this input
@@ -218,4 +219,4 @@ async def run_inputs(
         
     wait_task = asyncio.create_task(wait_until_completion())
     _runs = list(asyncio.create_task(input._run(wait_task)) for input in inputs)
-    await asyncio.wait(_runs)
+    await asyncio.wait([wait_task]+_runs)
