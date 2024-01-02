@@ -34,7 +34,7 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
         shared:Card_Holder = Card_Holder("Shared cards.")
         await self.player_draw(self.players,PLAYER_CARDS)
         self.deck.give(shared,SHARED_CARDS)
-        await self.send_ch(shared,"Here are the shared cards.")
+        await self.ch_to_attachment(shared,"Here are the shared cards.")
         responses = await self.basic_multiple_choice(
             "Judging from your own cards and the shared cards, where do you think you will place amongst your fellow players?",
             list(game.ordinate(num+1) for num in range(len(self.players))),
@@ -66,11 +66,11 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
                     down_check - False
             player_diffs[player] = diff
         for player in self.players:
-            await self.send_ch(
+            await self.ch_to_attachment(
                 self.hands[player],
                 f"{self.format_players_md(player)}'s hand was:"
             )
-            await self.send_ch(
+            await self.ch_to_attachment(
                 players_best_poker_hands[player],
                 f"Meaning {self.format_players_md(player)}'s best poker hand with the shared cards was:"
             )

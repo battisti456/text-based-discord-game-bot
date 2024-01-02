@@ -58,7 +58,8 @@ class Game(object):
         question = Message(
             content = content,
             channel_id=channel_id,
-            bullet_points=bp
+            bullet_points=bp,
+            attach_paths=[]
         )
         await self.sender(question)
         player_input = Player_Single_Choice_Input(

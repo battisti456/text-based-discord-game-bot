@@ -59,9 +59,10 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
             assert isinstance(message.channel_id,int)
             channel = self.client.get_channel(message.channel_id)
         assert isinstance(channel,(discord.TextChannel,discord.Thread))
-        attachments= []
-        for path in message.attach_paths:
-            attachments.append(discord.File(path))
+        attachments:list[discord.File] = []
+        if not message.attach_paths is None:
+            for path in message.attach_paths:
+                attachments.append(discord.File(path))
         if message.message_id is None:#new message
             await self.client.wait_until_ready()
             discord_message = await channel.send(content=message.content,files = attachments)

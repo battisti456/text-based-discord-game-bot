@@ -28,7 +28,7 @@ config:Config = grab_json(CONFIG_PATH)
 testing(config)
 
 gi = Discord_Game_Interface(config['channel_id'],list(config['players'][player] for player in config['players']))
-gm = Elimination_Trivia(gi)
+gm = Elimination_Blackjack(gi)
 @gi.client.event
 async def on_ready():
     await gi.client.wait_until_ready()

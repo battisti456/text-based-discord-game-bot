@@ -3,13 +3,15 @@ import random
 
 from game.game import Game, police_game_callable
 from game.game_interface import Game_Interface
+from game.message import Message
+from game.grammer import temp_file_path, wordify_iterable
 
 
 import PIL.Image
 import PIL.ImageOps
 
-from typing import Iterable, Callable
-from game import PlayerId
+from typing import Iterable
+from game import PlayerId, PlayerDict, ChannelId, make_player_dict
 
 from itertools import combinations
 from collections import Counter
@@ -36,7 +38,7 @@ def card_file_name(suit:int,value:int):
     return f"{card_text}_of_{SUIT_NAMES[suit]}{better_art}.png"
 
 def wordify_cards(cards:Iterable['Card']) -> str:
-    return game.wordify_iterable(card.string() for card in cards)
+    return wordify_iterable(card.string() for card in cards)
 def frequency(values:list[int]) -> dict[int,int]:
     return dict(Counter(values))
 
@@ -88,7 +90,7 @@ class Card_Holder(object):
         for i in range(len(self.cards)):
             base.paste(card_images[i],(int(offset+i*card_width*overlap_ratio),0))
         return PIL.ImageOps.expand(base,border = HAND_PADDING,fill =HAND_COLOR)
-    def give(self,other:'Card_Holder',num_random_cards:int = 0,cards:int|Card|Iterable[int|Card]= []) -> Iterable[Card]:
+    def give(self,other:'Card_Holder',num_random_cards:int = 0,cards:int|Card|Iterable[int|Card]= []) -> list[Card]:
         cards_to_remove:set[Card] = set()
         if isinstance(cards,int):
             cards_to_remove.add(self.cards[cards])
@@ -110,7 +112,7 @@ class Card_Holder(object):
         for card in cards_to_remove:
             self.cards.remove(card)
             other.cards.append(card)
-        return cards_to_remove
+        return list(cards_to_remove)
     def take(self,other:'Card_Holder',num_random_cards:int = 0,cards:int|Card|Iterable[int|Card]= []) -> Iterable[Card]:
         return other.give(self,num_random_cards,cards)
 
@@ -246,7 +248,7 @@ class Poker_Hand(Card_Holder):
             total += values[i] * 16**i
         return total#each digit should be hand value, then descending order of cards in base 16
 
-def best_poker_hand(*args:list[Card_Holder]) -> tuple[Poker_Hand,int]:
+def best_poker_hand(*args:Card_Holder) -> tuple[Poker_Hand,int]:
     cards:list[Card] = []
     for arg in args:
         cards = cards + arg.cards
@@ -254,10 +256,10 @@ def best_poker_hand(*args:list[Card_Holder]) -> tuple[Poker_Hand,int]:
     found_poker_hand = Poker_Hand()
     found_rank = -1
     for card_set in combinations(cards,5):
-        test_poker_hand.cards = card_set
+        test_poker_hand.cards = list(card_set)
         test_rank = test_poker_hand.rank()
         if test_rank > found_rank:
-            found_poker_hand.cards = card_set
+            found_poker_hand.cards = list(card_set)
             found_rank = test_rank
     return found_poker_hand,found_rank
 
@@ -276,71 +278,75 @@ class Card_Base(Game):
         Game.__init__(self,gi)
         if not Card_Base in self.initialized_bases:
             self.initialized_bases.append(Card_Base)
-            self.hand_threads:dict[int,int] = {}
-            self.hand_message:dict[int,int] = {}
+            self.hand_threads:PlayerDict[ChannelId] = make_player_dict(self.players,None)
+            self.hand_message:PlayerDict[Message] = make_player_dict(self.players,Message)
     async def setup_cards(self,num_decks:int = 1):
         self.deck:Deck = Deck(num_decks)
         self.discard = Card_Holder()
-        self.hands:dict[int,Hand] = {}
+        self.hands:PlayerDict[Hand] = {}
         for player in self.players:
             self.hands[player] = Hand()
         for player in self.players:
             if not player in self.hand_threads:#if first time
-                thread_id = await self.create_thread("Your hand")
-                await self.invite_to_thread(thread_id,player)
+                thread_id = await self.gi.new_channel("Your hand",[player])
                 self.hand_threads[player] = thread_id
             await self.update_hand(player)
-    async def send_ch(self,ch:Card_Holder,message:str = "",thread_id:int|None = None,message_id:int|None = None):
+    def ch_to_attachment(self,ch:Card_Holder) -> str:
         image = ch.image()
-        path = self.temp_file_path(".png")
+        path = temp_file_path(".png")
         image.save(path)
-        return await self.basic_send(content = message,attatchements_data=path,channel_id = thread_id,message_id = message_id)
-    police_game_callable
-    async def update_hand(self,player:int,message:str = ""):
-        message_id = None
-        if player in self.hand_message:
-            message_id = self.hand_message[player]
-        contents = message
+        return path
+    @police_game_callable
+    async def update_hand(self,player:PlayerId,add_text:str = ""):
+        contents = add_text
+        hand = self.hands[player]
+        assert not hand is None
         if self.allowed_to_speak():
             if contents != "":
                 contents += "; "
             if self.hands[player]:
-                contents += f"Your hand contains the {self.hands[player].string_contents()}"
+                contents += f"Your hand contains the {hand.string_contents()}"
             else:
                 contents += "Your hand is empty."
-        message_id = await self.send_ch(self.hands[player],contents,self.hand_threads[player],message_id)
-        self.hand_message[player] = message_id
-    police_game_callable
-    async def player_draw(self,player:int|Iterable[int],num:int = 1,text_for_player:Callable[[PlayerId],str] = None):
-        if isinstance(player,int):
+        message = self.hand_message[player]
+        assert not message is None
+        message.players_who_can_see = [player]
+        message.content = contents
+        ch_to_attachment = self.ch_to_attachment(hand)
+        message.attach_paths = [ch_to_attachment]
+        await self.sender(message)
+    @police_game_callable
+    async def player_draw(self,player:PlayerId|list[PlayerId],num:int = 1):
+        players:list[PlayerId] = []
+        if not isinstance(player,list):
             players = [player]
         else:
-            players=player
+            players=list(player)
         if players:
             await self.basic_policed_send(f"{self.format_players_md(players)} drew {num} card(s).")
         for player in players:
-            cards = self.hands[player].take(self.deck,num)
+            hand:Hand|None = self.hands[player]
+            assert not hand is None
+            cards = hand.take(self.deck,num)
             draw_text = ""
             if self.allowed_to_speak():
                 draw_text = f"You drew: {wordify_cards(cards)}."
-            if self.allowed_to_speak() and not text_for_player is None:
-                draw_text += "\n"
-            if not text_for_player is None:
-                draw_text += text_for_player(player)
             await self.update_hand(player,draw_text)
-    police_game_callable
-    async def player_discard(self,player:int,num_random:int = 0,cards:int|Card|Iterable[int]|Iterable[Card] = []):
-        cards = self.hands[player].give(self.discard,num_random,cards)
+    @police_game_callable
+    async def player_discard(self,player:PlayerId,num_random:int = 0,cards:int|Card|Iterable[int]|list[Card] = []):
+        hand = self.hands[player]
+        assert not hand is None
+        cards = hand.give(self.discard,num_random,cards)
         discard_text = ""
-        await self.basic_policed_send(f"{self.format_players_md(player)} discarded {len(cards)} card(s).")
+        await self.basic_policed_send(f"{self.format_players_md([player])} discarded {len(cards)} card(s).")
         if self.allowed_to_speak():
             discard_text = f"You discarded: {wordify_cards(cards)}."
         await self.update_hand(player,discard_text)
-    police_game_callable#wildly untested....
+    @police_game_callable#wildly untested....
     async def shuffle_discord_into_deck(self):
         self.discard.give(self.deck,cards=self.deck.cards)
         self.deck.shuffle()
-        self.basic_policed_send("The discard has been shuffled back into the deck.")
+        await self.basic_policed_send("The discard has been shuffled back into the deck.")
 
     
         

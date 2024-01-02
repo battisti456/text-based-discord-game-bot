@@ -34,10 +34,10 @@ class Bullet_Point(object):
 
 class Message(object):
     def __init__(
-            self,content:Optional[str] = None,attach_paths:list[str] = [],
+            self,content:Optional[str] = None,attach_paths:Optional[list[str]] = None,
             channel_id:Optional[ChannelId] = None,message_id:Optional[MessageId] = None,
             keep_id_on_copy:bool = False, players_who_can_see:Optional[list[PlayerId]] = None,
-            bullet_points:list[Bullet_Point] = []):
+            bullet_points:Optional[list[Bullet_Point]] = None):
         self.content = content
         self.attach_paths = attach_paths
         self.channel_id = channel_id
@@ -119,11 +119,11 @@ class Alias_Message(Child_Message):
     def __init__(
             self,parent_message:'Message',
             content_modifier:OptionalModifier[str] = do_not_modify,
-            attach_paths_modifier:Modifier[list[str]] = do_not_modify,
+            attach_paths_modifier:OptionalModifier[list[str]] = do_not_modify,
             channel_id_modifier:OptionalModifier[ChannelId] = do_not_modify,
             message_id_modifier:OptionalModifier[MessageId] = do_not_modify,
             players_who_can_see_modifier:OptionalModifier[list[PlayerId]] = do_not_modify,
-            bullet_points_modifier:Modifier[list[Bullet_Point]] = do_not_modify):
+            bullet_points_modifier:OptionalModifier[list[Bullet_Point]] = do_not_modify):
         Child_Message.__init__(self,parent_message)
         self.content_modifier = content_modifier
         self.attach_paths_modifier = attach_paths_modifier
@@ -135,7 +135,7 @@ class Alias_Message(Child_Message):
     def content(self) -> str | None:
         return self.content_modifier(self.parent_message.content)
     @property
-    def attach_paths(self) -> list[str]:
+    def attach_paths(self) -> list[str] | None:
         return self.attach_paths_modifier(self.parent_message.attach_paths)
     @property
     def channel_id(self) -> ChannelId | None:
@@ -150,15 +150,15 @@ class Alias_Message(Child_Message):
     def players_who_can_see(self) -> list[PlayerId] | None:
         return self.players_who_can_see_modifier(self.parent_message.players_who_can_see)
     @property
-    def bullet_points(self) -> list[Bullet_Point]:
+    def bullet_points(self) -> list[Bullet_Point] | None:
         return self.bullet_points_modifier(self.parent_message.bullet_points)
 class Unique_Id_Alias_Message(Alias_Message):
     def __init__(self,parent_message:'Message',
             content_modifier:OptionalModifier[str] = do_not_modify,
-            attach_paths_modifier:Modifier[list[str]] = do_not_modify,
+            attach_paths_modifier:OptionalModifier[list[str]] = do_not_modify,
             channel_id_modifier:OptionalModifier[ChannelId] = do_not_modify,
             players_who_can_see_modifier:OptionalModifier[list[PlayerId]] = do_not_modify,
-            bullet_points_modifier:Modifier[list[Bullet_Point]] = do_not_modify):
+            bullet_points_modifier:OptionalModifier[list[Bullet_Point]] = do_not_modify):
         self.sub_message_id= None
         Alias_Message.__init__(
             self,parent_message,content_modifier,attach_paths_modifier,
@@ -191,7 +191,11 @@ class Add_Bullet_Points_To_Content_Alias_Message(Alias_Message):
                 content = ""
             else:
                 content += "\n"
-            return f"{content}{wordify_iterable(str(bp) for bp in parent_message.bullet_points)}"
+            if parent_message.bullet_points is None:
+                bp = ""
+            else:
+                bp = wordify_iterable(str(bp) for bp in parent_message.bullet_points)
+            return f"{content}{bp}"
         Alias_Message.__init__(self,parent_message,add_bullet_points)
             
                 

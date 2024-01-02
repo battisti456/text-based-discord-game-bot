@@ -1,5 +1,5 @@
 from typing import TypeVar
-from typing import Hashable, Iterable, Optional
+from typing import Hashable, Iterable, Optional, Callable
 
 DataType = TypeVar('DataType')
 
@@ -11,10 +11,13 @@ type PlayerPlacement = list[list[PlayerId]]
 
 type PlayerDict[DataType] = dict[PlayerId,DataType|None]
 
-def make_player_dict(players:Iterable[PlayerId],value:Optional[DataType] = None) -> PlayerDict[DataType]:
+def make_player_dict(players:Iterable[PlayerId],value:Optional[DataType|Callable[[],DataType]] = None) -> PlayerDict[DataType]:
     to_return:PlayerDict[DataType] = {}
     for player in players:
-        to_return[player] = value
+        if callable(value):
+            to_return[player] = value()
+        else:
+            to_return[player] = value
     return to_return
 
 def correct_int(value:int|None) -> int:
