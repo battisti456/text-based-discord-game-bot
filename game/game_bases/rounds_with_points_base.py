@@ -19,7 +19,7 @@ class Rounds_With_Points_Base(Game):
             self.round_name = "round"
             self.reverse_scoring = False
     @police_game_callable
-    async def score(self,player:Optional[int|list[int]], num:int|PlayerDict[int], mute:bool = False):
+    async def score(self,player:Optional[PlayerId|list[PlayerId]], num:int|PlayerDict[int], mute:bool = False):
         p:list[PlayerId] = []
         if isinstance(player,int):
             p.append(player)

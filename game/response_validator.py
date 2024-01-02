@@ -16,7 +16,9 @@ def text_validator_maker(
         is_decimal:Optional[bool] = None,
         is_digit:Optional[bool] = None,
         is_in:Optional[list[str]] = None,
-        not_is_in:Optional[list[str]] = None
+        not_is_in:Optional[list[str]] = None,
+        is_composed_of:Optional[str] = None,
+        is_stricly_composed_of:Optional[str] = None
         
 ) -> ResponseValidator[str]:
     def validator(player:PlayerId,value:Optional[str]) -> Validation:
@@ -52,5 +54,15 @@ def text_validator_maker(
         if not not_is_in is None:
             if value in not_is_in:
                 return (False,f"given value '{value}' is a banned value")
+        if not is_composed_of is None:
+            if not all(letter in is_composed_of for letter in value):
+                return (False,f"given value '{value}' contains characters not found in '{is_composed_of}'")
+        if not is_stricly_composed_of is None:
+            list_letters = list(is_stricly_composed_of)
+            for letter in value:
+                if letter in list_letters:
+                    list_letters.remove(letter)
+                else:
+                    return (False,f"given value '{value}' contains more characters than are found in '{is_stricly_composed_of}'")
         return (True,None)
     return validator

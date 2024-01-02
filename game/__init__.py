@@ -9,9 +9,10 @@ type ChannelId = Hashable
 type InteractionId = Hashable
 type PlayerPlacement = list[list[PlayerId]]
 
-type PlayerDict[DataType] = dict[PlayerId,DataType|None]
+type PlayerDictOptional[DataType] = dict[PlayerId,DataType|None]
+type PlayerDict[DataType] = dict[PlayerId,DataType]
 
-def make_player_dict(players:Iterable[PlayerId],value:Optional[DataType|Callable[[],DataType]] = None) -> PlayerDict[DataType]:
+def make_player_dict(players:Iterable[PlayerId],value:DataType|Callable[[],DataType] = None) -> PlayerDict[DataType]:
     to_return:PlayerDict[DataType] = {}
     for player in players:
         if callable(value):
