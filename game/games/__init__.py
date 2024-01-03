@@ -32,3 +32,4 @@ games:list[type[Game]] = [
 
 def random_game() -> type[Game]:
     return choice(games)
+

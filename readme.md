@@ -39,4 +39,5 @@ Here are the steps to set the code up.
         "data_path":"data",
     }
 ```
+
 - Run 'main.py' to launch a game!

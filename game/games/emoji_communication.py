@@ -18,6 +18,7 @@ BONUS_POINTS_PER_GUESSER = 2
 MAX_EMOJI = 10
 
 def only_emoji(text:str) -> str:
+
     emj:list[str] = list(token.chars for token in emoji.analyze(text,False,False) if emoji.is_emoji(token.chars))
     emj = emj[0:MAX_EMOJI]
     return "".join(emj)
@@ -34,6 +35,7 @@ def emoji_response_validator(player:PlayerId,value:str|None) -> tuple[bool,str|N
     if num_emoji(value) > BONUS_NUM:
         return (True,f"response '{value}' contains {num_emoji(value)} emoji, if it contained {BONUS_NUM} or fewer, it could be eligible for bonus points")
     return (True,None)
+
 
 class Emoji_Communication(Basic_Secret_Message_Base,Rounds_With_Points_Base):
     def __init__(self,gh:Game_Interface):
@@ -59,7 +61,9 @@ class Emoji_Communication(Basic_Secret_Message_Base,Rounds_With_Points_Base):
         player_questions = {}
         for current_player in self.players:
             player_questions[current_player] = f"Please do your best to convey this sentence through emoji.\n'{player_prompts[current_player]}'"
+
         emoji_responses = await self.basic_secret_text_response(self.players,player_questions,response_validator=emoji_response_validator)
+
         emoji_prompts = {}
         for current_player in self.players:
             emoji_prompts[current_player] = only_emoji(emoji_responses[current_player])
@@ -70,8 +74,10 @@ class Emoji_Communication(Basic_Secret_Message_Base,Rounds_With_Points_Base):
                 options.append(self.ww_sentence.sentence())
             options.append(player_prompts[current_player])
             random.shuffle(options)
+
             responses = await self.basic_multiple_choice(
                 f"{self.format_players_md([current_player])} emoted '{emoji_prompts[current_player]}' to convey their sentence.\n" +
+
                 "Which sentence was it?",
                 options,
                 players_to_ask
@@ -91,9 +97,11 @@ class Emoji_Communication(Basic_Secret_Message_Base,Rounds_With_Points_Base):
                 if num_emoji(emoji_prompts[current_player]) <= BONUS_NUM:
                     points = BONUS_POINTS_PER_GUESSER*len(correct_players)
                     bonus_text = f", and achieving the bonus for using less than {BONUS_NUM} emojis,"
+
                 await self.basic_send(
                     f"{correct_text}{self.format_players_md(correct_players)} got it right each earning {POINTS_FOR_GUESS} point(s).\n" +
                     f"For guiding them so well{bonus_text} {self.format_players_md([current_player])} earned {points} point(s)."
+
                 )
                 await self.score(correct_players,POINTS_FOR_GUESS,mute = True)
                 await self.score(current_player,points,mute = True)

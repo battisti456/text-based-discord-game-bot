@@ -187,12 +187,14 @@ class Game(object):
             else:
                 text_list.append(f"in {ordinate(place)} place we have {self.format_players_md(item)}")
                 place += 1
+
         return await self.basic_send(f"The placements are: {wordify_iterable(text_list,comma=';')}.")
     async def send(self,message:Message):
         await self.sender(message)
     async def policed_send(self,message:Message):
         if self.allowed_to_speak():
             await self.sender(message)
+
 
 def police_game_callable(func:Callable[P,Awaitable[R]]) -> Callable[P,Awaitable[R]]:
     #Adds the class the function was first defined in to current_class_execution, only to be used on asynchronous game.Game methods
