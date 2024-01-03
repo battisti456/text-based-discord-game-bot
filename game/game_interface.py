@@ -23,6 +23,9 @@ class Game_Interface(object):
         self.clear_actions()
         self.default_sender = Interface_Sender(self)
         self.tracked_messages:list[Message] = []
+    async def reset(self):
+        self.purge_tracked_messages()
+        self.clear_actions()
     def track_message(self,message:Message):
         self.tracked_messages.append(message)
     def purge_tracked_messages(self):

@@ -1,6 +1,5 @@
 import json
 import asyncio
-import game
 from discord_interface import Discord_Game_Interface
 from game.games import *
 from typing import TypedDict
@@ -20,21 +19,13 @@ def grab_json(path):
         to_return = json.load(file)
     return to_return
 
-def testing(config:Config):
-    config['channel_id'] = config['test_channel_id']
-    config['players'] = config['test_players']
-
-config:Config = grab_json(CONFIG_PATH)
-testing(config)
-
-gi = Discord_Game_Interface(config['channel_id'],list(config['players'][player] for player in config['players']))
-gm = Emoji_Communication(gi)
-@gi.client.event
-async def on_ready():
-    await gi.client.wait_until_ready()
-    channel = gi.client.get_channel(config['channel_id'])
-    for thread in channel.threads:
-        await thread.delete()
-
-    asyncio.create_task(gm.run())
-gi.client.run(config['token'])
+if __name__ == "__main__":
+    config:Config = grab_json(CONFIG_PATH)
+    gi = Discord_Game_Interface(config['channel_id'],list(config['players'][player] for player in config['players']))
+    @gi.client.event
+    async def on_ready():
+        await gi.reset()
+        while True:
+            gm = random_game()(gi)
+            await asyncio.create_task(gm.run_independant())
+    gi.client.run(config['token'])

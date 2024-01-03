@@ -174,6 +174,14 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                                 break
                         if not interaction.choice_index is None:
                             await self._trigger_action(interaction)
+    async def reset(self):
+        await super().reset()
+        await self.client.wait_until_ready()
+        assert isinstance(self.channel_id,int)
+        channel = self.client.get_channel(self.channel_id)
+        assert isinstance(channel,discord.TextChannel)
+        for thread in channel.threads:
+            await thread.delete()
     async def _infer_option_order(self,channel_id:ChannelId,message_id:MessageId) -> list[str]:#very very slow
         assert isinstance(channel_id,int)
         await self.client.wait_until_ready()

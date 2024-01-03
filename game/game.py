@@ -26,6 +26,9 @@ class Game(object):
             self.classes_banned_from_speaking:list[type[Game]] = []
     async def run(self)->PlayerPlacement:
         return []
+    async def run_independant(self):
+        placement:PlayerPlacement = await self.run()
+        await self.send_placement(placement)
     def format_players_md(self,players:Iterable[PlayerId]) -> str:
         return self.sender.format_players_md(players)
     def format_players(self,user_id:list[PlayerId]) -> str:
@@ -172,11 +175,11 @@ class Game(object):
         #only sends if allowed_to_speak
         if self.allowed_to_speak():
             return await self.basic_send(content,attatchements_data,channel_id)
-    async def send_rank(self,rank:PlayerPlacement):
+    async def send_placement(self,placement:PlayerPlacement):
         #takes a list of userids and lists of userids as an idea of ranking them, returns a string describing the placements
         text_list:list[str] = []
         place = 1
-        for item in rank:
+        for item in placement:
             if isinstance(item,list):
                 places = list(ordinate(place+i) for i in range(len(item)))
                 text_list.append(f"tied in {wordify_iterable(places)} places we have {self.format_players_md(item)}")
