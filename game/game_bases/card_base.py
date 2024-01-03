@@ -50,7 +50,7 @@ class Card(object):
         return f"{CARD_NAMES[self.value].capitalize()} of {SUIT_NAMES[self.suit].capitalize()}"
     def emoji(self)->str:
         return game.emoji_groups.PLAYING_CARD_EMOJI[self.suit*len(CARD_NAMES)+self.value]
-    def image(self,card_width:int = CARD_WIDTH)->PIL.Image.Image:
+    def image(self,card_width:int = CARD_WIDTH)->PIL.Image.Image:#doen't keep transparent corners....?
         image = PIL.Image.open(f"{CARD_PATH}\\{card_file_name(self.suit,self.value)}")
         image = image.convert('RGBA')
         width,height = image.size

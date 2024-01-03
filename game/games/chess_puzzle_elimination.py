@@ -1,8 +1,10 @@
-import game
+
 from game import PlayerId
-from typing import TypedDict
+from typing import TypedDict, Optional
 
 from game.game_bases import Elimination_Base
+from game.game_interface import Game_Interface
+from game.grammer import temp_file_path
 
 import chessboard.board
 import pygame
@@ -15,7 +17,7 @@ import random
 
 import pandas
 
-DATA_PATH = "lichess_db_puzzle.csv"
+DATA_PATH = "data\\lichess_db_puzzle.csv"
 ORIGINAL_BG_COLOR = (0,0,0)
 
 RATING_RANGE = (400,800)
@@ -83,10 +85,30 @@ class ChessPuzzleDict(TypedDict):
     GameUrl:str#lichess puzzle url
     OpeningTags:str#space seperated opening tags
 
+def correct_chess_puzzle(value:dict) -> ChessPuzzleDict:
+    if isinstance(value['PuzzleId'],dict):
+        num = list(value['PuzzleId'])[0]
+        for item in value:
+            value[item] = value[item][num]
+    assert not isinstance(value['PuzzleId'],dict)
+    return  {
+        'PuzzleId' : value['PuzzleId'],
+        'FEN' : value['FEN'],
+        'Moves' : value['Moves'],
+        'Rating' : value['Rating'],
+        'RatingDeviation' : value['RatingDeviation'],
+        'Popularity' : value['Popularity'],
+        'NbPlays' : value['NbPlays'],
+        'Themes' : value['Themes'],
+        'GameUrl' : value['GameUrl'],
+        'OpeningTags' : value['OpeningTags']
+    }
+
+
 class Chess_Puzzle_Elimination(Elimination_Base):
-    def __init__(self,gh:game.GH):
-        Elimination_Base.__init__(self,gh)
-        self.chess_puzzle_data:pandas.DataFrame = pandas.read_csv(f"{self.config['data_path']}\\{DATA_PATH}",dtype = {
+    def __init__(self,gi:Game_Interface):
+        Elimination_Base.__init__(self,gi)
+        self.chess_puzzle_data:pandas.DataFrame = pandas.read_csv(f"{DATA_PATH}",dtype = {
             'PuzzleId' : 'string',
             'FEN' : 'string',
             'Moves' : 'string',
@@ -103,15 +125,16 @@ class Chess_Puzzle_Elimination(Elimination_Base):
         self.board:chess.Board = chess.Board()
         self.rating_range = RATING_RANGE
     def move_text(self,move_uci:str) -> str:
-        def get_piece(uci:str) -> chess.Piece:
-            return self.board.piece_at(eval(f"chess.{uci.upper()}"))
-        piece:chess.Piece = get_piece(move_uci[0:2])
-        if piece is None:
-            self.logger.error(f"Chess move '{move_uci}' is invalid!")
-        capture:chess.Piece = get_piece(move_uci[2:4])
+        def get_piece(uci:str) -> chess.Piece | None:
+            piece = self.board.piece_at(eval(f"chess.{uci.upper()}"))
+            return piece
+        piece:chess.Piece | None = get_piece(move_uci[0:2])
+        capture:chess.Piece | None = get_piece(move_uci[2:4])
         moves_to:str = 'moves to'
         and_text = ""
         check_text = ""
+
+        assert not piece is None
 
         if (piece.piece_type == chess.PAWN and #en passant
             capture is None and #not capturing
@@ -150,7 +173,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
             return "a draw due to insufficient material for either side to checkmate"
         return ""
     def make_board_image(self) -> str:
-        tile_size = (int((ORIGINAL_BOARD_SIZE[0]-ORIGINAL_BOARDER_WIDTH*2)/NUM_TILES),
+        tile_size:tuple[int,int] = (int((ORIGINAL_BOARD_SIZE[0]-ORIGINAL_BOARDER_WIDTH*2)/NUM_TILES),
                          int((ORIGINAL_BOARD_SIZE[1]-ORIGINAL_BOARDER_WIDTH*2)/NUM_TILES))
         def uci_to_coord(uci:str) -> tuple[int,int]:
             coord = (COL_LABELS.index(uci[0]),ROW_LABELS.index(uci[1]))
@@ -167,7 +190,6 @@ class Chess_Puzzle_Elimination(Elimination_Base):
         def uci_to_square(uci:str)->tuple[int,int,int,int]:
             return coord_to_square(uci_to_coord(uci))
         fen:str = self.board.fen()
-        self.board.num
         if self.board.move_stack:
             last_move:chess.Move = self.board.peek()
             last_move_uci = last_move.uci()
@@ -177,7 +199,8 @@ class Chess_Puzzle_Elimination(Elimination_Base):
                     uci_to_square(uci)
                 )
         if self.board.is_check():
-            king_pos:chess.Square = self.board.king(self.board.turn)
+            king_pos:chess.Square | None = self.board.king(self.board.turn)
+            assert not king_pos is None
             square_index = chess.SQUARES.index(king_pos)
             coord = (
                 square_index%NUM_TILES,
@@ -202,12 +225,12 @@ class Chess_Puzzle_Elimination(Elimination_Base):
             cols.reverse()
             rows.reverse()
         drawer = PIL.ImageDraw.Draw(image)
-        tile_size = int(SET_IMAGE_SIZE[0]/8)
+        tile_pixel_width = int(SET_IMAGE_SIZE[0]/8)
 
         for i in range(NUM_TILES):
             drawer.text(#bottom
                 (
-                    NEW_BOARDER_WIDTH+int((i+0.5)*tile_size)-5,
+                    NEW_BOARDER_WIDTH+int((i+0.5)*tile_pixel_width)-5,
                     BOTTOM_LABEL_OFFSET
                 ),
                 cols[i],TEXT_COLOR,
@@ -217,19 +240,19 @@ class Chess_Puzzle_Elimination(Elimination_Base):
             drawer.text(
                 (#side
                     SIDE_LABEL_OFFSET,
-                    int(NEW_BOARDER_WIDTH/2+SET_IMAGE_SIZE[1] - (i+0.5)*tile_size)
+                    int(NEW_BOARDER_WIDTH/2+SET_IMAGE_SIZE[1] - (i+0.5)*tile_pixel_width)
                 ),
                 rows[i],TEXT_COLOR,
                 font = PIL.ImageFont.truetype("arial.ttf",size = LABEL_FONT_SIZE),
                 align = 'center',
                 spacing = 0)
 
-        file_path = self.temp_file_path('.png')
+        file_path = temp_file_path('.png')
         image.save(file_path)
         return file_path
-    def random_puzzle(self,rating_range:tuple[int,int] = None,popularity_range:tuple[int,int] = None) -> ChessPuzzleDict:
+    def random_puzzle(self,rating_range:Optional[tuple[int,int]] = None,popularity_range:Optional[tuple[int,int]] = None) -> ChessPuzzleDict:
         if rating_range is None and popularity_range is None:
-            return self.chess_puzzle_data.sample().to_dict()
+            return correct_chess_puzzle(self.chess_puzzle_data.sample().to_dict())
         def get_diffs(puzzle:ChessPuzzleDict) ->tuple[int,int]:
             rating_diff = 0
             if not rating_range is None:
@@ -244,11 +267,11 @@ class Chess_Puzzle_Elimination(Elimination_Base):
                 elif puzzle['Popularity'] < popularity_range[0]:
                     popularity_diff = popularity_range[0] - puzzle['Popularity']
             return (rating_diff,popularity_diff)
-        puzzle:ChessPuzzleDict = None
-        puzzle_diffs:tuple[int,int] = None
+        puzzle:ChessPuzzleDict = correct_chess_puzzle(self.chess_puzzle_data.sample().to_dict())
+        puzzle_diffs:tuple[int,int] = get_diffs(puzzle)
         data_sample:pandas.DataFrame = self.chess_puzzle_data.sample(n=NUM_TO_SAMPLE)
         for index, row in data_sample.iterrows():
-            row_puzzle:ChessPuzzleDict = row.to_dict()
+            row_puzzle:ChessPuzzleDict = correct_chess_puzzle(row.to_dict())
             row_diffs:tuple[int,int] = get_diffs(row_puzzle)
             if sum(row_diffs) == 0:
                 return row_puzzle
@@ -269,7 +292,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
             "If you pick the wrong move, you are eliminated (unless no one gets it right).\n" +
             "Last player standing wins!"
         )
-    async def core_game(self, remaining_players: list[PlayerId])->list[PlayerId]:
+    async def core_game(self, remaining_players: list[PlayerId])->list[PlayerId]|None:
         puzzle:ChessPuzzleDict = self.random_puzzle(self.rating_range,POPULARITY_RANGE)
         self.rating_range = (self.rating_range[0],self.rating_range[1]+PUZZLE_RATING_CAP_ESCALATION)
         self.board.set_fen(puzzle['FEN'])
@@ -359,7 +382,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
                 end_text = f" This ends the game in {self.game_over_text()}."
             await self.basic_send(
                 f"{begin_text}{COLOR_NAMES[self.board.turn]} plays {move_text}.{end_text}",
-                attatchements_data=self.make_board_image()
+                attatchements_data=[self.make_board_image()]
             )
             begin_text = ""
             move_index += 1
