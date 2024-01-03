@@ -146,11 +146,15 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 interaction.reply_to_message_id = payload.message_id
                 interaction.interaction_id = payload.emoji.id#maybe?
                 
-                emoji_order = await self._infer_option_order(payload.channel_id,payload.message_id)
-                if emoji in emoji_order:
-                    interaction.choice_index = emoji_order.index(emoji)
-                    await self._trigger_action(interaction)
-
+                message = self.find_tracked_message(payload.message_id)
+                if not message is None:
+                    if not message.bullet_points is None:
+                        for i in range(len(message.bullet_points)):
+                            if message.bullet_points[i].emoji == emoji:
+                                interaction.choice_index = i
+                                break
+                        if not interaction.choice_index is None:
+                            await self._trigger_action(interaction)
         @self.client.event
         async def on_raw_reaction_remove(payload:discord.RawReactionActionEvent):
             if (self.client.user is None or payload.user_id != self.client.user.id):
@@ -161,11 +165,16 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 interaction.reply_to_message_id = payload.message_id
                 interaction.interaction_id = payload.emoji.id#maybe?
                 
-                emoji_order = await self._infer_option_order(payload.channel_id,payload.message_id)
-                if emoji in emoji_order:
-                    interaction.choice_index = emoji_order.index(emoji)
-                    await self._trigger_action(interaction)
-    async def _infer_option_order(self,channel_id:ChannelId,message_id:MessageId) -> list[str]:
+                message = self.find_tracked_message(payload.message_id)
+                if not message is None:
+                    if not message.bullet_points is None:
+                        for i in range(len(message.bullet_points)):
+                            if message.bullet_points[i].emoji == emoji:
+                                interaction.choice_index = i
+                                break
+                        if not interaction.choice_index is None:
+                            await self._trigger_action(interaction)
+    async def _infer_option_order(self,channel_id:ChannelId,message_id:MessageId) -> list[str]:#very very slow
         assert isinstance(channel_id,int)
         await self.client.wait_until_ready()
         channel = await self.client.fetch_channel(channel_id)

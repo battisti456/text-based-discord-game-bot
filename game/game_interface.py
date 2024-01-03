@@ -13,6 +13,7 @@ class Interface_Sender(Sender):
         Sender.__init__(self)
         self.gi = gi
     async def __call__(self,message:Message) -> Any:
+        self.gi.track_message(message)
         return await self._send(message)
 
 class Game_Interface(object):
@@ -21,6 +22,16 @@ class Game_Interface(object):
         self.action_owners:dict[Action,Hashable] = {}
         self.clear_actions()
         self.default_sender = Interface_Sender(self)
+        self.tracked_messages:list[Message] = []
+    def track_message(self,message:Message):
+        self.tracked_messages.append(message)
+    def purge_tracked_messages(self):
+        self.tracked_messages = []
+    def find_tracked_message(self,message_id:MessageId) -> Message | None:
+        for message in self.tracked_messages:
+            if message.is_message(message_id,'original'):
+                return message
+        return None
     def clear_actions(self):
         for interaction_type in INTERACTION_TYPES:
             self.actions[interaction_type] = []
@@ -61,7 +72,7 @@ class Channel_Limited_Interface_Sender(Interface_Sender):
                 message,
                 await self.gi.who_can_see_channel(message.players_who_can_see)
             )
-        return await self._send(message)
+        return await Interface_Sender.__call__(self,message)
 
 class Channel_Limited_Game_Interface(Game_Interface):
     #a special kind of game interface which uses channels to limit who_can_see on Message

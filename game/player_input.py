@@ -1,4 +1,4 @@
-from game import PlayerId,PlayerDict,PlayerDictOptional, make_player_dict
+from game import PlayerId,PlayerDict,PlayerDictOptional, make_player_dict, correct_str
 from game.sender import Sender
 from game.message import Message, Alias_Message
 from game.game_interface import Game_Interface
@@ -30,6 +30,7 @@ class Player_Input[T]():
         self.status_message = Alias_Message(
             Message(players_who_can_see=who_can_see),lambda content: self.response_status())
         self.funcs_to_call_on_update:list[Callable[[],Awaitable]] = []
+        self._last_response_status:str = ""
     def on_update(self,func:Callable[[],Awaitable]) -> Callable[[],Awaitable]:
         if not func in self.funcs_to_call_on_update:
             self.funcs_to_call_on_update.append(func)
@@ -61,9 +62,11 @@ class Player_Input[T]():
         for func in self.funcs_to_call_on_update:
             await func()
     async def update_response_status(self):
-        #to be called only one something has changed
-        await self.sender(self.status_message)
-    def recieved_responses(self) -> bool:
+        #to be called only when something has changed
+        if self.status_message.content != self._last_response_status:
+            self._last_response_status = correct_str(self.status_message.content)
+            await self.sender(self.status_message)
+    def has_recieved_all_responses(self) -> bool:
         #returns weather all responses in this input are no longer None
         return all(self._response_validator(player,self.responses[player])[0] for player in self.players)
     async def _run(self,await_task:asyncio.Task[Any]):
@@ -76,7 +79,7 @@ class Player_Input[T]():
         await self._unsetup()
     async def wait_until_received_all(self):
         #wait until all responses meet response validator
-        while not self.recieved_responses():
+        while not self.has_recieved_all_responses():
             await asyncio.sleep(SLEEP_TIME)
         self._receive_inputs = False
     async def run(self) -> PlayerDictOptional[T]:
@@ -194,11 +197,12 @@ class Player_Multiple_Choice_Input(Player_Input_In_Response_To_Message[set[int]]
 
 async def run_inputs(
         inputs:list[Player_Input],completion_sets:Optional[list[set[Player_Input]]] = None,
-        sender:Optional[Sender] = None,who_can_see:Optional[list[PlayerId]] = None):
+        sender:Optional[Sender] = None,who_can_see:Optional[list[PlayerId]] = None,
+        codependant:bool = False):
     if completion_sets is None:
         completion_sets = [set(inputs)]
     def check_is_completion() -> bool:
-        completed_inputs = set(input for input in inputs if input.recieved_responses())
+        completed_inputs = set(input for input in inputs if input.has_recieved_all_responses())
         return any(completed_inputs == sub_set for sub_set in completion_sets)
     async def wait_until_completion():
         while not check_is_completion():
@@ -216,7 +220,11 @@ async def run_inputs(
             await sender(feedback_message)
         for input in inputs:
             input.on_update(on_update)
-        
+    if codependant:
+        for input1 in inputs:
+            for input2 in inputs:
+                if input1 != input2:
+                    input1.on_update(input2.update_response_status)#didn't work!!!!!!!
     wait_task = asyncio.create_task(wait_until_completion())
     _runs = list(asyncio.create_task(input._run(wait_task)) for input in inputs)
     await asyncio.wait([wait_task]+_runs)

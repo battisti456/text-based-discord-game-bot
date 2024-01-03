@@ -7,6 +7,8 @@ from math import ceil
 
 from typing import Optional, Callable, TypeVar, Literal, Sequence
 
+type MessageSearchStrictness = Literal["original","aliases","children",'sub_aliases','sub_children']
+
 ArgVar = TypeVar('ArgVar')
 def do_not_modify(arg:ArgVar) -> ArgVar:
     return arg
@@ -55,9 +57,11 @@ class Message(object):
         return Message(self.content,self.attach_paths,self.channel_id,message_id,self.keep_id_on_copy,self.players_who_can_see)
     def is_sent(self) -> bool:
         return not self.message_id is None
-    def is_response(self,interaction:Interaction,allow:Literal["original","aliases","children",'sub_aliases','sub_children'] = 'sub_children') -> bool:
+    def is_response(self,interaction:Interaction,allow:MessageSearchStrictness = 'sub_children') -> bool:
+        return self.is_message(interaction.reply_to_message_id,allow)
+    def is_message(self,message_id:MessageId,allow:MessageSearchStrictness='sub_children') -> bool:
         is_response = False
-        is_response = is_response or interaction.reply_to_message_id == self.message_id
+        is_response = is_response or message_id == self.message_id
         if allow != 'original':
             if allow in ['aliases','children']:
                 sub_text = 'original'
@@ -67,7 +71,7 @@ class Message(object):
                 check = lambda child: isinstance(child,Alias_Message)
             else:
                 check = lambda child: True
-            is_response = is_response or any(child.is_response(interaction,sub_text) for child in self.children if check(child))
+            is_response = is_response or any(child.is_message(message_id,sub_text) for child in self.children if check(child))
         return is_response
     def split(
             self,deliminator:Optional[str] = None,length:Optional[int] = None,
@@ -214,4 +218,4 @@ class Add_Bullet_Points_To_Content_Alias_Message(Alias_Message):
             
 class Reroute_Message(Alias_Message):
     def __init__(self,message:Message,channel_id:ChannelId):
-        Alias_Message.__init__(self,message,channel_id_modifier=lambda channel: channel_id)       
+        Alias_Message.__init__(self,message,channel_id_modifier=lambda channel: channel_id)
