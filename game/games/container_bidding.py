@@ -1,13 +1,17 @@
-import game
 from typing import TypedDict
-from game import userid
-from game.game_bases import Rounds_With_Points_Base, Secret_Message_Base, Bidding_Base
+from game import PlayerId, PlayerDict, make_player_dict
+from game.game_bases import Rounds_With_Points_Base, Basic_Secret_Message_Base
+
+from game.game_interface import Game_Interface
+from game.grammer import wordify_iterable
+
+
 import json
 import random
 import logging
 
 NUM_CONTAINERS = 5
-DATA_PATH = "container_contents.json"
+DATA_PATH = "data\\container_contents.json"
 STARTING_MONEY = 1000
 PERCENTILE_VAR = 10
 END_OF_GAME_INTEREST = 20
@@ -36,29 +40,29 @@ def percentify(value:float,decimal_points:int = 2):
     else:
         return f"{nums}%"
 
-def validate_data(data:DataDict,logger:logging.Logger):
+def validate_data(data:DataDict):
     for desc_text in data["container_descriptions"]:
         for tier_text in data["container_descriptions"][desc_text]["possible_item_tiers"]:
             if not tier_text in data["container_types"]:
-                logger.error(f"In container data tier '{tier_text}' from desc '{desc_text}' is undefined.")
+                raise Exception(f"In container data tier '{tier_text}' from desc '{desc_text}' is undefined.")
     for tier in data["container_types"]:
         for item in data["container_types"][tier]:
             if not item in data["items"]:
-                logger.error(f"In container data item '{item}' from tier '{tier}'is undefined.")
+                raise Exception(f"In container data item '{item}' from tier '{tier}'is undefined.")
 
-class Container_Bidding(Rounds_With_Points_Base,Secret_Message_Base):
-    def __init__(self,gh:game.GH):
-        Rounds_With_Points_Base.__init__(self,gh)
-        Secret_Message_Base.__init__(self,gh)
+class Container_Bidding(Rounds_With_Points_Base,Basic_Secret_Message_Base):
+    def __init__(self,gi:Game_Interface):
+        Rounds_With_Points_Base.__init__(self,gi)
+        Basic_Secret_Message_Base.__init__(self,gi)
         self.num_rounds = NUM_CONTAINERS
         self.round_name = "bidding on container"
         self.points_format = lambda x: f"{moneyfy(x)} of valuables"
-        with open(f"{self.config['data_path']}//{DATA_PATH}",'r') as file:
+        with open(f"{DATA_PATH}",'r') as file:
             self.data:DataDict = json.load(file)
-        validate_data(self.data,self.logger)
-        self.money = self.make_player_dict(int(STARTING_MONEY/len(self.players)))
+        validate_data(self.data)
+        self.money:PlayerDict[int] = make_player_dict(self.players,int(STARTING_MONEY/len(self.players)))
     async def game_intro(self):
-        await self.send(f"# Welcome to a game of container bidding!\n" + 
+        await self.basic_send(f"# Welcome to a game of container bidding!\n" + 
                         f"In this game we will have {NUM_CONTAINERS} containers that we look at.\n" +
                         "For each container my expert evaluator will provide their decription.\n" +
                         "Then you must each secretly choose how much you would be willing to contribute for it!\n" +
@@ -91,12 +95,12 @@ class Container_Bidding(Rounds_With_Points_Base,Secret_Message_Base):
             f"I would suggest contributing 1/{len(self.players)} of this. " +
             f"So, {int(total_bid_threshold/len(self.players))}.\n" +
             "How much are you willing to contribute?")
-        await self.send(f"{question_text}\nPlease respond in your private channel.")
-        individual_message:dict[userid,str] = {}
+        await self.basic_send(f"{question_text}\nPlease respond in your private channel.")
+        individual_message:dict[PlayerId,str] = {}
         for player in self.players:
             individual_message[player] = f"{question_text}\nYou currently have {moneyfy(self.money[player])} available to contribute."
-        responses = await self.secret_text_response(self.players,individual_message)
-        player_bids:dict[userid,int] = self.make_player_dict(0)
+        responses = await self.basic_secret_text_response(self.players,individual_message)
+        player_bids:dict[PlayerId,int] = make_player_dict(self.players,0)
         for player in self.players:
             response:str = responses[player]
             response_only_num:str = "".join(list(num for num in response if num.isdigit()))
@@ -106,10 +110,10 @@ class Container_Bidding(Rounds_With_Points_Base,Secret_Message_Base):
         total_bid:int = sum(player_bids[player] for player in player_bids)
         if total_bid >= total_bid_threshold:
             total_reward, reward_text = self.evaluate_container(desc)
-            player_split_text = f"It will be split {len(player_bids)} way(s) between {self.mention(list(player_bids))} according to the amounts they contributed to the bid."
+            player_split_text = f"It will be split {len(player_bids)} way(s) between {self.format_players_md(list(player_bids))} according to the amounts they contributed to the bid."
             if len(player_bids) == 1:
-                player_split_text = f"{self.mention(list(player_bids))} has won the whole amount."
-            await self.send(
+                player_split_text = f"{self.format_players_md(list(player_bids))} has won the whole amount."
+            await self.basic_send(
                 f"Your total bid of {moneyfy(total_bid)} exceeded our bid threshold of {moneyfy(total_bid_threshold)}.\n" +
                 "\n".join(reward_text) + '\n' +
                 f"The total contents of this container are worth {moneyfy(total_reward)}.\n" +
@@ -122,18 +126,18 @@ class Container_Bidding(Rounds_With_Points_Base,Secret_Message_Base):
                 if player_bids[player] > player_return:
                     net_text = "loss"
                 await self.score(player,player_return,True)
-                await self.secret_send(player,
+                await self.basic_secret_send(player,
                                        f"Your portion of the bid was {percentify(player_portion)} making your return {moneyfy(player_return)}.\n" +
                                        f"This means you had a net {net_text} of {moneyfy(abs(player_bids[player] - player_return))}.\n" +
                                        f"You now have {moneyfy(self.money[player])} remaining to bid with and {moneyfy(self.points[player])} in valuables.")
         else:
-            await self.send(
+            await self.basic_send(
                 f"Your total bid of {moneyfy(total_bid)} didn't exceed our bid threshold of {moneyfy(total_bid_threshold)}.\n" +
                 f"Y'all have decided to pass on this container. Ah well.")
     async def game_cleanup(self):
-        await self.send(
+        await self.basic_send(
             "That was our last container, so, at the end of the game: "+
-            f"{self.mention(self.players)} had {game.wordify_iterable(moneyfy(self.money[player]) for player in self.players)} leftover respectively." +
+            f"{self.format_players_md(self.players)} had {wordify_iterable(moneyfy(self.money[player]) for player in self.players)} leftover respectively." +
             f"This remaining money will be added to your final money score, but any negatives will be charged an extra {END_OF_GAME_INTEREST}% in interest.")
         for player in self.players:
             if self.money[player] < 0:

@@ -1,5 +1,5 @@
-import game
-
+from game.game import Game
+from game.game_interface import Game_Interface
 from typing import TypedDict
 
 import PIL.Image
@@ -9,9 +9,9 @@ import io
 BASE_URL = "https://source.unsplash.com"
 
 
-class Random_Image_Base(game.Game):
-    def __init__(self,gh:game.GH):
-        game.Game.__init__(self,gh)
+class Random_Image_Base(Game):
+    def __init__(self,gh:Game_Interface):
+        Game.__init__(self,gh)
         if not Random_Image_Base in self.initialized_bases:
             self.initialized_bases.append(Random_Image_Base)
     def random_image_url(self,author:str = None, size:tuple[int,int] = None,search_terms:list[str] = None) -> str:

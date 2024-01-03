@@ -1,6 +1,8 @@
 import game
-from game import userid
+from game import PlayerId, PlayerDict
+from game.game_interface import Game_Interface
 from game.game_bases import Rounds_With_Points_Base,Random_Image_Base
+from game.grammer import temp_file_path
 
 import random
 import math
@@ -257,12 +259,12 @@ SEARCH_TOPICS = {
 }
 
 class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
-    def __init__(self,gh:game.GH):
-        Rounds_With_Points_Base.__init__(self,gh)
-        Random_Image_Base.__init__(self,gh)
+    def __init__(self,gi:Game_Interface):
+        Rounds_With_Points_Base.__init__(self,gi)
+        Random_Image_Base.__init__(self,gi)
         self.num_rounds = NUM_ROUNDS
     async def game_intro(self):
-        await self.send(
+        await self.basic_send(
             "# Welcome to a game of guess what I searched!\n" +
             "In this game, I will search through an online image database via a random search term.\n" +
             "I will then take that image, and alter it to make it harder to guess.\n" +
@@ -277,25 +279,26 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
             image = self.random_image(search_terms=[actual_search])
         alter_method = random.choice(list(ALTER_METHODS))
         altered_image = ALTER_METHODS[alter_method](image)
-        image_path = self.temp_file_path(".jpg")
-        altered_path = self.temp_file_path(".jpg")
+        image_path = temp_file_path(".jpg")
+        altered_path = temp_file_path(".jpg")
         image.save(image_path)
         altered_image.save(altered_path)
 
-        await self.send(
+        await self.basic_send(
             f"I have found a random image from a search prompt, here is a version I have altered through {alter_method} the image.",
             attatchements_data=[altered_path]
         )
         
-        responses = await self.multiple_choice(
+        responses:PlayerDict[int] = await self.basic_multiple_choice(
             f"Which of these search prompts does this image correspond to?",
             search_options,
+            who_chooses=self.players,
             emojis = list(SEARCH_TOPICS[topic] for topic in search_options)
         )
 
         correct_players = list(player for player in self.players if search_options[responses[player]] == actual_search)
 
-        await self.send(
+        await self.basic_send(
             f"I actually searched for '{actual_search}'.",
             attatchements_data=[image_path]
         )

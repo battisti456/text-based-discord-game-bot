@@ -1,10 +1,11 @@
-import game
+from game.game import Game
+from game.game_interface import Game_Interface
 
 import PyDictionary
 import fogleman_TWL06_scrabble as scrabble
 import wonderwords
 import random
-from typing import Literal
+from typing import Literal, get_args
 
 LETTER_FREQUENCY = {
     "a" : 9,
@@ -39,13 +40,22 @@ LETTER_WEIGHTS:list[int|float] = list(LETTER_FREQUENCY[letter] for letter in LET
 
 WORD_LIST_LEN_CAP = 100
 
-partofspeach = Literal['Noun','Verb','Adjective','Adverb']
-definitiondict = dict[partofspeach,list[str]]
 
+type PartOfSpeach = Literal['Noun','Verb','Adjective','Adverb']
 
-class Dictionary_Base(game.Game):
-    def __init__(self,gh:game.GH):
-        game.Game.__init__(self,gh)
+type DefinitionDict = dict[PartOfSpeach,list[str]]
+type DefinitionList = list[tuple[PartOfSpeach,str]]
+
+def definition_dict_to_list(value:DefinitionDict) -> DefinitionList:
+    to_return:DefinitionList = []
+    for pos in value:
+        for _def in value[pos]:
+            to_return.append((pos,_def))
+    return to_return
+        
+class Dictionary_Base(Game):
+    def __init__(self,gh:Game_Interface):
+        Game.__init__(self,gh)
         if not Dictionary_Base in self.initialized_bases:
             self.initialized_bases.append(Dictionary_Base)
             self.dictionary = PyDictionary.PyDictionary()
@@ -53,28 +63,27 @@ class Dictionary_Base(game.Game):
             self.ww_sentence = wonderwords.RandomSentence()
     def is_word(self,word:str) -> bool:
         return scrabble.check(word)
-    def define(self,word:str) -> definitiondict:
+    def define(self,word:str) -> DefinitionDict | None:
         return self.dictionary.meaning(word,True)
     def random_balanced_letters(self,num:int = 5) -> str:
         letter_list = random.choices(LETTERS,LETTER_WEIGHTS,k = num)
         return "".join(letter_list)
-    def definition_string(self,*args:list[tuple[partofspeach,str]|list[tuple[partofspeach,str]]|definitiondict]|list[partofspeach,str]) -> str:
-        if len(args) == 2 and all(isinstance(item,str) for item in def_):
-            args = [args]
-        defs:list[tuple[partofspeach,str]] = []
-        for def_ in args:
-            if isinstance(def_,dict):
-                for part in def_:
-                    for alt in def_[part]:
-                        defs.append((part,alt))
-            elif len(def_) == 2 and all(isinstance(item,str) for item in def_):
-                defs.append(def_)
-            elif isinstance(def_,list):
-                defs += def_
-        for def_ in defs:
-            if '(' in def_[1] and not ')' in def_[1]:
-                def_ += ")"
-        return "\n".join(f"> {def_[0].lower()}: **{def_[1]}**" for def_ in defs)
+    def _definintion_string(self,defs_list:DefinitionList) -> str:
+        formatted_strings:list[str] = []
+        for _def in defs_list:
+            close_paranthesis = ""
+            if "(" in _def[1]:
+                close_paranthesis = ")"
+            formatted_strings.append(
+                f"> {_def[0]}: *{_def[1]}{close_paranthesis}*"
+            )
+        return '\n'.join(formatted_strings)
+            
+    def definition_string(self,value:DefinitionList|DefinitionDict) -> str:
+        if isinstance(value,list):
+            return self._definintion_string(value)
+        else:
+            return self._definintion_string(definition_dict_to_list(value))
         
     def random_word(self,length:int = 5) -> str:
         letters = self.random_balanced_letters(length*2)

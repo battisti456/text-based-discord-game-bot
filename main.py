@@ -1,8 +1,15 @@
 import json
-
-import game_handler
+import asyncio
+from discord_interface import Discord_Game_Interface
 from game.games import *
+from typing import TypedDict
 
+class Config(TypedDict):
+    channel_id:int
+    players:dict[str,int]
+    test_channel_id:int
+    test_players:dict[str,int]
+    token:str
 
 CONFIG_PATH = "gamebotconfig.json"
 
@@ -12,39 +19,13 @@ def grab_json(path):
         to_return = json.load(file)
     return to_return
 
-def testing(config):
-    config['channel_id'] = config['test_channel_id']
-    config['players'] = config['test_players']
-
-config = grab_json(CONFIG_PATH)
-#testing(config)
-gh = game_handler.Game_Handler(config)
-gh.next_game= Emoji_Communication(gh)
-gh.run()
-
-"""
-things to work on:
--add who hasn't responded message to secret base main thread
-
-add while waiting message prompts - sorta done. Won't notify, but now updates dynamcally
-
--big picture changes:
-change format a bit
-    create game_interface object
-    change game_handler to be a discord version of game_interface
-    change userid,messageid, and channelid to be objects User, Message, Channel (with all nessasry functionality)
-    and hopefully fix import order a bit better because of it
-    add Question or User_Prompty type too, hopeffuly fix all the spaghetti code of the current various question and send functions
-    add a Sync object to get rid of the horrers that is the current Sync_Lock implementation
-
-
--minor
-fix gitignore so git only includes files I made
-test bidding base- will anything even use it?
-retest letter adder
-test aig
-
-
--priorities!
-considering there isn't much time left, priority should probably go to fixing it up so it can actually be shown on github, although overhauling everything would be nice too....
-"""
+if __name__ == "__main__":
+    config:Config = grab_json(CONFIG_PATH)
+    gi = Discord_Game_Interface(config['channel_id'],list(config['players'][player] for player in config['players']))
+    @gi.client.event
+    async def on_ready():
+        await gi.reset()
+        while True:
+            gm = random_game()(gi)
+            await asyncio.create_task(gm.run_independant())
+    gi.client.run(config['token'])
