@@ -33,15 +33,15 @@ class Game(object):
         return self.sender.format_players(user_id)
     @overload
     async def basic_multiple_choice(
-            self,content:Optional[str],options:list[str],who_chooses:PlayerId,
-            emojis:Optional[list[str]], channel_id:Optional[ChannelId], 
-            allow_answer_change:bool) -> int:
+            self,content:Optional[str]=...,options:list[str]=...,who_chooses:PlayerId=...,
+            emojis:Optional[list[str]]=..., channel_id:Optional[ChannelId]=..., 
+            allow_answer_change:bool=...) -> int:
         ...
     @overload
     async def basic_multiple_choice(
-            self,content:Optional[str],options:list[str],who_chooses:Optional[list[PlayerId]],
-            emojis:Optional[list[str]], channel_id:Optional[ChannelId], 
-            allow_answer_change:bool) -> PlayerDict[int]:
+            self,content:Optional[str]=...,options:list[str]=...,who_chooses:Optional[list[PlayerId]]=...,
+            emojis:Optional[list[str]]=..., channel_id:Optional[ChannelId]=..., 
+            allow_answer_change:bool=...) -> PlayerDict[int]:
         ...
     async def basic_multiple_choice(
             self,content:Optional[str] = None,options:list[str] = [],who_chooses:Optional[list[PlayerId]|PlayerId] = None,
@@ -96,13 +96,13 @@ class Game(object):
             return value
     @overload
     async def basic_no_yes(
-            self,content:Optional[str],who_chooses:PlayerId,
-            channel_id:Optional[ChannelId], allow_answer_change:bool) -> int:
+            self,content:Optional[str]=...,who_chooses:PlayerId=...,
+            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...) -> int:
         ...
     @overload
     async def basic_no_yes(
-            self,content:Optional[str],who_chooses:Optional[list[PlayerId]],
-            channel_id:Optional[ChannelId], allow_answer_change:bool) -> int | PlayerDict[int]:
+            self,content:Optional[str]=...,who_chooses:Optional[list[PlayerId]]=...,
+            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...) -> int | PlayerDict[int]:
         ...
     async def basic_no_yes(
             self,content:Optional[str] = None,who_chooses:Optional[PlayerId|list[PlayerId]] = None,
@@ -111,13 +111,13 @@ class Game(object):
         return await self.basic_multiple_choice(content,["no","yes"],who_chooses,list(game.emoji_groups.NO_YES_EMOJI),channel_id,allow_answer_change)
     @overload
     async def basic_text_response(
-            self,content:str,who_chooses:PlayerId,
-            channel_id:Optional[ChannelId], allow_answer_change:bool) -> str:
+            self,content:str,who_chooses:PlayerId=...,
+            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...) -> str:
         ...
     @overload
     async def basic_text_response(
-            self,content:str,who_chooses:list[PlayerId]|None,
-            channel_id:Optional[ChannelId], allow_answer_change:bool) -> PlayerDict[str]:
+            self,content:str,who_chooses:list[PlayerId]|None=...,
+            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...) -> PlayerDict[str]:
         ...
     async def basic_text_response(
             self,content:str,who_chooses:PlayerId|list[PlayerId]|None = None,

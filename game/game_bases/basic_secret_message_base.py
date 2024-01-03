@@ -37,14 +37,14 @@ class Basic_Secret_Message_Base(Game):
             message = Message(c[pl],a[pl],players_who_can_see=[pl])
             await self.sender(message)
     @overload
-    async def basic_secret_text_response(self,players:PlayerId,
-            content:Optional[str|PlayerDict[str]] = None, allow_answer_change:bool = True,
+    async def basic_secret_text_response(self,players:PlayerId=...,
+            content:Optional[str|PlayerDict[str]]=..., allow_answer_change:bool=...,
             ) -> str:
         ...
     @overload
     async def basic_secret_text_response(
-            self,players:Optional[list[PlayerId]] = None,
-            content:Optional[str|PlayerDict[str]] = None, allow_answer_change:bool = True,
+            self,players:Optional[list[PlayerId]]=...,
+            content:Optional[str|PlayerDict[str]]=..., allow_answer_change:bool=...,
             ) -> PlayerDict[str]:
         ...
     async def basic_secret_text_response(
@@ -95,19 +95,19 @@ class Basic_Secret_Message_Base(Game):
             return to_return
     @overload
     async def basic_secret_multiple_choice(
-            self,players:PlayerId,
-            content:Optional[str|PlayerDict[str]] = None,
-            options:Optional[list[str]|PlayerDict[list[str]]] = None,
-            emojis:Optional[list[str]|PlayerDict[list[str]]] = None,
-            allow_answer_change:bool=True,
+            self,players:PlayerId=...,
+            content:Optional[str|PlayerDict[str]]=...,
+            options:Optional[list[str]|PlayerDict[list[str]]]=...,
+            emojis:Optional[list[str]|PlayerDict[list[str]]]=...,
+            allow_answer_change:bool=...,
         ) -> int:
         ...  
     @overload
     async def basic_secret_multiple_choice(
-            self,players:list[PlayerId]|None = None,
-            content:Optional[str|PlayerDict[str]] = None,
-            options:Optional[list[str]|PlayerDict[list[str]]] = None,
-            emojis:Optional[list[str]|PlayerDict[list[str]]] = None,
+            self,players:list[PlayerId]|None=...,
+            content:Optional[str|PlayerDict[str]]=...,
+            options:Optional[list[str]|PlayerDict[list[str]]]=...,
+            emojis:Optional[list[str]|PlayerDict[list[str]]]=...,
             allow_answer_change:bool=True,
         ) -> PlayerDict[int]:
         ...
@@ -177,16 +177,16 @@ class Basic_Secret_Message_Base(Game):
             return to_return
     @overload
     async def basic_secret_no_yes(
-            self,players:PlayerId,
-            content:Optional[str|PlayerDict[str]] = None,
-            allow_answer_change:bool = True,
+            self,players:PlayerId=...,
+            content:Optional[str|PlayerDict[str]]=...,
+            allow_answer_change:bool=...,
             ) -> int:
         ...
     @overload
     async def basic_secret_no_yes(
-            self,players:Optional[list[PlayerId]] = None,
-            content:Optional[str|PlayerDict[str]] = None,
-            allow_answer_change:bool = True,
+            self,players:Optional[list[PlayerId]]=...,
+            content:Optional[str|PlayerDict[str]]=...,
+            allow_answer_change:bool=...,
             ) -> PlayerDict[int]:
         ...
     async def basic_secret_no_yes(
