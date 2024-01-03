@@ -3,6 +3,7 @@ from game.game_interface import Game_Interface
 from game.message import Message, make_bullet_points
 from game.player_input import Player_Single_Choice_Input, Player_Text_Input, run_inputs
 from game.emoji_groups import COLORED_CIRCLE_EMOJI, NO_YES_EMOJI
+from game.response_validator import ResponseValidator, not_none
 
 from game import PlayerId,PlayerDict, PlayerDictOptional, make_player_dict
 from typing import Optional, overload
@@ -39,18 +40,18 @@ class Basic_Secret_Message_Base(Game):
     @overload
     async def basic_secret_text_response(self,players:PlayerId=...,
             content:Optional[str|PlayerDict[str]]=..., allow_answer_change:bool=...,
-            ) -> str:
+            response_validator:ResponseValidator[str]=...) -> str:
         ...
     @overload
     async def basic_secret_text_response(
             self,players:Optional[list[PlayerId]]=...,
             content:Optional[str|PlayerDict[str]]=..., allow_answer_change:bool=...,
-            ) -> PlayerDict[str]:
+            response_validator:ResponseValidator[str]=...) -> PlayerDict[str]:
         ...
     async def basic_secret_text_response(
             self,players:Optional[list[PlayerId]|PlayerId] = None,
             content:Optional[str|PlayerDict[str]] = None, allow_answer_change:bool = True,
-            ) -> str|PlayerDict[str]:
+            response_validator:ResponseValidator[str] = not_none) -> str|PlayerDict[str]:
         p:list[PlayerId] = []
         if players is None:
             p = list(self.players)
@@ -76,12 +77,14 @@ class Basic_Secret_Message_Base(Game):
                 [player],
                 who_can_see=[player],
                 message=message,
-                allow_edits=allow_answer_change
+                allow_edits=allow_answer_change,
+                response_validator=response_validator
             )
             inputs[player] = inpt
         await run_inputs(
             list(inputs[player] for player in p),
-            sender = self.sender)
+            sender = self.sender,
+            basic_feedback=True)
         if players is None or isinstance(players,list):
             to_return_dict:PlayerDict[str] = {}
             for player in p:
@@ -100,6 +103,7 @@ class Basic_Secret_Message_Base(Game):
             options:Optional[list[str]|PlayerDict[list[str]]]=...,
             emojis:Optional[list[str]|PlayerDict[list[str]]]=...,
             allow_answer_change:bool=...,
+            response_validator:ResponseValidator[int]=...
         ) -> int:
         ...  
     @overload
@@ -109,6 +113,7 @@ class Basic_Secret_Message_Base(Game):
             options:Optional[list[str]|PlayerDict[list[str]]]=...,
             emojis:Optional[list[str]|PlayerDict[list[str]]]=...,
             allow_answer_change:bool=True,
+            response_validator:ResponseValidator[int]=...
         ) -> PlayerDict[int]:
         ...
     async def basic_secret_multiple_choice(
@@ -117,6 +122,7 @@ class Basic_Secret_Message_Base(Game):
             options:Optional[list[str]|PlayerDict[list[str]]] = None,
             emojis:Optional[list[str]|PlayerDict[list[str]]] = None,
             allow_answer_change:bool=True,
+            response_validator:ResponseValidator[int] = not_none
         ) -> int|PlayerDict[int]:
         assert not options is None
         p:list[PlayerId] = []
@@ -158,12 +164,14 @@ class Basic_Secret_Message_Base(Game):
                 [player],
                 who_can_see=[player],
                 message=message,
-                allow_edits=allow_answer_change
+                allow_edits=allow_answer_change,
+                response_validator=response_validator
             )
             inputs[player] = inpt
         await run_inputs(
             list(inputs[player] for player in p),
-            sender = self.sender)
+            sender = self.sender,
+            basic_feedback=True)
         if players is None or isinstance(players,list):
             to_return_dict:PlayerDict[int] = {}
             for player in p:

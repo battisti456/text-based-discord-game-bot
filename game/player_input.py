@@ -35,20 +35,22 @@ class Player_Input[T]():
         if not func in self.funcs_to_call_on_update:
             self.funcs_to_call_on_update.append(func)
         return func
-    def response_status(self) -> str:
+    def response_status(self, basic:bool = False) -> str:
         #returns text describing which players have not responded to this input
         validation:PlayerDict[Validation] = {player:self._response_validator(player,self.responses[player]) for player in self.players}
         players_not_responded = list(player for player in self.players if not validation[player][0])
         player_text = self.sender.format_players_md(players_not_responded)
+        players_with_feedback = list(player for player in self.players if not validation[player][1] is None)
         if player_text:
             to_return = f"*Waiting for {player_text} to respond to {self.name}.*"
-            for player in players_not_responded:
+        else:
+            to_return = f"*Not waiting for anyone to respond to {self.name}.*"
+        if not basic:
+            for player in players_with_feedback:
                 feedback = validation[player][1]
                 if not feedback is None:
                     to_return += f"\n{self.sender.format_players_md([player])}: __{feedback}__"
-            return to_return
-        else:
-            return f"*Not waiting for anyone to respond to {self.name}.*"
+        return to_return
     def reset(self):
         self.responses = make_player_dict(self.players,None)
     async def _setup(self):
@@ -198,7 +200,7 @@ class Player_Multiple_Choice_Input(Player_Input_In_Response_To_Message[set[int]]
 async def run_inputs(
         inputs:list[Player_Input],completion_sets:Optional[list[set[Player_Input]]] = None,
         sender:Optional[Sender] = None,who_can_see:Optional[list[PlayerId]] = None,
-        codependant:bool = False):
+        codependant:bool = False, basic_feedback:bool = False):
     if completion_sets is None:
         completion_sets = [set(inputs)]
     def check_is_completion() -> bool:
@@ -211,7 +213,7 @@ async def run_inputs(
         def feedback_text() -> str:
             feedback_list = []
             for input in inputs:
-                feedback_list.append("Monitoring: " + input.response_status())
+                feedback_list.append("Monitoring: " + input.response_status(basic_feedback))
             return "\n".join(feedback_list)
         feedback_message:Message = Alias_Message(
             Message(players_who_can_see=who_can_see),content_modifier=lambda content:feedback_text())
