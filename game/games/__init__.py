@@ -9,4 +9,5 @@ from game.games.container_bidding import Container_Bidding
 from game.games.the_great_kitten_race import The_Great_Kitten_Race
 from game.games.prediction_texas_holdem import Prediction_Texas_Holdem
 from game.games.chess_puzzle_elimination import Chess_Puzzle_Elimination
-#from game.games.altered_image_guess import Altered_Image_Guess
+from game.games.altered_image_guess import Altered_Image_Guess
+#from game.games.emoji_communication import Emoji_Communication

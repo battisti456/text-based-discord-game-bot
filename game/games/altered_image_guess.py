@@ -1,6 +1,8 @@
 import game
-from game import PlayerId
+from game import PlayerId, PlayerDict
+from game.game_interface import Game_Interface
 from game.game_bases import Rounds_With_Points_Base,Random_Image_Base
+from game.grammer import temp_file_path
 
 import random
 import math
@@ -257,9 +259,9 @@ SEARCH_TOPICS = {
 }
 
 class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
-    def __init__(self,gh:game.GH):
-        Rounds_With_Points_Base.__init__(self,gh)
-        Random_Image_Base.__init__(self,gh)
+    def __init__(self,gi:Game_Interface):
+        Rounds_With_Points_Base.__init__(self,gi)
+        Random_Image_Base.__init__(self,gi)
         self.num_rounds = NUM_ROUNDS
     async def game_intro(self):
         await self.basic_send(
@@ -277,8 +279,8 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
             image = self.random_image(search_terms=[actual_search])
         alter_method = random.choice(list(ALTER_METHODS))
         altered_image = ALTER_METHODS[alter_method](image)
-        image_path = self.temp_file_path(".jpg")
-        altered_path = self.temp_file_path(".jpg")
+        image_path = temp_file_path(".jpg")
+        altered_path = temp_file_path(".jpg")
         image.save(image_path)
         altered_image.save(altered_path)
 
@@ -287,9 +289,10 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
             attatchements_data=[altered_path]
         )
         
-        responses = await self.basic_multiple_choice(
+        responses:PlayerDict[int] = await self.basic_multiple_choice(
             f"Which of these search prompts does this image correspond to?",
             search_options,
+            who_chooses=self.players,
             emojis = list(SEARCH_TOPICS[topic] for topic in search_options)
         )
 
