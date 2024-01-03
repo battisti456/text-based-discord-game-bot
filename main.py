@@ -28,7 +28,7 @@ config:Config = grab_json(CONFIG_PATH)
 testing(config)
 
 gi = Discord_Game_Interface(config['channel_id'],list(config['players'][player] for player in config['players']))
-gm = The_Great_Kitten_Race(gi)
+gm = Prediction_Texas_Holdem(gi)
 @gi.client.event
 async def on_ready():
     await gi.client.wait_until_ready()

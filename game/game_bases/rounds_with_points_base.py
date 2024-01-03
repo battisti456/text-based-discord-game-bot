@@ -33,7 +33,8 @@ class Rounds_With_Points_Base(Game):
                 if not ps in p:
                     p.append(ps)
             n = num
-        await self._score(p,n,mute)
+        if p:
+            await self._score(p,n,mute)
     @police_game_callable
     async def _score(self,players:list[PlayerId],num:PlayerDict[int], mute:bool):
         players_who_changed_score:list[PlayerId] = []
@@ -47,7 +48,7 @@ class Rounds_With_Points_Base(Game):
             self.points[player] = old_points + new_points
             if new_points != 0:
                 players_who_changed_score.append(player)
-        if mute:
+        if mute or not players_who_changed_score:
             return
         await self.policed_send(Message(
             wordify_iterable(f"{self.sender.format_players_md([player])} now has {self.points_format(self.points[player])}" for player in players_who_changed_score)

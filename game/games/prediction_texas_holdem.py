@@ -1,11 +1,11 @@
-from typing import Any, Coroutine
-import game
+from game.game_interface import Game_Interface
 from game.game_bases import Rounds_With_Points_Base, Card_Base
 
 from game.game_bases.card_base import Card_Holder,best_poker_hand, Poker_Hand, name_poker_hand_by_rank
 from game.emoji_groups import NUMBERED_KEYCAP_EMOJI
+from game.grammer import ordinate
 
-from game import PlayerId
+from game import PlayerId, PlayerDict, make_player_dict
 
 NUM_ROUNDS = 3
 
@@ -13,9 +13,9 @@ PLAYER_CARDS = 2
 SHARED_CARDS = 5
 
 class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
-    def __init__(self,gh:game.GH):
-        Rounds_With_Points_Base.__init__(self,gh)
-        Card_Base.__init__(self,gh)
+    def __init__(self,gi:Game_Interface):
+        Rounds_With_Points_Base.__init__(self,gi)
+        Card_Base.__init__(self,gi)
         self.reverse_scoring = True
         self.points_format = lambda points: f"{points} penalties"
         self.num_rounds = NUM_ROUNDS
@@ -29,17 +29,21 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
             "The further you are from guessing your rank correctly, the more penalties you accrue.\n" +
             "Lowest penalties at the end of the game wins!"
         )
-    async def core_game(self) -> list[PlayerId]:
+    async def core_game(self) -> PlayerDict[int] | None:
         await self.setup_cards()
         shared:Card_Holder = Card_Holder("Shared cards.")
         await self.player_draw(self.players,PLAYER_CARDS)
         self.deck.give(shared,SHARED_CARDS)
-        await self.ch_to_attachment(shared,"Here are the shared cards.")
+        attachment = self.ch_to_attachment(shared)
+        await self.basic_send(
+            "Here are the shared cards:",
+            attatchements_data=[attachment]
+        )
         responses = await self.basic_multiple_choice(
             "Judging from your own cards and the shared cards, where do you think you will place amongst your fellow players?",
-            list(game.ordinate(num+1) for num in range(len(self.players))),
+            list(ordinate(num+1) for num in range(len(self.players))),
             self.players,
-            NUMBERED_KEYCAP_EMOJI[1:]
+            list(NUMBERED_KEYCAP_EMOJI[1:])
         )
         players_best_poker_hands:dict[PlayerId,Poker_Hand] = dict()
         player_hand_ranks:dict[PlayerId,int] = dict()
@@ -49,7 +53,7 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
         ranking.sort(key = lambda player: player_hand_ranks[player],reverse=True)
         sorted_ranks = list(player_hand_ranks[player] for player in self.players)
         sorted_ranks.sort(reverse=True)
-        player_diffs:dict[PlayerId,int] = self.make_player_dict(0)
+        player_diffs:PlayerDict[int] = make_player_dict(self.players,0)
         for player in self.players:
             diff = -1
             up_check = False
@@ -63,20 +67,20 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
                 if responses[player] - diff >= 0:
                     down_check = sorted_ranks[responses[player]-diff] == player_hand_ranks[player]
                 else:
-                    down_check - False
+                    down_check = False
             player_diffs[player] = diff
         for player in self.players:
-            await self.ch_to_attachment(
-                self.hands[player],
-                f"{self.format_players_md(player)}'s hand was:"
-            )
-            await self.ch_to_attachment(
-                players_best_poker_hands[player],
-                f"Meaning {self.format_players_md(player)}'s best poker hand with the shared cards was:"
+            await self.basic_send(
+                f"{self.format_players_md([player])}'s hand was:",
+                [self.ch_to_attachment(self.hands[player])]
             )
             await self.basic_send(
-                f"This placed {self.format_players_md(player)} {game.ordinate(1+ranking.index(player))} "+
+                f"Meaning {self.format_players_md([player])}'s best poker hand with the shared cards was:",
+                [self.ch_to_attachment(players_best_poker_hands[player])]
+            )
+            await self.basic_send(
+                f"This placed {self.format_players_md([player])} {ordinate(1+ranking.index(player))} "+
                 f"in the hand rankings with a {name_poker_hand_by_rank(player_hand_ranks[player])}, "+
-                f"and they predicted they would be {game.ordinate(responses[player]+1)}."
+                f"and they predicted they would be {ordinate(responses[player]+1)}."
             )
         await self.score(self.players,player_diffs)
