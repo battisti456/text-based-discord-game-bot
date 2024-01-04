@@ -27,16 +27,12 @@ Here are the steps to set the code up.
     {
         "token" : "<your discord bot's api token here>",
         "channel_id" : 00000,
-        "log_file": "gamebotlog.txt",
-        "log_level": 10,
         "players": {
             "<player1 name>" : 000000,
             "<player2 name>" : 000000,
             "<player3 name>" : 000000,
             "<player4 name>" : 000000
         },
-        "temp_path":"temp",
-        "data_path":"data",
     }
 ```
 
