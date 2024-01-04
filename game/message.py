@@ -11,8 +11,10 @@ type MessageSearchStrictness = Literal["original","aliases","children",'sub_alia
 
 ArgVar = TypeVar('ArgVar')
 def do_not_modify(arg:ArgVar) -> ArgVar:
+    """modifier for changing nothing"""
     return arg
-def modify_nothing(arg:ArgVar) -> ArgVar|None:
+def modify_into_nothing(arg:ArgVar) -> ArgVar|None:
+    """modifier for a value to be empty if a list, or None if not"""
     if isinstance(arg,list):
         new = arg.copy()
         new.clear()
@@ -22,13 +24,15 @@ def modify_nothing(arg:ArgVar) -> ArgVar|None:
 OptionalModifier = Callable[[ArgVar|None],ArgVar|None]
 Modifier = Callable[[ArgVar],ArgVar]
 def keep(keep_value:bool) -> Modifier:
+    """returns do_not_modify if keep, and modify_into_nothing if not"""
     if keep_value:
         return do_not_modify
     else:
-        return modify_nothing
+        return modify_into_nothing
 
 
 class Bullet_Point(object):
+    """a basic object storing the text and the emoji representations of a bullet point item"""
     def __init__(self,text:Optional[str] = None, emoji:Optional[str] = None):
         self.text = text
         self.emoji = emoji
@@ -36,30 +40,59 @@ class Bullet_Point(object):
         return f"{self.emoji} (*{self.text}*)"
 
 class Message(object):
+    """
+    an object storing all the values which can be included in a message from the bot to the players, meant to be sent with a sender; all values are optional
+
+    content: the text content of the message
+
+    attach_paths: a list of sting paths directing to files to be attatched to the message
+
+    channel_id: the channel on which to send the message, if None will be assigned by sender to some dafault when sent
+
+    message_id: the id of the message to edit, if None will be set by sender once sent
+
+    players_who_can_see: the list of players who are permitted to see the message, if None all players can see
+
+    bullet_points: a list of BulletPoint objects to display in the message
+    """
     def __init__(
             self,content:Optional[str] = None,attach_paths:Optional[list[str]] = None,
-            channel_id:Optional[ChannelId] = None,message_id:Optional[MessageId] = None,
-            keep_id_on_copy:bool = False, players_who_can_see:Optional[list[PlayerId]] = None,
+            channel_id:Optional[ChannelId] = None,message_id:Optional[MessageId] = None, 
+            players_who_can_see:Optional[list[PlayerId]] = None,
             bullet_points:Optional[list[Bullet_Point]] = None):
         self.content = content
         self.attach_paths = attach_paths
         self.channel_id = channel_id
         self.message_id = message_id
-        self.keep_id_on_copy = keep_id_on_copy
         self.players_who_can_see = players_who_can_see
         self.bullet_points = bullet_points
         self.children:list[Message] = []
-    def copy(self) -> 'Message':
-        if self.keep_id_on_copy:
-            message_id = self.message_id
-        else:
-            message_id = None
-        return Message(self.content,self.attach_paths,self.channel_id,message_id,self.keep_id_on_copy,self.players_who_can_see)
     def is_sent(self) -> bool:
+        """return weather or not this Message object refers to an already sent message"""
         return not self.message_id is None
     def is_response(self,interaction:Interaction,allow:MessageSearchStrictness = 'sub_children') -> bool:
+        """
+        returns whether an interaction refers to this message with its reply_to_message_id
+        
+        allow: sets the strictness of the allowance parameters
+            'original' only if this message has that id
+            'aliases' only if this message or any child aliases have that id
+            'children' only if this message or any children have that id
+            'sub_aliases' only if this message or any of its alias decendants have that id
+            'sub_children' whether this message or any of its descendants have that id
+        """
         return self.is_message(interaction.reply_to_message_id,allow)
     def is_message(self,message_id:MessageId,allow:MessageSearchStrictness='sub_children') -> bool:
+        """
+        returns whether this message is refferd to by the given MessageId
+        
+        allow: sets the strictness of the allowance parameters
+            'original' only if this message has that id
+            'aliases' only if this message or any child aliases have that id
+            'children' only if this message or any children have that id
+            'sub_aliases' only if this message or any of its alias decendants have that id
+            'sub_children' whether this message or any of its descendants have that id
+        """
         is_response = False
         is_response = is_response or message_id == self.message_id
         if allow != 'original':
@@ -67,7 +100,7 @@ class Message(object):
                 sub_text = 'original'
             else:
                 sub_text = allow
-            if allow in ['aliases','sub_aliases']:
+            if allow in ['sub_aliases','sub_aliases']:
                 check = lambda child: isinstance(child,Alias_Message)
             else:
                 check = lambda child: True
@@ -77,6 +110,25 @@ class Message(object):
             self,deliminator:Optional[str] = None,length:Optional[int] = None,
             add_start = "", add_end = "",
             add_join_start = "", add_join_end = "", rest_at_start:bool = False, rest_at_end:bool = True) -> list['Content_Split_Message']:
+        """
+        returns a list of Content_Split_Messages based on splitting parameters; each Content_Split_Message will have content of a poriton of this Messages content
+
+        deliminator: if given, what string to split the message's content on
+
+        length: max length a split message's content can have
+
+        add_start: content to add to the beggining of the first split message (not considered in length)
+
+        add_end: content to add to the end of the last split message (not considered in length)
+
+        add_join_start: content to add at the beggining of each split message, except the first (not considered in length)
+
+        add_join_end: content to add to the end of each split message, except the last (not considered in length)
+
+        rest_at_start: whether to include non-content paramaters of this message in the first split message
+
+        rest_at_end: whether to include non-content parameters of this message in the last split message
+        """
         if self.content is None:
             return [Content_Split_Message(self,0,0,add_start,add_end,True)]
         splits = []
@@ -115,6 +167,7 @@ class Message(object):
         return to_return
 
 def make_bullet_points(contents:list[str],emojis:Sequence[str]) -> list[Bullet_Point]:
+    """turns lists of texts and emojis into a list of bullet_points with the corresponding values"""
     to_return:list[Bullet_Point] = []
     for i in range(len(contents)):
         to_return.append(
@@ -134,6 +187,7 @@ class Child_Message(Message):
         self.children:list[Message] = []
 
 class Alias_Message(Child_Message):
+    """creates a child message where the properties are determined from called functions"""
     def __init__(
             self,parent_message:'Message',
             content_modifier:OptionalModifier[str] = do_not_modify,
@@ -171,6 +225,7 @@ class Alias_Message(Child_Message):
     def bullet_points(self) -> list[Bullet_Point] | None:
         return self.bullet_points_modifier(self.parent_message.bullet_points)
 class Unique_Id_Alias_Message(Alias_Message):
+    """creates an alias message capable of having its message_id set independantly of it's parent's message_id"""
     def __init__(self,parent_message:'Message',
             content_modifier:OptionalModifier[str] = do_not_modify,
             attach_paths_modifier:OptionalModifier[list[str]] = do_not_modify,
@@ -186,6 +241,7 @@ class Unique_Id_Alias_Message(Alias_Message):
     def message_id(self,message_id:MessageId):
         self.sub_message_id = message_id
 class Content_Split_Message(Unique_Id_Alias_Message):
+    """contains a subsection of the parent message's content as according to its split function"""
     def __init__(
             self,parent_message:'Message',
             start_index:int, end_index:int,
@@ -203,6 +259,7 @@ class Content_Split_Message(Unique_Id_Alias_Message):
             )
     
 class Add_Bullet_Points_To_Content_Alias_Message(Alias_Message):
+    """adds text representation of the bullet point list to the content as an alias"""
     def __init__(self,parent_message:'Message'):
         def add_bullet_points(content:Optional[str]) -> str:
             if content is None:
@@ -217,5 +274,6 @@ class Add_Bullet_Points_To_Content_Alias_Message(Alias_Message):
         Alias_Message.__init__(self,parent_message,add_bullet_points)
             
 class Reroute_Message(Alias_Message):
+    """creates an alias message rerouting a message's channel to a new one"""
     def __init__(self,message:Message,channel_id:ChannelId):
         Alias_Message.__init__(self,message,channel_id_modifier=lambda channel: channel_id)

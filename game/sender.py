@@ -5,16 +5,20 @@ from game.grammer import wordify_iterable
 from typing import Iterable
 
 class Sender(object):
-    #A callable object used to display a Message to player
+    """a callable object whose responsibility it is to interpret Messages and display them"""
     def __init__(self):
         pass
     async def __call__(self,message:Message):
+        """display Message object for the players according to it's parameters"""
         return await self._send(message)
     async def _send(self,message:Message):
+        """highest level definition of Sender's sending capabilities"""
         pass
     def format_players_md(self,players:Iterable[PlayerId]) -> str:
+        """format a list of PlayerIds with markdown; --migtht replace with formatter object"""
         return wordify_iterable(players)
     def format_players(self,players:Iterable[PlayerId]) -> str:
+        """format a list of PlayerIds without markdown; --migtht replace with formatter object"""
         return wordify_iterable(players)
 class Multiple_Sender(Sender):
     def __init__(self,senders:list[Sender]):

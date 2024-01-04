@@ -21,6 +21,7 @@ def text_validator_maker(
         is_stricly_composed_of:Optional[str] = None
         
 ) -> ResponseValidator[str]:
+    """creates a response validator for str's matching given validation, and with feedback given on problems with the input"""
     def validator(player:PlayerId,value:Optional[str]) -> Validation:
         if value is None:
             return (False,None)

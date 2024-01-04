@@ -13,6 +13,11 @@ type Condition = dict[Player_Input,bool]
 SLEEP_TIME = 10
 
 class Player_Input[T]():
+    """
+    base player input class
+    
+    meant only to be overwritten
+    """
     def __init__(
             self,name:str, gi:Game_Interface,sender:Sender,players:Optional[list[PlayerId]] = None,
             response_validator:ResponseValidator[T] = not_none, 
@@ -32,10 +37,17 @@ class Player_Input[T]():
         self.funcs_to_call_on_update:list[Callable[[],Awaitable]] = []
         self._last_response_status:str = ""
     def on_update(self,func:Callable[[],Awaitable]) -> Callable[[],Awaitable]:
+        """binds a callable to be run whenever the input changes"""
         if not func in self.funcs_to_call_on_update:
             self.funcs_to_call_on_update.append(func)
         return func
     def response_status(self, basic:bool = False) -> str:
+        """
+        generates a string representing the current state of the input
+        
+        basic : controls weather to include validation feedback in the returned string,
+        True excludes, False includes
+        """
         #returns text describing which players have not responded to this input
         validation:PlayerDict[Validation] = {player:self._response_validator(player,self.responses[player]) for player in self.players}
         players_not_responded = list(player for player in self.players if not validation[player][0])
@@ -52,26 +64,42 @@ class Player_Input[T]():
                     to_return += f"\n{self.sender.format_players_md([player])}: __{feedback}__"
         return to_return
     def reset(self):
+        """
+        prepares the input to be run again by clearing responses
+        """
         self.responses = make_player_dict(self.players,None)
     async def _setup(self):
+        """run once and awaited in _run at the beggining"""
         pass
     async def _core(self):
+        """
+        run once and not awaited in _run while waiting for await_task to finish
+        
+        will be cancelled if it takes too long
+        """
         pass
     async def _unsetup(self):
+        """run once and awaited in _run at the end"""
         pass
     async def _update(self):
+        """called during running only when an input is changed"""
         await self.update_response_status()
         for func in self.funcs_to_call_on_update:
             await func()
     async def update_response_status(self):
-        #to be called only when something has changed
+        """updates status_message, if it is different"""
         if self.status_message.content != self._last_response_status:
             self._last_response_status = correct_str(self.status_message.content)
             await self.sender(self.status_message)
     def has_recieved_all_responses(self) -> bool:
-        #returns weather all responses in this input are no longer None
+        """returns whether all responses meet the validator's requirements"""
         return all(self._response_validator(player,self.responses[player])[0] for player in self.players)
     async def _run(self,await_task:asyncio.Task[Any]):
+        """
+        awaits's _setup, then calls _core while it awaits await_task, then calls _unsetup
+        
+        await_task : an asyncio.Task to call ayncio.wait on during running
+        """
         await self._setup()
         await self._update()
         self._receive_inputs = True
@@ -80,16 +108,27 @@ class Player_Input[T]():
         _core.cancel()
         await self._unsetup()
     async def wait_until_received_all(self):
-        #wait until all responses meet response validator
+        """
+        waits until has_received_all_responses, check every SLEEP_TIME seconds
+        """
         while not self.has_recieved_all_responses():
             await asyncio.sleep(SLEEP_TIME)
         self._receive_inputs = False
     async def run(self) -> PlayerDictOptional[T]:
-        #runs input until response validator is satisfied
+        """
+        collects and return player responses to the input
+
+        calls _run with wait_until_received_all as the wait task
+        """
         await_task = asyncio.create_task(self.wait_until_received_all())
         await self._run(await_task)
         return self.responses
 class Player_Input_In_Response_To_Message[T](Player_Input[T]):
+    """
+    base player input class for reacting to interactions sent by the game_interface in response to a message
+
+    meant to be overwritten
+    """
     def __init__(
             self, name:str, gi:Game_Interface, sender :Sender, 
             players:Optional[list[PlayerId]] = None, response_validator:ResponseValidator[T] = not_none,
@@ -102,6 +141,11 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
             self.message:Message = message
         self.allow_edits:bool = allow_edits
     def allow_interaction(self,interaction:Interaction) -> bool:
+        """
+        returns wether a particular interaction is auctually meant for this player_input's message
+        
+        it does not check if the interaction is valid according to the validifier
+        """
         if interaction.player_id is None:
             return False
         if not interaction.player_id in self.players:
@@ -116,6 +160,9 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
             await self.sender(self.message)
         
 class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
+    """
+    player input class for collecting text interactions to a message
+    """
     def __init__(
             self, name:str, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
             response_validator:ResponseValidator[str] = not_none,
@@ -141,6 +188,9 @@ class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
         self.gi.purge_actions(self)
 
 class Player_Single_Choice_Input(Player_Input_In_Response_To_Message[int]):
+    """
+    player input class for collecting single choice selection interactions to a message
+    """
     def __init__(
             self, name:str, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
             response_validator:ResponseValidator[int] = not_none, 
@@ -166,6 +216,9 @@ class Player_Single_Choice_Input(Player_Input_In_Response_To_Message[int]):
     async def _unsetup(self):
         self.gi.purge_actions(self)
 class Player_Multiple_Choice_Input(Player_Input_In_Response_To_Message[set[int]]):
+    """
+    player input class for collecting multiple choice selection interactions to a message
+    """
     def __init__(
             self, name:str, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
             response_validator:ResponseValidator[set[int]] = not_none,
@@ -201,6 +254,21 @@ async def run_inputs(
         inputs:list[Player_Input],completion_sets:Optional[list[set[Player_Input]]] = None,
         sender:Optional[Sender] = None,who_can_see:Optional[list[PlayerId]] = None,
         codependant:bool = False, basic_feedback:bool = False):
+    """
+    runs inputs simultaniously until completion criteria are met
+
+    inputs: a list of fully configured inputs
+
+    completions_sets: a list of sets of inputs from inputs for which if all of the inputs in a set mark themselves complete, the code will exit; if set to None, will default to a set of all inputs
+
+    sender: the sender to use for displaying feedback; if set to None the function will not display its own feedback
+
+    who_can_see: the list of people who are allowed to see the feedback, set as the feedback message's who_can_see variable
+
+    codependant: sets wher a change in one input should update all the other inputs
+
+    basic_feedback: sets whether the feedback, if it exists, should be limited to only whether an input is complete or not; True for limited, False for unlimited
+    """
     if completion_sets is None:
         completion_sets = [set(inputs)]
     def check_is_completion() -> bool:
