@@ -33,7 +33,7 @@ class Tricky_Trivia(Basic_Secret_Message_Base,Trivia_Base,Rounds_With_Points_Bas
 
         question_text = f"*{trivia_dict['question']}*\nAn example answer might be '*{trivia_dict['incorrect_answers'][0]}*'."
         await self.basic_send(question_text)
-        responses:PlayerDict[str] = await self.basic_secret_text_response(
+        responses:PlayerDict[str] = await self.basic_secret_text_response(self.players,
             content = f"{question_text}\nWhat is a possible answer to this qustion that might fool your competitors?")
         
         options = [trivia_dict['correct_answer']]+list(responses[player] for player in responses)
