@@ -134,7 +134,7 @@ class Game(object):
     @overload
     async def basic_no_yes(
             self,content:Optional[str]=...,who_chooses:Optional[list[PlayerId]]=...,
-            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...) -> int | PlayerDict[int]:
+            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...) -> PlayerDict[int]:
         ...
     async def basic_no_yes(
             self,content:Optional[str] = None,who_chooses:Optional[PlayerId|list[PlayerId]] = None,
