@@ -2,7 +2,15 @@ from typing import Iterable, Any
 import uuid
 
 def wordify_iterable(values:Iterable[str|Any],operator:str = 'and',comma:str = ",") -> str:
-    #returns a string comma comma anding an iterator of strings
+    """
+    takes an iterable of values, turns it into a list ad formats it into a ___, ___, and __ string;
+    if values is of length one, it returns the value unchanged;
+    if values is of length two, returns ___ and ___ (no comma)
+
+    operator: replaces 'and', eg 'or'
+
+    comma: replaces ',' eg. ';'
+    """
     to_return = ""
     if not isinstance(values,list):
         values = list(values)
@@ -24,7 +32,9 @@ def wordify_iterable(values:Iterable[str|Any],operator:str = 'and',comma:str = "
             to_return += str(values[i])
     return to_return
 def ordinate(num:int|str) -> str:
-    #takes a number and returns a string of the digits with the correct 'st','nd','rd' of 'th' ending for the ordinal
+    """
+    takes a number and returns a string with the appropriate 'st', 'nd', 'rd', or 'th' apennded to that number
+    """
     num = str(num)
     ordinal = ""
     if num[-1] == '1':
@@ -40,6 +50,9 @@ def ordinate(num:int|str) -> str:
     return num + ordinal
 TEMP_PATH = "temp"
 
-def temp_file_path(type:str) -> str:
-    #returns a (probably) unique file name in the temp folder
-    return f"{TEMP_PATH}//{uuid.uuid4()}{type}"
+def temp_file_path(file_type:str) -> str:
+    """
+    returns a theoretical random file path with the given file_type;
+    it doesn't actually check that the file doesn't already exist
+    """
+    return f"{TEMP_PATH}//{uuid.uuid4()}{file_type}"
