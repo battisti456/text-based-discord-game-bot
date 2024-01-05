@@ -1,6 +1,6 @@
 from game.game import Game
 from game.game_interface import Game_Interface
-from typing import TypedDict
+from typing import TypedDict, Optional
 
 import PIL.Image
 import requests
@@ -10,11 +10,27 @@ BASE_URL = "https://source.unsplash.com"
 
 
 class Random_Image_Base(Game):
+    """
+    a game base for fetching and managing random images
+    """
     def __init__(self,gh:Game_Interface):
         Game.__init__(self,gh)
         if not Random_Image_Base in self.initialized_bases:
             self.initialized_bases.append(Random_Image_Base)
-    def random_image_url(self,author:str = None, size:tuple[int,int] = None,search_terms:list[str] = None) -> str:
+    def random_image_url(
+            self,
+            author:Optional[str] = None, 
+            size:Optional[tuple[int,int]] = None,
+            search_terms:Optional[list[str]] = None) -> str:
+        """
+        returns a contructed url for finding a random image
+        
+        author: name of an author this image should be by
+        
+        size: what size the image should be given in
+        
+        search_terms: what keywords to include in the random search
+        """
         source_text = "/random"
         if not author is None:
             source_text = f"/user/{author}"
@@ -26,13 +42,24 @@ class Random_Image_Base(Game):
             search_text = f"/?{','.join(search_terms)}"
         return f"{BASE_URL}{source_text}{size_text}{search_text}"
     def get_image_from_url(self,url:str) -> PIL.Image.Image:
+        """
+        fetches an image from a url
+        """
         request = requests.get(url,stream=True)
         if request.status_code == 200:
             return PIL.Image.open(io.BytesIO(request.content))
         else:
-            self.logger.error(f"Image at '{url}' could not be accessed.")
-            return None
-    def random_image(self,author:str = None, size:tuple[int,int] = None,search_terms:list[str] = None) -> PIL.Image.Image:
+            raise Exception(f"Unable to get image at {url}.")
+    def random_image(self,author:Optional[str] = None, size:Optional[tuple[int,int]] = None,search_terms:Optional[list[str]] = None) -> PIL.Image.Image:
+        """
+        fetches a random image based on the given search terms
+        
+        author: name of an author this image should be by
+        
+        size: what size the image should be given in
+        
+        search_terms: what keywords to include in the random search
+        """
         url = self.random_image_url(author,size,search_terms)
         image = self.get_image_from_url(url)
         if not image is None:
