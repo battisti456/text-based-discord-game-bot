@@ -5,6 +5,37 @@
     "loss_penalty" : [40,120],
     "stats" : ["hoppiness","cutiepie-ness","sparkles","zoomies","eldrich monster"],
     "obstacles" :{
+        "sitting the timekeeper keyboard" : {
+            "stat_checks" : ["hoppiness","eldrich monster","sparkles"],
+            "loss_text" : [
+                "didn't sparkle and was yeeted",
+                "missed the keyboard with their but",
+                "got distracted by the timekeeper's untied shoelace",
+                "was too polite and just sat next to the timekeeper",
+                "tripped over the keys and fell on their face"
+            ],
+            "win_text" : [
+                "just plain mashes that keyboard",
+                "'opwienjrg;njioruegojiqergfojiqfr'",
+                "'eqrwinmewqdfoinweqfoinj'",
+                "'erwgqnoirefqoinerqgojin'",
+                "'frgqniouopqairneweraqfo0i'",
+                "'fffffffffffffffffffffffff'"
+            ]
+        },
+        "getting their fur everywhere" : {
+            "stat_checks" : ["cutiepie-ness","zoomies","eldrich monster"],
+            "loss_text" : [
+                "forgot to cover the ceiling",
+                "forgot to get it inside the audiences socks",
+                "forgot their fur, them being a hairless cat",
+                "took too long"
+            ],
+            "win_text" : [
+                "doused the whole arena in hair",
+                "ruined everyone's day with hair"
+            ]
+        },
         "kitten hurdles" : {
             "stat_checks" : ["hoppiness","zoomies"],
             "loss_text" : [

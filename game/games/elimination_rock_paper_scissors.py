@@ -22,7 +22,7 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
         if players_with_guns:
             options.append('gun')
             gun_owners:list[list[PlayerId]] = []
-            for player in self.guns:
+            for player in players_with_guns:
                 while len(gun_owners) < self.guns[player]:
                     gun_owners.append([])
                 gun_owners[self.guns[player]-1].append(player)

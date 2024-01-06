@@ -15,7 +15,6 @@ class TriviaDict(TypedDict):
     difficulty: str
     category: str
 
-
 class Trivia_Base(Game):
     def __init__(self,gi:Game_Interface):
         Game.__init__(self,gi)

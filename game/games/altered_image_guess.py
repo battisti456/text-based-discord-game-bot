@@ -222,7 +222,7 @@ ALTER_METHODS = {#...altered through ____ the image
     "blurring" : blur,
     "applying a poorly implemented conversion to black and white to" : black_and_white,
     "applying an edge highlighting filter to" : edge_highlight,
-    "corering the center of" : remove_center,
+    "covering the center of" : remove_center,
     "adding polka dots to" : polka_dots,
     "adding some radial rays to" : pattern_radial_rays,
     "scribbling a bit on" : scribble,

@@ -61,7 +61,8 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                 self.gi,
                 self.sender,
                 [player],
-                message=will_challenge_message
+                message=will_challenge_message,
+                response_validator=lambda player, value: (bool(value),None)
             )
             left_right_input = Player_Single_Choice_Input(
                 "choice of left or right",

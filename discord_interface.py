@@ -102,6 +102,7 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
         intents = discord.Intents.default()
         intents.message_content = True
         intents.members = True
+
         self.client = discord.Client(intents = intents)
         self.default_sender = Discord_Sender(self)
 

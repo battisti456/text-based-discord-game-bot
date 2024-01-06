@@ -18,13 +18,16 @@ def text_validator_maker(
         is_in:Optional[list[str]] = None,
         not_is_in:Optional[list[str]] = None,
         is_composed_of:Optional[str] = None,
-        is_stricly_composed_of:Optional[str] = None
+        is_stricly_composed_of:Optional[str] = None,
+        check_lower_case:bool = False
         
 ) -> ResponseValidator[str]:
     """creates a response validator for str's matching given validation, and with feedback given on problems with the input"""
     def validator(player:PlayerId,value:Optional[str]) -> Validation:
         if value is None:
             return (False,None)
+        if check_lower_case:
+            value = value.lower()
         if not is_substr_of is None:
             if not value in is_substr_of:
                 return (False,f"given value '{value}' not in '{is_substr_of}'")

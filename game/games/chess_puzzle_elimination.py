@@ -320,9 +320,13 @@ class Chess_Puzzle_Elimination(Elimination_Base):
 
         while len(remaining_players) > 1:
             legal_moves:list[str] = list(move.uci() for move in self.board.legal_moves)
-            move_options = (random.sample(legal_moves,k=NUM_MOVE_OPTIONS))
-            if not moves[move_index] in move_options:
-                move_options[random.randint(0,NUM_MOVE_OPTIONS-1)] = moves[move_index]
+            if len(legal_moves) < NUM_MOVE_OPTIONS:
+                random.shuffle(legal_moves)
+                move_options = legal_moves
+            else:
+                move_options = (random.sample(legal_moves,k=NUM_MOVE_OPTIONS))
+                if not moves[move_index] in move_options:
+                    move_options[random.randint(0,NUM_MOVE_OPTIONS-1)] = moves[move_index]
             option_text_list:list[str] = list(self.move_text(move_option) for move_option in move_options)
             
             responses:dict[PlayerId,int] = await self.basic_multiple_choice(

@@ -44,7 +44,7 @@ class The_Great_Kitten_Race(Game):
             "You have each spent the past year training your kitten to compete in our randomized obstacle course!\n" +
             f"You have made sure to allocate each of those {self.kitten_config['point_limit']} skill points gained into the stats you believe will be most valuable.\n" +
             f"Your kitten's skill determines how likely it is to succeed where 0 always fails and {self.kitten_config['stat_limit']} always succeeds.\n" +
-            "If your kitten succeeds at an obstacle it won't loses as much time as kittens who fail\n." +
+            "If your kitten succeeds at an obstacle it won't loses as much time as kittens who fail.\n" +
             "If an obstacle requires multiple stat checks, then your kitten's success will be based on the average of those stats.\n" +
             "Now is the day where you kittens will finally race! The lowest time at the end wins!\n" +
             "All you can do now is watch and hope your training pulled off...."

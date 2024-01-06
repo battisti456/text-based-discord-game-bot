@@ -139,7 +139,15 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
             self.message:Message = Message("Respond here.",players_who_can_see=players)
         else:
             self.message:Message = message
+        self.message = Alias_Message(self.message,lambda content: self.add_response_status(content))
         self.allow_edits:bool = allow_edits
+    async def update_response_status(self):
+        await self.sender(self.message)
+    def add_response_status(self,content:str|None):
+        if content is None:
+            return self.response_status()
+        else:
+            return content +'\n' + self.response_status()
     def allow_interaction(self,interaction:Interaction) -> bool:
         """
         returns wether a particular interaction is auctually meant for this player_input's message

@@ -39,7 +39,7 @@ class Longest_Word(Dictionary_Base,Rounds_With_Points_Base):
             self.gi,
             self.sender,
             [player],
-            lambda x,y: text_validator_maker(is_stricly_composed_of=self.current_letters,max_length=num_letters_can_refresh)(x,y),
+            lambda x,y: text_validator_maker(is_stricly_composed_of=self.current_letters,max_length=num_letters_can_refresh,check_lower_case=True)(x,y),
             message=change_letter_message
         )
         choose_word_input = Player_Text_Input(
@@ -47,7 +47,7 @@ class Longest_Word(Dictionary_Base,Rounds_With_Points_Base):
             self.gi,
             self.sender,
             [player],
-            lambda x,y: text_validator_maker(is_stricly_composed_of=self.current_letters)(x,y),
+            lambda x,y: text_validator_maker(is_stricly_composed_of=self.current_letters,check_lower_case=True)(x,y),
             message=choose_word_message
         )
         chosen_word:None|str = None
@@ -61,17 +61,17 @@ class Longest_Word(Dictionary_Base,Rounds_With_Points_Base):
             else:
                 choose_word_input.reset()
                 await choose_word_input.run()
-            chosen_word = choose_word_input.responses[player]
-            if chosen_word:
-                break
-            change_letters = change_letter_input.responses[player] 
-            if not change_letters is None:
-                list_letters = list(self.current_letters)
-                for letter in change_letters:
-                    list_letters.remove(letter)
-                list_letters += self.random_balanced_letters(NUM_LETTERS-len(list_letters))
-                self.current_letters = "".join(list_letters)
-                num_letters_can_refresh -= len(change_letters)
+            if choose_word_input.has_recieved_all_responses():
+                chosen_word = choose_word_input.responses[player]
+            else:
+                change_letters = change_letter_input.responses[player] 
+                if not change_letters is None:
+                    list_letters = list(self.current_letters)
+                    for letter in change_letters:
+                        list_letters.remove(letter)
+                    list_letters += self.random_balanced_letters(NUM_LETTERS-len(list_letters))
+                    self.current_letters = "".join(list_letters)
+                    num_letters_can_refresh -= len(change_letters)
         return chosen_word
     
     async def core_game(self):
