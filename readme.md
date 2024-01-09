@@ -5,7 +5,7 @@ Several discalimers!
 - This repository was created on the fly while trying to make small text-based minigames in discord.
 - As it was only ever intended to be run while I was there to correct any mistakes that actually cause errors, I am sure there are many more bugs still left that have not been found.
 - In addition, the code, while fairly versatile, is not friendly to work with and probably requires many small edits to lots of files to implement features which should be simple, but I never though to add.
-- I designed these games to work with between 2 aqnd 6 people. Some may work with more, some may not.
+- I designed these games to work with between two and six people. Some may work with more, some may not.
 
 So be warned.
 
