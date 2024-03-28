@@ -49,7 +49,12 @@ def ordinate(num:int|str) -> str:
         ordinal = 'th'
     return num + ordinal
 TEMP_PATH = "temp"
-
+def nice_time(time:int) -> str:
+    """
+    converts a time in seconds into a more readable approximation
+    not finished
+    """
+    return f"{time} seconds"
 def temp_file_path(file_type:str) -> str:
     """
     returns a theoretical random file path with the given file_type;

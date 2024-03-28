@@ -4,10 +4,13 @@ from game.message import Message, Alias_Message
 from game.game_interface import Game_Interface
 from game.interaction import Interaction
 from game.response_validator import ResponseValidator, Validation, not_none
+from game.grammer import nice_time, ordinate
 
 from typing import Optional, Any, Callable, Awaitable
 
 import asyncio
+from inspect import iscoroutinefunction
+from time import time
 type Condition = dict[Player_Input,bool]
 
 SLEEP_TIME = 10
@@ -21,10 +24,14 @@ class Player_Input[T]():
     def __init__(
             self,name:str, gi:Game_Interface,sender:Sender,players:Optional[list[PlayerId]] = None,
             response_validator:ResponseValidator[T] = not_none, 
-            who_can_see:Optional[list[PlayerId]] = None):
+            who_can_see:Optional[list[PlayerId]] = None, 
+            timeout:Optional[int] = None, warnings:list[int] = []):
+        self.timeout = timeout
+        self.warnings = warnings
         self.name = name
         self.gi = gi
         self.sender = sender
+        self.who_can_see = who_can_see
         if players is None:
             self.players = self.gi.get_players()
         else:
@@ -33,9 +40,10 @@ class Player_Input[T]():
         self._receive_inputs = False
         self._response_validator:ResponseValidator[T] = response_validator
         self.status_message = Alias_Message(
-            Message(players_who_can_see=who_can_see),lambda content: self.response_status())
+            Message(players_who_can_see=self.who_can_see),lambda content: self.response_status())
         self.funcs_to_call_on_update:list[Callable[[],Awaitable]] = []
         self._last_response_status:str = ""
+        self.timeout_time:int = 0
     def on_update(self,func:Callable[[],Awaitable]) -> Callable[[],Awaitable]:
         """binds a callable to be run whenever the input changes"""
         if not func in self.funcs_to_call_on_update:
@@ -94,6 +102,24 @@ class Player_Input[T]():
     def has_recieved_all_responses(self) -> bool:
         """returns whether all responses meet the validator's requirements"""
         return all(self._response_validator(player,self.responses[player])[0] for player in self.players)
+    async def _handle_warnings(self):
+        for i in range(len(self.warnings)):
+            await asyncio.sleep(self.warnings[i])
+            players_not_responded = list(player for player in self.players if not self._response_validator(player,self.responses[player])[0])
+            warning_text:str
+            if i + 1 == len(self.warnings):
+                warning_text = "This is your final warning."
+            else:
+                warning_text = f"You have {len(self.warnings)-1-i} warning(s) remaining."
+            timeout_text:str = ""
+            if not self.timeout is None:
+                timeout_text = f"\nYou have {nice_time(self.timeout_time-int(time()))} to respond before timeout."
+            await self.sender(Message(
+                players_who_can_see=self.who_can_see,
+                content=f"We are still waiting on {self.sender.format_players_md(players_not_responded)} to respond to {self.name}.\n" +
+                f"This is your {ordinate(i+1)} warning at {nice_time(self.warnings[i])} of failure to respond.\n" + 
+                warning_text + timeout_text
+                ))
     async def _run(self,await_task:asyncio.Task[Any]):
         """
         awaits's _setup, then calls _core while it awaits await_task, then calls _unsetup
@@ -104,8 +130,17 @@ class Player_Input[T]():
         await self._update()
         self._receive_inputs = True
         _core = asyncio.create_task(self._core())
-        await asyncio.wait([await_task])
+        _handle_warnings = asyncio.create_task(self._handle_warnings())
+        if isinstance(self.timeout,int):
+            self.timeout_time = int(time()) + self.timeout
+        try:
+            await asyncio.wait([await_task],timeout=self.timeout)
+        except asyncio.TimeoutError:
+            await self.sender(Message(
+                players_who_can_see=self.who_can_see,
+                content=f"The opportunity to respond to {self.name} has timed out."))
         _core.cancel()
+        _handle_warnings.cancel()
         await self._unsetup()
     async def wait_until_received_all(self):
         """
@@ -132,9 +167,10 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
     def __init__(
             self, name:str, gi:Game_Interface, sender :Sender, 
             players:Optional[list[PlayerId]] = None, response_validator:ResponseValidator[T] = not_none,
-            who_can_see:Optional[list[PlayerId]] = None,
+            who_can_see:Optional[list[PlayerId]] = None, 
+            timeout:Optional[int] = None, warnings:list[int] = [],
             message:Optional[Message] = None, allow_edits:bool = True):
-        Player_Input.__init__(self,name,gi,sender,players,response_validator,who_can_see)
+        Player_Input.__init__(self,name,gi,sender,players,response_validator,who_can_see,timeout,warnings)
         if message is None:
             self.message:Message = Message("Respond here.",players_who_can_see=players)
         else:
@@ -174,10 +210,11 @@ class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
     def __init__(
             self, name:str, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
             response_validator:ResponseValidator[str] = not_none,
-            who_can_see:Optional[list[PlayerId]] = None,
+            who_can_see:Optional[list[PlayerId]] = None, 
+            timeout:Optional[int] = None, warnings:list[int] = [],
             message:Optional[Message] = None,
             allow_edits:bool = True):
-        Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,message,allow_edits)
+        Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,timeout,warnings,message,allow_edits)
     async def _setup(self):
         await Player_Input_In_Response_To_Message._setup(self)
         @self.gi.on_action('send_message',self)
@@ -202,10 +239,11 @@ class Player_Single_Choice_Input(Player_Input_In_Response_To_Message[int]):
     def __init__(
             self, name:str, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
             response_validator:ResponseValidator[int] = not_none, 
-            who_can_see:Optional[list[PlayerId]] = None,
+            who_can_see:Optional[list[PlayerId]] = None, 
+            timeout:Optional[int] = None, warnings:list[int] = [],
             message:Optional[Message] = None,
             allow_edits:bool = True):
-        Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,message,allow_edits)
+        Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,timeout,warnings,message,allow_edits)
     async def _setup(self):
         await Player_Input_In_Response_To_Message._setup(self)
         @self.gi.on_action('select_option',self)
@@ -230,8 +268,9 @@ class Player_Multiple_Choice_Input(Player_Input_In_Response_To_Message[set[int]]
     def __init__(
             self, name:str, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
             response_validator:ResponseValidator[set[int]] = not_none,
-            who_can_see:Optional[list[PlayerId]] = None, message:Optional[Message] = None):
-        Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,message,True)
+            who_can_see:Optional[list[PlayerId]] = None, 
+            timeout:Optional[int] = None, warnings:list[int] = [], message:Optional[Message] = None):
+        Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,timeout,warnings,message,True)
     async def _setup(self):
         await Player_Input_In_Response_To_Message._setup(self)
         @self.gi.on_action('select_option',self)
