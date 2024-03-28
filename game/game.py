@@ -1,5 +1,5 @@
 
-from game import PlayerId, ChannelId, PlayerPlacement, PlayerDict
+from game import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional
 import game.emoji_groups
 from game.game_interface import Game_Interface
 from game.message import Message, Bullet_Point
@@ -48,6 +48,24 @@ class Game(object):
         returns the senders formatting of a list of players without markdown
         """
         return self.sender.format_players(user_id)
+    async def _process_none_response(self,player:PlayerId):
+        """
+        meant to be overwiritten
+        called during treatment of responses
+        """
+        pass
+    async def treat_reponses(self,responses:PlayerDictOptional) -> PlayerDict:
+        """
+        removes None answers from a response dict
+        calls _process_none_responses to do something with the none responses
+        """
+        treaded_responses:PlayerDict = {}
+        for player in responses:
+            if not responses[player] is None:
+                treaded_responses[player] = responses[player]
+            else:
+                await self._process_none_response(player)
+        return treaded_responses
     @overload
     async def basic_multiple_choice(
             self,content:Optional[str]=...,options:list[str]=...,who_chooses:PlayerId=...,
