@@ -2,7 +2,7 @@ from game import PlayerId, PlayerDict, make_player_dict, PlayerPlacement, correc
 
 from game.game import Game
 from game.game_interface import Game_Interface
-from game.player_input import Player_Input, Player_Single_Choice_Input, Player_Text_Input, run_inputs
+from game.player_input import Player_Input, Player_Single_Selection_Input, Player_Text_Input, run_inputs
 from game.message import Message, make_bullet_points
 from game.emoji_groups import NUMBERED_KEYCAP_EMOJI
 from game.grammer import wordify_iterable, ordinate
@@ -74,7 +74,7 @@ class The_Great_Kitten_Race(Game):
                 content = f"How did you train your cat's **{stat}** stat?",
                 bullet_points= bp
             )
-            input = Player_Single_Choice_Input(
+            input = Player_Single_Selection_Input(
                 name = f"choice of {stat} stat",
                 gi = self.gi,
                 sender = self.sender,

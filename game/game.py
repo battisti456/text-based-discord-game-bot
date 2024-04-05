@@ -4,7 +4,7 @@ import game.emoji_groups
 from game.game_interface import Game_Interface
 from game.message import Message, Bullet_Point
 from game.sender import Sender
-from game.player_input import Player_Single_Choice_Input, Player_Text_Input
+from game.player_input import Player_Single_Selection_Input, Player_Text_Input
 from game.grammer import ordinate, wordify_iterable
 import functools
 
@@ -122,11 +122,10 @@ class Game(object):
         question = Message(
             content = content,
             channel_id=channel_id,
-            bullet_points=bp,
-            attach_paths=[]
+            bullet_points=bp
         )
         await self.sender(question)
-        player_input = Player_Single_Choice_Input(
+        player_input = Player_Single_Selection_Input(
             name = "this multiple choice question",
             gi = self.gi,
             sender = self.sender,

@@ -232,7 +232,7 @@ class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
     async def _unsetup(self):
         self.gi.purge_actions(self)
 
-class Player_Single_Choice_Input(Player_Input_In_Response_To_Message[int]):
+class Player_Single_Selection_Input(Player_Input_In_Response_To_Message[int]):
     """
     player input class for collecting single choice selection interactions to a message
     """
@@ -261,7 +261,7 @@ class Player_Single_Choice_Input(Player_Input_In_Response_To_Message[int]):
                     await self._update()
     async def _unsetup(self):
         self.gi.purge_actions(self)
-class Player_Multiple_Choice_Input(Player_Input_In_Response_To_Message[set[int]]):
+class Player_Multiple_Selection_Input(Player_Input_In_Response_To_Message[set[int]]):
     """
     player input class for collecting multiple choice selection interactions to a message
     """

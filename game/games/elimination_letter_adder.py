@@ -2,7 +2,7 @@ from game.game_bases.elimination_base import Elimination_Base
 from game.game_bases.dictionary_base import Dictionary_Base
 from game.game_interface import Game_Interface
 from game.message import Message, make_no_yes_bullet_points, make_bullet_points
-from game.player_input import Player_Input, Player_Single_Choice_Input, Player_Text_Input, run_inputs
+from game.player_input import Player_Input, Player_Single_Selection_Input, Player_Text_Input, run_inputs
 from game.response_validator import text_validator_maker
 
 from game import PlayerId, PlayerPlacement
@@ -56,7 +56,7 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                 content = "Which side would you like to put your letter on, and which letter would you like to add?",
                 bullet_points=make_bullet_points(['left','right'],LEFT_RIGHT_EMOJI)
             )
-            challenge_input = Player_Single_Choice_Input(
+            challenge_input = Player_Single_Selection_Input(
                 "choice to challenge",
                 self.gi,
                 self.sender,
@@ -64,7 +64,7 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                 message=will_challenge_message,
                 response_validator=lambda player, value: (bool(value),None)
             )
-            left_right_input = Player_Single_Choice_Input(
+            left_right_input = Player_Single_Selection_Input(
                 "choice of left or right",
                 self.gi,
                 self.sender,

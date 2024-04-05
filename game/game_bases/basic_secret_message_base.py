@@ -1,7 +1,7 @@
 from game.game import Game, police_game_callable
 from game.game_interface import Game_Interface
 from game.message import Message, make_bullet_points
-from game.player_input import Player_Single_Choice_Input, Player_Text_Input, run_inputs
+from game.player_input import Player_Single_Selection_Input, Player_Text_Input, run_inputs
 from game.emoji_groups import COLORED_CIRCLE_EMOJI, NO_YES_EMOJI
 from game.response_validator import ResponseValidator, not_none
 
@@ -150,14 +150,14 @@ class Basic_Secret_Message_Base(Game):
         else:
             e = emojis
         
-        inputs:PlayerDict[Player_Single_Choice_Input] = {}
+        inputs:PlayerDict[Player_Single_Selection_Input] = {}
         for player in p:
             message= Message(
                 content = c[player],
                 players_who_can_see=[player],
                 bullet_points=make_bullet_points(o[player],e[player])
             )
-            inpt = Player_Single_Choice_Input(
+            inpt = Player_Single_Selection_Input(
                 "their secret multiple choice response",
                 self.gi,
                 self.sender,
