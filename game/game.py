@@ -48,7 +48,7 @@ class Game(object):
         returns the senders formatting of a list of players without markdown
         """
         return self.sender.format_players(user_id)
-    async def _process_none_response(self,player:PlayerId):
+    async def _process_none_responses(self,responses:list[PlayerId]):
         """
         meant to be overwiritten
         called during treatment of responses
@@ -59,12 +59,14 @@ class Game(object):
         removes None answers from a response dict
         calls _process_none_responses to do something with the none responses
         """
+        none_response:list[PlayerId] = []
         treaded_responses:PlayerDict = {}
         for player in responses:
             if not responses[player] is None:
                 treaded_responses[player] = responses[player]
             else:
-                await self._process_none_response(player)
+                none_response.append(player)
+        await self._process_none_responses(none_response)
         return treaded_responses
     @overload
     async def basic_multiple_choice(
