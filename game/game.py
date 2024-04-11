@@ -1,5 +1,5 @@
 
-from game import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional
+from game import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional, KickFunc
 import game.emoji_groups
 from game.game_interface import Game_Interface
 from game.message import Message, Bullet_Point
@@ -8,9 +8,10 @@ from game.player_input import Player_Single_Selection_Input, Player_Text_Input
 from game.grammer import ordinate, wordify_iterable
 import functools
 
-from typing import Optional, Iterable, TypeVar, Callable, Awaitable, ParamSpec, overload
+from typing import Optional, Iterable, TypeVar, Callable, Awaitable, ParamSpec, overload, Sequence
 
 MULTIPLE_CHOICE_LINE_THRESHOLD = 30
+PRIORITY_OF_DEFAULT_KICK = 100#lower happens first
 
 R = TypeVar('R')
 P = ParamSpec('P')
@@ -27,6 +28,13 @@ class Game(object):
             self.players:list[PlayerId] = self.gi.get_players()
             self.current_class_execution:Optional[type[Game]] = None
             self.classes_banned_from_speaking:list[type[Game]] = []
+
+            self.on_kick_players_funcs:dict[KickFunc,int] = {}
+            self.kicked_players:list[list[PlayerId]] = []
+            @on_kick_players(self,PRIORITY_OF_DEFAULT_KICK)
+            async def default_on_kick(players:list[PlayerId]) -> bool:
+                self.kicked_players.insert(0,players)
+                return True
     async def run(self)->PlayerPlacement:
         """
         runs the currently defined game and returns a list reperesnting a randking of how the players placed in the game
@@ -48,26 +56,6 @@ class Game(object):
         returns the senders formatting of a list of players without markdown
         """
         return self.sender.format_players(user_id)
-    async def _process_none_responses(self,responses:list[PlayerId]):
-        """
-        meant to be overwiritten
-        called during treatment of responses
-        """
-        pass
-    async def treat_reponses(self,responses:PlayerDictOptional) -> PlayerDict:
-        """
-        removes None answers from a response dict
-        calls _process_none_responses to do something with the none responses
-        """
-        none_response:list[PlayerId] = []
-        treaded_responses:PlayerDict = {}
-        for player in responses:
-            if not responses[player] is None:
-                treaded_responses[player] = responses[player]
-            else:
-                none_response.append(player)
-        await self._process_none_responses(none_response)
-        return treaded_responses
     @overload
     async def basic_multiple_choice(
             self,content:Optional[str]=...,options:list[str]=...,who_chooses:PlayerId=...,
@@ -290,7 +278,27 @@ class Game(object):
         """
         if self.allowed_to_speak():
             await self.sender(message)
+    async def kick_none_response(self,responses:PlayerDictOptional):
+        relevant_players = (player for player in self.players if player in responses)
+        none_responders = (player for player in relevant_players if responses[player] is None)
+        await self.kick_players(list(none_responders))
+    async def kick_players(self,players:list[PlayerId]):
+        funcs = list(self.on_kick_players_funcs)
+        funcs.sort(key=lambda func:self.on_kick_players_funcs[func])
+        for func in funcs:
+            if not func(players):
+                break
+    def _on_kick_players(self,func:KickFunc,priority:int = 0):
+        self.on_kick_players_funcs[func] = priority
+    
+    
 
+
+def on_kick_players(game:Game,priority:int=0):
+    def wrapper(func:KickFunc) -> KickFunc:
+        game._on_kick_players(func,priority)
+        return func
+    return wrapper
 
 def police_game_callable(func:Callable[P,Awaitable[R]]) -> Callable[P,Awaitable[R]]:
     """
