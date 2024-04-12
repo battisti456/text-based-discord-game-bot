@@ -292,11 +292,11 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
         responses:PlayerDict[int] = await self.basic_multiple_choice(
             f"Which of these search prompts does this image correspond to?",
             search_options,
-            who_chooses=self.players,
+            who_chooses=self.unkicked_players,
             emojis = list(SEARCH_TOPICS[topic] for topic in search_options)
         )
 
-        correct_players = list(player for player in self.players if search_options[responses[player]] == actual_search)
+        correct_players = list(player for player in self.unkicked_players if search_options[responses[player]] == actual_search)
 
         await self.basic_send(
             f"I actually searched for '{actual_search}'.",

@@ -1,7 +1,7 @@
 import game
 from game import PlayerId, PlayerDict, PlayerPlacement
 from game.game_interface import Game_Interface
-from game.game import Game, police_game_callable
+from game.game import Game, police_game_callable, on_kick_players, PRIORITY_OF_DEFAULT_KICK
 from typing import Iterable
 
 class Elimination_Base(Game):
@@ -10,6 +10,12 @@ class Elimination_Base(Game):
         if not Elimination_Base in self.initialized_bases:
             self.initialized_bases.append(Elimination_Base)
             self.players_eliminated:PlayerPlacement = []
+
+            @on_kick_players(self,PRIORITY_OF_DEFAULT_KICK-1)
+            async def elimination_on_kick(players:list[PlayerId]) -> bool:
+                await self.eliminate_players(players)
+                
+                return False#stop execution here, do not use default kick function
     @police_game_callable
     async def eliminate_players(self,players:PlayerId|list[PlayerId]) -> bool:
         """Returns True to tell core_game that another round should be started after calling this.
@@ -18,7 +24,7 @@ class Elimination_Base(Game):
             players = [players]
         if players:
             assert isinstance(players,list)
-            if len(players) == len(self.players) - self.get_num_eliminated():
+            if len(players) == len(self.unkicked_players) - self.get_num_eliminated():
                 await self.basic_policed_send(f"{self.format_players_md(players)} despite otherwise being eliminated will continue to another round.")
                 return True#all players would have been eliminated, restart round
             self.players_eliminated.append(players)
@@ -26,7 +32,7 @@ class Elimination_Base(Game):
             if len(players) == 1:
                 were_text = "was"
             await self.basic_policed_send(f"{self.format_players_md(players)} {were_text} eliminated.")
-            if self.get_num_eliminated() == len(self.players) -1 :
+            if self.get_num_eliminated() == len(self.unkicked_players) -1 :
                 return True #winner decided
         return False #nothing happens
     def player_is_eliminated(self,player:PlayerId) -> bool:
@@ -38,7 +44,7 @@ class Elimination_Base(Game):
                 not_eliminated = not_eliminated and not (player in elimination)
         return not not_eliminated
     def get_remaining_players(self) -> list[PlayerId]:
-        return list(player for player in self.players if not self.player_is_eliminated(player))
+        return list(player for player in self.unkicked_players if not self.player_is_eliminated(player))
     def get_num_eliminated(self) -> int:
         num = 0
         for elimination in self.players_eliminated:
@@ -51,7 +57,7 @@ class Elimination_Base(Game):
     async def run(self) -> PlayerPlacement:
         await self.game_intro()
         await self.game_setup()
-        while self.get_num_eliminated() < len(self.players) - 1:
+        while self.get_num_eliminated() < len(self.unkicked_players) - 1:
             players_to_be_eliminated = await self.core_game(self.get_remaining_players())
             await self.eliminate_players(players_to_be_eliminated)
         await self.game_cleanup()

@@ -19,7 +19,7 @@ class Basic_Secret_Message_Base(Game):
             attatchements_data:Optional[list[str]|PlayerDict[list[str]]] = None):
         p:list[PlayerId] = []
         if player is None:
-            p = list(self.players)
+            p = list(self.unkicked_players)
         elif isinstance(player,list):
             p = player
         else:
@@ -54,7 +54,7 @@ class Basic_Secret_Message_Base(Game):
             response_validator:ResponseValidator[str] = not_none) -> str|PlayerDict[str]:
         p:list[PlayerId] = []
         if players is None:
-            p = list(self.players)
+            p = list(self.unkicked_players)
         elif isinstance(players,list):
             p = players
         else:
@@ -127,7 +127,7 @@ class Basic_Secret_Message_Base(Game):
         assert not options is None
         p:list[PlayerId] = []
         if players is None:
-            p = list(self.players)
+            p = list(self.unkicked_players)
         elif isinstance(players,list):
             p = players
         else:

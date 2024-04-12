@@ -7,7 +7,7 @@ import random
 class Elimination_Rock_Paper_Scissors(Elimination_Base):
     def __init__(self,gi:Game_Interface):
         Elimination_Base.__init__(self,gi)
-        self.guns:PlayerDict[int] = make_player_dict(self.players,0)
+        self.guns:PlayerDict[int] = make_player_dict(self.unkicked_players,0)
         self.announced_guns:bool = False
     async def game_intro(self):
         await self.basic_send(

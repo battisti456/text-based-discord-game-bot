@@ -34,23 +34,23 @@ class Tricky_Trivia(Basic_Secret_Message_Base,Trivia_Base,Rounds_With_Points_Bas
 
         question_text = f"*{trivia_dict['question']}*\nAn example of an incorrect answer '*{trivia_dict['incorrect_answers'][0]}*'."
         await self.basic_send(question_text)
-        responses:PlayerDict[str] = await self.basic_secret_text_response(self.players,
+        responses:PlayerDict[str] = await self.basic_secret_text_response(self.unkicked_players,
             content = f"{question_text}\nWhat is a possible answer to this qustion that might fool your competitors?")
         
         options = [trivia_dict['correct_answer']]+list(responses[player] for player in responses)
         options = list(set(options))#remove duplicates
         random.shuffle(options)
 
-        choices:PlayerDict[int] = await self.basic_multiple_choice(question_text,options,self.players)
+        choices:PlayerDict[int] = await self.basic_multiple_choice(question_text,options,self.unkicked_players)
         for option in (option for option in options if not option is trivia_dict['correct_answer']):
-            players_who_gave = list(player for player in self.players if responses[player] == option)
-            players_who_chose = list(player for player in self.players if options[choices[player]] == option and not player in players_who_gave)
+            players_who_gave = list(player for player in self.unkicked_players if responses[player] == option)
+            players_who_chose = list(player for player in self.unkicked_players if options[choices[player]] == option and not player in players_who_gave)
             if not players_who_chose == []:
                 await self.basic_send(f"{self.format_players_md(players_who_gave)} provided the answer:\n'{option}'\n and fooled {self.format_players_md(players_who_chose)}.")
                 await self.score(players_who_gave,len(players_who_chose)*POINTS_FOOL)
         bonus:dict[PlayerId,int] = {}
-        for player_who_gave in (player for player in self.players if responses[player] == trivia_dict['correct_answer']):
-            bonus[player_who_gave] = sum(1 for player in self.players if options[choices[player]] == trivia_dict['correct_answer'] and not player == player_who_gave)
+        for player_who_gave in (player for player in self.unkicked_players if responses[player] == trivia_dict['correct_answer']):
+            bonus[player_who_gave] = sum(1 for player in self.unkicked_players if options[choices[player]] == trivia_dict['correct_answer'] and not player == player_who_gave)
         bonus_text = ""
         if bonus:
             bonus_text = (
@@ -58,7 +58,7 @@ class Tricky_Trivia(Basic_Secret_Message_Base,Trivia_Base,Rounds_With_Points_Bas
                 " bonus points respectively for providing the correct answer earlier.")
         correct_answer_text = f"The correct answer was:\n'{trivia_dict['correct_answer']}'"
         correct_choice_index = options.index(trivia_dict['correct_answer'])
-        correct_players = list(player for player in self.players if choices[player] == correct_choice_index)
+        correct_players = list(player for player in self.unkicked_players if choices[player] == correct_choice_index)
         if correct_players:
             await self.basic_send(f"{correct_answer_text}\n{self.format_players_md(correct_players)} got the answer right!{bonus_text}")
             point_dict = make_player_dict(correct_players,POINTS_GUESS)

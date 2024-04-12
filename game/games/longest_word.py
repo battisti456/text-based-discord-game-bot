@@ -75,7 +75,7 @@ class Longest_Word(Dictionary_Base,Rounds_With_Points_Base):
         return chosen_word
     
     async def core_game(self):
-        for player in self.players:
+        for player in self.unkicked_players:
             word = await self.longest_word_question(player)
             if self.is_word(word):
                 p= POINT_FUNCTION(word)

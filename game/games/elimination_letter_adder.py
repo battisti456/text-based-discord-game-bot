@@ -19,7 +19,7 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
     def __init__(self,gi:Game_Interface):
         Elimination_Base.__init__(self,gi)
         Dictionary_Base.__init__(self,gi)
-        self.last_player:PlayerId = self.players[0]
+        self.last_player:PlayerId = self.unkicked_players[0]
     async def game_intro(self):
         await self.basic_send(
             "# We are playing a game of word creation!\n" +
@@ -41,9 +41,9 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
         while True:
             #determine whose turn it is
             player = None
-            main_index = self.players.index(self.last_player)
-            for i in range(1,len(self.players)):
-                player = self.players[(main_index+i)%len(self.players)]
+            main_index = self.unkicked_players.index(self.last_player)
+            for i in range(1,len(self.unkicked_players)):
+                player = self.unkicked_players[(main_index+i)%len(self.unkicked_players)]
                 if player in remaining_players:
                     break
             #

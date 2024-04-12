@@ -106,8 +106,8 @@ class The_Great_Kitten_Race(Game):
         )
         
         make_kitten:Callable[[],Kitten] = lambda:{'name':"",'stats':{},'time':-1}
-        kittens:PlayerDict[Kitten] = make_player_dict(self.players,make_kitten)
-        for player in self.players:
+        kittens:PlayerDict[Kitten] = make_player_dict(self.unkicked_players,make_kitten)
+        for player in self.unkicked_players:
             name = name_input.responses[player]
             assert not name is None
             kittens[player]['name'] = name
@@ -124,7 +124,7 @@ class The_Great_Kitten_Race(Game):
             obstacle:Obstacle = self.kitten_config['obstacles'][obstacle_name]
             kitten_text_list:list[str] = []
             stat_checks:list[str] = obstacle["stat_checks"]
-            for player in self.players:
+            for player in self.unkicked_players:
                 stat_treshold:float = sum(kittens[player]['stats'][stat] for stat in stat_checks)/len(stat_checks)/self.kitten_config['stat_limit']
                 if random.random() < stat_treshold:#success
                     text = f"__*{kittens[player]['name']}*__ fortunately peformed well. They {random.choice(obstacle['win_text'])} and only"
@@ -139,7 +139,7 @@ class The_Great_Kitten_Race(Game):
                 '\n'.join(kitten_text_list)
             )
         
-        order:list[PlayerId] = list(self.players).copy()
+        order:list[PlayerId] = list(self.unkicked_players).copy()
         order.sort(key=lambda player:kittens[player]['time'])
 
         cross_finish_text_list:list[str] = list(

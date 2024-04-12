@@ -56,19 +56,19 @@ class Emoji_Communication(Basic_Secret_Message_Base,Rounds_With_Points_Base):
         )
     async def core_game(self):
         player_prompts:PlayerDict[str] = {}
-        for current_player in self.players:
+        for current_player in self.unkicked_players:
             player_prompts[current_player] = self.ww_sentence.sentence()
         player_questions = {}
-        for current_player in self.players:
+        for current_player in self.unkicked_players:
             player_questions[current_player] = f"Please do your best to convey this sentence through emoji.\n'{player_prompts[current_player]}'"
 
-        emoji_responses = await self.basic_secret_text_response(self.players,player_questions,response_validator=emoji_response_validator)
+        emoji_responses = await self.basic_secret_text_response(self.unkicked_players,player_questions,response_validator=emoji_response_validator)
 
         emoji_prompts = {}
-        for current_player in self.players:
+        for current_player in self.unkicked_players:
             emoji_prompts[current_player] = only_emoji(emoji_responses[current_player])
-        for current_player in self.players:
-            players_to_ask = list(player for player in self.players if player != current_player)
+        for current_player in self.unkicked_players:
+            players_to_ask = list(player for player in self.unkicked_players if player != current_player)
             options = []
             for i in range(NUM_OPTIONS-1):
                 options.append(self.ww_sentence.sentence())

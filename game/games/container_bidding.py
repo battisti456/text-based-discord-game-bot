@@ -60,7 +60,7 @@ class Container_Bidding(Rounds_With_Points_Base,Basic_Secret_Message_Base):
         with open(f"{DATA_PATH}",'r') as file:
             self.data:DataDict = json.load(file)
         validate_data(self.data)
-        self.money:PlayerDict[int] = make_player_dict(self.players,int(STARTING_MONEY/len(self.players)))
+        self.money:PlayerDict[int] = make_player_dict(self.unkicked_players,int(STARTING_MONEY/len(self.unkicked_players)))
     async def game_intro(self):
         await self.basic_send(f"# Welcome to a game of container bidding!\n" + 
                         f"In this game we will have {NUM_CONTAINERS} containers that we look at.\n" +
@@ -68,7 +68,7 @@ class Container_Bidding(Rounds_With_Points_Base,Basic_Secret_Message_Base):
                         "Then you must each secretly choose how much you would be willing to contribute for it!\n" +
                         "All of you are bidding together, but each secretly deciding how much to contribute.\n" +
                         "The proportion of the total bid that your contribution takes up determines your share of the valuables inside the container.\n" +
-                        f"If your cumulitive bidding exceeds your starting cash of {moneyfy(int(STARTING_MONEY/len(self.players)))}, " +
+                        f"If your cumulitive bidding exceeds your starting cash of {moneyfy(int(STARTING_MONEY/len(self.unkicked_players)))}, " +
                         f"then you will lose an extra {END_OF_GAME_INTEREST}% at the end of the game for interest for all money spent in excess of that.\n"+
                         "Any money you don't end up spending will be added to your total at the end of the game.\n"
                         "**WARNING: Your answers are only evaluated based of the digits they contain. All other characters are ignored. So '$100.00' is '$10000'.**")
@@ -92,16 +92,16 @@ class Container_Bidding(Rounds_With_Points_Base,Basic_Secret_Message_Base):
         question_text:str = (
             f"Our expert evaluator described this container as '{desc_name}'.\n"+
             f"The total bid threshold is {moneyfy(total_bid_threshold)}.\n" +
-            f"I would suggest contributing 1/{len(self.players)} of this. " +
-            f"So, {int(total_bid_threshold/len(self.players))}.\n" +
+            f"I would suggest contributing 1/{len(self.unkicked_players)} of this. " +
+            f"So, {int(total_bid_threshold/len(self.unkicked_players))}.\n" +
             "How much are you willing to contribute?")
         await self.basic_send(f"{question_text}\nPlease respond in your private channel.")
         individual_message:dict[PlayerId,str] = {}
-        for player in self.players:
+        for player in self.unkicked_players:
             individual_message[player] = f"{question_text}\nYou currently have {moneyfy(self.money[player])} available to contribute."
-        responses = await self.basic_secret_text_response(self.players,individual_message)
-        player_bids:dict[PlayerId,int] = make_player_dict(self.players,0)
-        for player in self.players:
+        responses = await self.basic_secret_text_response(self.unkicked_players,individual_message)
+        player_bids:dict[PlayerId,int] = make_player_dict(self.unkicked_players,0)
+        for player in self.unkicked_players:
             response:str = responses[player]
             response_only_num:str = "".join(list(num for num in response if num.isdigit()))
             if response_only_num != "":
@@ -137,13 +137,13 @@ class Container_Bidding(Rounds_With_Points_Base,Basic_Secret_Message_Base):
     async def game_cleanup(self):
         await self.basic_send(
             "That was our last container, so, at the end of the game: "+
-            f"{self.format_players_md(self.players)} had {wordify_iterable(moneyfy(self.money[player]) for player in self.players)} leftover respectively." +
+            f"{self.format_players_md(self.unkicked_players)} had {wordify_iterable(moneyfy(self.money[player]) for player in self.unkicked_players)} leftover respectively." +
             f"This remaining money will be added to your final money score, but any negatives will be charged an extra {END_OF_GAME_INTEREST}% in interest.")
-        for player in self.players:
+        for player in self.unkicked_players:
             if self.money[player] < 0:
                 self.money[player] = int(self.money[player] * (1 + END_OF_GAME_INTEREST/100))
         self.points_format = lambda x: f"{moneyfy(x)} total"
-        await self.score(self.players,self.money)
+        await self.score(self.unkicked_players,self.money)
 
 
             

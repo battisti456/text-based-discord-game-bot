@@ -25,7 +25,7 @@ class Game(object):
             self.initialized_bases:list[type[Game]] = [Game]
             self.gi = gi
             self.sender:Sender = self.gi.get_sender()
-            self.players:list[PlayerId] = self.gi.get_players()
+            self.all_players:list[PlayerId] = self.gi.get_players()
             self.current_class_execution:Optional[type[Game]] = None
             self.classes_banned_from_speaking:list[type[Game]] = []
 
@@ -35,9 +35,12 @@ class Game(object):
             async def default_on_kick(players:list[PlayerId]) -> bool:
                 self.kicked_players.insert(0,players)
                 return True
+    @property 
+    def unkicked_players(self) -> list[PlayerId]:
+        return list(player for player in self.all_players if not any(player in kick_group for kick_group in self.kicked_players))
     async def run(self)->PlayerPlacement:
         """
-        runs the currently defined game and returns a list reperesnting a randking of how the players placed in the game
+        runs the currently defined game and returns a list reperesnting a ranking of how the players placed in the game
         """
         return []
     async def run_independant(self):
@@ -91,7 +94,7 @@ class Game(object):
         if isinstance(who_chooses,list):
             wc += who_chooses
         elif who_chooses is None:
-            wc += self.players
+            wc += self.unkicked_players
         else:
             wc.append(who_chooses)
         emj:list[str] = []
@@ -187,7 +190,7 @@ class Game(object):
         if isinstance(who_chooses,list):
             wc += who_chooses
         elif who_chooses is None:
-            wc += self.players
+            wc += self.unkicked_players
         else:
             wc.append(who_chooses)
         question = Message(
@@ -279,7 +282,7 @@ class Game(object):
         if self.allowed_to_speak():
             await self.sender(message)
     async def kick_none_response(self,responses:PlayerDictOptional):
-        relevant_players = (player for player in self.players if player in responses)
+        relevant_players = (player for player in self.unkicked_players if player in responses)
         none_responders = (player for player in relevant_players if responses[player] is None)
         await self.kick_players(list(none_responders))
     async def kick_players(self,players:list[PlayerId]):

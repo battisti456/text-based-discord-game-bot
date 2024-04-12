@@ -12,7 +12,7 @@ class Rounds_With_Points_Base(Game):
         if not Rounds_With_Points_Base in self.initialized_bases:
             self.initialized_bases.append(Rounds_With_Points_Base)
             self.points:PlayerDict[int] = {}
-            for player in self.players:
+            for player in self.unkicked_players:
                 self.points[player] = 0
             self.num_rounds:int = 3
             self.points_format:Callable = lambda x: f"{x} points"
@@ -71,7 +71,7 @@ class Rounds_With_Points_Base(Game):
             scores.reverse()
         rank:PlayerPlacement = []
         for score in scores:
-            players_at_score = list(player for player in self.players if self.points[player] == score)
+            players_at_score = list(player for player in self.unkicked_players if self.points[player] == score)
             rank.append(players_at_score)
         await self.game_outro(rank)
         return rank
