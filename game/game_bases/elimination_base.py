@@ -1,7 +1,7 @@
 import game
 from game import PlayerId, PlayerDict, PlayerPlacement
 from game.game_interface import Game_Interface
-from game.game import Game, police_game_callable, on_kick_players, PRIORITY_OF_DEFAULT_KICK
+from game.game import Game, police_game_callable
 from typing import Iterable
 
 class Elimination_Base(Game):
@@ -11,10 +11,6 @@ class Elimination_Base(Game):
             self.initialized_bases.append(Elimination_Base)
             self.players_eliminated:PlayerPlacement = []
 
-            @on_kick_players(self,PRIORITY_OF_DEFAULT_KICK-1)
-            async def elimination_on_kick(players:list[PlayerId]) -> bool:
-                self.players_eliminated.append(players)
-                return False#stop execution here, do not use default kick function
     @police_game_callable
     async def eliminate_players(self,players:PlayerId|list[PlayerId]) -> bool:
         """Returns True to tell core_game that another round should be started after calling this.

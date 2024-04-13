@@ -11,7 +11,6 @@ import functools
 from typing import Optional, Iterable, TypeVar, Callable, Awaitable, ParamSpec, overload, Sequence
 
 MULTIPLE_CHOICE_LINE_THRESHOLD = 30
-PRIORITY_OF_DEFAULT_KICK = 100#lower happens first
 
 R = TypeVar('R')
 P = ParamSpec('P')
