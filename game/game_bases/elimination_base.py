@@ -49,7 +49,7 @@ class Elimination_Base(Game):
                 num += len(elimination)
         return num
     @police_game_callable
-    async def run(self) -> PlayerPlacement:
+    async def _run(self) -> PlayerPlacement:
         await self.game_intro()
         await self.game_setup()
         while self.get_num_eliminated() < len(self.unkicked_players) - 1:

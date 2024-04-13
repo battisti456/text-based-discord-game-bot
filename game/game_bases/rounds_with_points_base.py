@@ -55,7 +55,7 @@ class Rounds_With_Points_Base(Game):
         ))
 
     @police_game_callable
-    async def run(self) -> PlayerPlacement:
+    async def _run(self) -> PlayerPlacement:
         await self.game_intro()
         await self.game_setup()
         for round in range(self.num_rounds):

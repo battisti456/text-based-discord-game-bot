@@ -1,5 +1,5 @@
 
-from game import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional, KickFunc, KickReason
+from game import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional, KickFunc, KickReason, GameEndException, GameEndInsufficientPlayers, kick_text
 import game.emoji_groups
 from game.game_interface import Game_Interface
 from game.message import Message, Bullet_Point
@@ -32,17 +32,21 @@ class Game(object):
     @property 
     def unkicked_players(self) -> list[PlayerId]:
         return list(player for player in self.all_players if not player in self.kicked)
-    async def run(self)->PlayerPlacement:
+    async def _run(self)->PlayerPlacement:
         """
-        runs the currently defined game and returns a list reperesnting a ranking of how the players placed in the game
+        the actual running of the game, meant to be overloaded
         """
         return []
-    async def run_independant(self):
+    async def run(self):
         """
-        executes run and displays the given placement
+        intended function to run the selected game
         """
-        placement:PlayerPlacement = await self.run()
-        await self.basic_send_placement(placement)
+        try:
+            await self._run()
+        except GameEndException as e:
+            await self.basic_send(e.explanation)
+    def generate_placements(self) -> PlayerPlacement:
+        return []
     def format_players_md(self,players:Iterable[PlayerId]) -> str:
         """
         returns the senders fomatting of a list of players with markdown
@@ -288,11 +292,9 @@ class Game(object):
             self,
             players:list[PlayerId],
             reason:KickReason = 'unspecified',
-            priority:Optional[int] = None) -> bool:
+            priority:Optional[int] = None) :
         """
         adds players to the kicked dict with the approprite priority and reason
-        returns false if this leaves 1 or 0 unkicked players
-        true if there are 2 or more remaining players
 
         players: a list of players to eliminate
         reason: one of a set list of reasons which might have further implications elsewhere
@@ -302,7 +304,8 @@ class Game(object):
             priority = self.max_kick_priority() + 1
         for player in players:
             self.kicked[player] = (priority,reason)
-        return len(self.unkicked_players) > 1
+        if len(self.unkicked_players) <= 1:
+            raise GameEndInsufficientPlayers(f"{self.sender.format_players_md(players)} being {kick_text[reason]}.")
 
     
     

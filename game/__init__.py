@@ -16,6 +16,45 @@ type PlayerDict[DataType] = dict[PlayerId,DataType]
 type KickFunc = Callable[[list[PlayerId]],Awaitable[bool]]
 type KickReason = Literal['timeout','eliminated','unspecified']
 
+#player/players being _______
+kick_text:dict[KickReason,str] = {
+    'timeout': 'removed due to exceeding the timeout',
+    'eliminated': 'eliminated from the game',
+    'unspecified': 'kicked for unspecified reasons'
+}
+
+class GameBotException(Exception):
+    ...
+class GameException(GameBotException):
+    ...
+class GameEndException(GameException):
+    def __init__(self,message:Optional[str] = None):
+        """
+        message: ...caused by ________.
+        """
+        if message is not None:
+            super().__init__(message)
+        else:
+            super().__init__()
+        self._explanation:str = "an unspecified reason" 
+    @property
+    def explanation(self) -> str:
+        start:str = "The game has ended due to "
+        end:str = "."
+        if self.args:
+            end = f"caused by {self.args[0]}."
+        return f"{start}{self._explanation}{end}"
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}: {self.explanation}"
+
+class GameEndInsufficientPlayers(GameEndException):
+    def __init__(self,message:Optional[str] = None):
+        """
+        message: ...caused by ________.
+        """
+        GameEndException.__init__(self,message)
+        self._explanation:str = "a lack of sufficient remaining players" 
+
 def treat_responses(self,responses:PlayerDictOptional[R],players:Optional[None]=None) -> PlayerDict[R]:
         new_responses:PlayerDict[R] = {}
         for player in responses:

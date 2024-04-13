@@ -38,7 +38,7 @@ class The_Great_Kitten_Race(Game):
         Game.__init__(self,gi)
         with open(DATA_PATH,'r') as file:
             self.kitten_config:KittenConfig = json.load(file)
-    async def run(self) -> list[PlayerId|list[PlayerId]]:
+    async def _run(self) -> list[PlayerId|list[PlayerId]]:
         await self.basic_send(
             "# Here y'all are, finally, at the great kitten race!\n" +
             "You have each spent the past year training your kitten to compete in our randomized obstacle course!\n" +
