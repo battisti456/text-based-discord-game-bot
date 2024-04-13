@@ -1,5 +1,5 @@
 from typing import TypeVar
-from typing import Hashable, Iterable, Optional, Callable, Mapping, Dict, Awaitable
+from typing import Hashable, Iterable, Optional, Callable, Mapping, Dict, Awaitable, Literal
 
 DataType = TypeVar('DataType')
 R = TypeVar('R')
@@ -14,6 +14,7 @@ type PlayerDictOptional[DataType] = dict[PlayerId,Optional[DataType]]
 type PlayerDict[DataType] = dict[PlayerId,DataType]
 
 type KickFunc = Callable[[list[PlayerId]],Awaitable[bool]]
+type KickReason = Literal['timeout','eliminated','unspecified']
 
 def treat_responses(self,responses:PlayerDictOptional[R],players:Optional[None]=None) -> PlayerDict[R]:
         new_responses:PlayerDict[R] = {}

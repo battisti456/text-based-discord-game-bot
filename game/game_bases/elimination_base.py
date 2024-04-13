@@ -13,8 +13,7 @@ class Elimination_Base(Game):
 
             @on_kick_players(self,PRIORITY_OF_DEFAULT_KICK-1)
             async def elimination_on_kick(players:list[PlayerId]) -> bool:
-                await self.eliminate_players(players)
-                
+                self.players_eliminated.append(players)
                 return False#stop execution here, do not use default kick function
     @police_game_callable
     async def eliminate_players(self,players:PlayerId|list[PlayerId]) -> bool:

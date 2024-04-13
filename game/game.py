@@ -1,5 +1,5 @@
 
-from game import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional, KickFunc
+from game import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional, KickFunc, KickReason
 import game.emoji_groups
 from game.game_interface import Game_Interface
 from game.message import Message, Bullet_Point
@@ -29,15 +29,10 @@ class Game(object):
             self.current_class_execution:Optional[type[Game]] = None
             self.classes_banned_from_speaking:list[type[Game]] = []
 
-            self.on_kick_players_funcs:dict[KickFunc,int] = {}
-            self.kicked_players:list[list[PlayerId]] = []
-            @on_kick_players(self,PRIORITY_OF_DEFAULT_KICK)
-            async def default_on_kick(players:list[PlayerId]) -> bool:
-                self.kicked_players.insert(0,players)
-                return True
+            self.kicked:PlayerDict[tuple[int,KickReason]] = {}
     @property 
     def unkicked_players(self) -> list[PlayerId]:
-        return list(player for player in self.all_players if not any(player in kick_group for kick_group in self.kicked_players))
+        return list(player for player in self.all_players if not player in self.kicked)
     async def run(self)->PlayerPlacement:
         """
         runs the currently defined game and returns a list reperesnting a ranking of how the players placed in the game
@@ -285,23 +280,33 @@ class Game(object):
         relevant_players = (player for player in self.unkicked_players if player in responses)
         none_responders = (player for player in relevant_players if responses[player] is None)
         await self.kick_players(list(none_responders))
-    async def kick_players(self,players:list[PlayerId]):
-        funcs = list(self.on_kick_players_funcs)
-        funcs.sort(key=lambda func:self.on_kick_players_funcs[func])
-        for func in funcs:
-            if not func(players):
-                break
-    def _on_kick_players(self,func:KickFunc,priority:int = 0):
-        self.on_kick_players_funcs[func] = priority
+    def max_kick_priority(self) -> int:
+        if self.kicked:
+            return max(self.kicked[player][0] for player in self.kicked)
+        else:
+            return 0
+    async def kick_players(
+            self,
+            players:list[PlayerId],
+            reason:KickReason = 'unspecified',
+            priority:Optional[int] = None) -> bool:
+        """
+        adds players to the kicked dict with the approprite priority and reason
+        returns false if this leaves 1 or 0 unkicked players
+        true if there are 2 or more remaining players
+
+        players: a list of players to eliminate
+        reason: one of a set list of reasons which might have further implications elsewhere
+        priority: where should these players be placed in the order of their elimination, if None, assumes after the lastmost eliminated of players so far
+        """
+        if priority is None:
+            priority = self.max_kick_priority() + 1
+        for player in players:
+            self.kicked[player] = (priority,reason)
+        return len(self.unkicked_players) > 1
+
     
     
-
-
-def on_kick_players(game:Game,priority:int=0):
-    def wrapper(func:KickFunc) -> KickFunc:
-        game._on_kick_players(func,priority)
-        return func
-    return wrapper
 
 def police_game_callable(func:Callable[P,Awaitable[R]]) -> Callable[P,Awaitable[R]]:
     """
