@@ -1,4 +1,5 @@
-from game import PlayerId
+#NEEDS TO BE TESTED
+from game import PlayerId,PlayerDict
 from game.game_bases import Elimination_Base, Trivia_Base
 from game.game_interface import Game_Interface
 
@@ -14,6 +15,6 @@ class Elimination_Trivia(Elimination_Base,Trivia_Base):
             "Feel free to respond even once you are eliminated, but I will not be counting those.\n" +
             "Let's begin!"
         )
-    async def core_game(self,remaining_players:list[PlayerId]) -> list[PlayerId]:
-        player_correct:dict[PlayerId,bool] = await self.ask_trivia(remaining_players)
-        return list(player for player in remaining_players if not player_correct[player])
+    async def core_game(self):
+        player_correct:PlayerDict[bool] = await self.basic_ask_trivia(self.unkicked_players)
+        self.eliminate_players(list(player for player in self.unkicked_players if not player_correct[player]))

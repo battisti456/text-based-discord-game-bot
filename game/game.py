@@ -4,7 +4,7 @@ import game.emoji_groups
 from game.game_interface import Game_Interface
 from game.message import Message, Bullet_Point
 from game.sender import Sender
-from game.player_input import Player_Single_Selection_Input, Player_Text_Input
+from game.player_input import Player_Single_Selection_Input, Player_Text_Input, Player_Input
 from game.grammer import ordinate, wordify_iterable
 import functools
 
@@ -29,10 +29,13 @@ class Game(object):
             self.classes_banned_from_speaking:list[type[Game]] = []
 
             self.kicked:PlayerDict[tuple[int,KickReason]] = {}
+    @property
+    def kicked_players(self) -> list[PlayerId]:
+        return list(player for player in self.all_players if player in self.kicked)#maintian order
     @property 
     def unkicked_players(self) -> list[PlayerId]:
         return list(player for player in self.all_players if not player in self.kicked)
-    async def _run(self)->PlayerPlacement:
+    async def _run(self):
         """
         the actual running of the game, meant to be overloaded
         """
@@ -47,6 +50,19 @@ class Game(object):
             await self.basic_send(e.explanation)
     def generate_placements(self) -> PlayerPlacement:
         return []
+    def generate_kicked_placements(self) -> PlayerPlacement:
+        players = self.kicked_players.copy()
+        players.sort(key=lambda player: self.kicked[player][0])
+        placement:PlayerPlacement = []
+        for i in range(len(players)):
+            if i > 0:
+                if self.kicked[players[i]][0] == self.kicked[players[i-1]][0]:
+                    placement[-1].append(players[i])
+                    continue
+            #else
+            placement.append([players[i]])
+        placement.reverse()
+        return placement
     def format_players_md(self,players:Iterable[PlayerId]) -> str:
         """
         returns the senders fomatting of a list of players with markdown
@@ -123,17 +139,15 @@ class Game(object):
             allow_edits=allow_answer_change
         )
         await player_input.run()
+        await self.kick_none_response(player_input.responses)
+        clean_responses = self.clean_player_dict(player_input,wc,self.unkicked_players)
         if isinstance(who_chooses,list) or who_chooses is None:
-            to_return:PlayerDict[int] = {}
-            for player in wc:
-                value = player_input.responses[player]
-                assert not value is None
-                to_return[player] = value
-            return to_return
+            return clean_responses
         else:
-            value = player_input.responses[who_chooses]
-            assert not value is None
-            return value
+            if who_chooses in clean_responses:
+                return clean_responses[who_chooses]
+            else:
+                return -1#The player did not respond and got kicked, function must still return though
     @overload
     async def basic_no_yes(
             self,content:Optional[str]=...,who_chooses:PlayerId=...,
@@ -205,17 +219,15 @@ class Game(object):
             allow_edits=allow_answer_change
         )
         await player_input.run()
+        await self.kick_none_response(player_input.responses)
+        clean_responses = self.clean_player_dict(player_input,wc,self.unkicked_players)
         if isinstance(who_chooses,list) or who_chooses is None:
-            to_return:PlayerDict[str] = {}
-            for player in wc:
-                value = player_input.responses[player]
-                assert not value is None
-                to_return[player] = value
-            return to_return
+            return clean_responses
         else:
-            value = player_input.responses[who_chooses]
-            assert not value is None
-            return value
+            if who_chooses in clean_responses:
+                return clean_responses[who_chooses]
+            else:
+                return ""#The player did not respond and got kicked, function must still return though
 
     async def basic_send(self,content:Optional[str] = None,attatchements_data:list[str] = [],
                    channel_id:Optional[ChannelId] = None):
@@ -279,10 +291,10 @@ class Game(object):
         """
         if self.allowed_to_speak():
             await self.sender(message)
-    async def kick_none_response(self,responses:PlayerDictOptional):
+    async def kick_none_response(self,responses:PlayerDictOptional,reason:KickReason='timeout'):
         relevant_players = (player for player in self.unkicked_players if player in responses)
         none_responders = (player for player in relevant_players if responses[player] is None)
-        await self.kick_players(list(none_responders))
+        await self.kick_players(list(none_responders),reason)
     def max_kick_priority(self) -> int:
         if self.kicked:
             return max(self.kicked[player][0] for player in self.kicked)
@@ -306,7 +318,19 @@ class Game(object):
             self.kicked[player] = (priority,reason)
         if len(self.unkicked_players) <= 1:
             raise GameEndInsufficientPlayers(f"{self.sender.format_players_md(players)} being {kick_text[reason]}.")
-
+    def clean_player_dict(self,responses:Player_Input[R]|PlayerDictOptional[R],*args:list[PlayerId]) -> PlayerDict[R]:
+        clean_responses:PlayerDict = {}
+        if isinstance(responses,Player_Input):
+            responses = responses.responses
+        if args:
+            players = list(set.intersection(*list(set(p) for p in args)))
+        else:
+            players = list(responses)
+        for player in players:
+            if player in responses:
+                if not responses[player] is None:
+                    clean_responses[player] = responses[player]
+        return clean_responses
     
     
 

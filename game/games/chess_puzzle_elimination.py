@@ -1,4 +1,4 @@
-
+#NEEDS TO BE TESTED
 from game import PlayerId
 from typing import TypedDict, Optional
 
@@ -292,7 +292,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
             "If you pick the wrong move, you are eliminated (unless no one gets it right).\n" +
             "Last player standing wins!"
         )
-    async def core_game(self, remaining_players: list[PlayerId])->list[PlayerId]|None:
+    async def core_game(self):
         puzzle:ChessPuzzleDict = self.random_puzzle(self.rating_range,POPULARITY_RANGE)
         self.rating_range = (self.rating_range[0],self.rating_range[1]+PUZZLE_RATING_CAP_ESCALATION)
         self.board.set_fen(puzzle['FEN'])
@@ -318,7 +318,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
             test_board.push_uci(move_uci)
             return test_board.is_checkmate()
 
-        while len(remaining_players) > 1:
+        while len(self.unkicked_players) > 1:
             legal_moves:list[str] = list(move.uci() for move in self.board.legal_moves)
             if len(legal_moves) < NUM_MOVE_OPTIONS:
                 random.shuffle(legal_moves)
@@ -331,19 +331,18 @@ class Chess_Puzzle_Elimination(Elimination_Base):
             
             responses:dict[PlayerId,int] = await self.basic_multiple_choice(
                 f"What is the best move for {player_color} in this position?",
-                who_chooses=remaining_players,
+                who_chooses=self.unkicked_players,
                 options = option_text_list
             )
 
-            correct_players = list(player for player in remaining_players if best_move(move_options[responses[player]]))
-            incorrect_players = list(player for player in remaining_players if not player in correct_players)
+            correct_players = list(player for player in self.unkicked_players if best_move(move_options[responses[player]]))
+            incorrect_players = list(player for player in self.unkicked_players if not player in correct_players)
 
             move_right_text = "No one got the move correct."
             best_move_text = f"The best move in this position for {player_color} is {self.move_text(moves[move_index])}."
 
             if correct_players:
                 await self.eliminate_players(incorrect_players)
-                remaining_players = correct_players
                 move_right_text = f"{self.format_players_md(correct_players)} got the move correct!"
             
             self.board.push_uci(moves[move_index])

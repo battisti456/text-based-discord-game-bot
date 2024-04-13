@@ -1,3 +1,4 @@
+#NEEDS TO BE TESTED
 from game.game_bases import Card_Base
 from game.game_bases import Elimination_Base
 
@@ -42,13 +43,11 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
             f"Aces are worth 11 points, unless that would put you over {HAND_LIMIT} in which case they are worth 1 point.\n" +
             f"If your score goes above {HAND_LIMIT}, you are immediately eliminated (earlier than if you had just scored lowest in the round).\n" +
             f"The closer to {HAND_LIMIT} you get, the higher the chance you will defeat your competitors, however.")
-    async def game_outro(self,order:PlayerPlacement):
-        pass
-    async def core_game(self,remaining_players:list[PlayerId])->list[PlayerId] | None:
-        await self.setup_cards(ceil(len(remaining_players)/NUM_PLAYERS_PER_DECK))
-        await self.player_draw(remaining_players,2)
+    async def core_game(self):
+        await self.setup_cards(ceil(len(self.unkicked_players)/NUM_PLAYERS_PER_DECK))
+        await self.player_draw(self.unkicked_players,2)
         players_passed:list[PlayerId] = []
-        players_still_drawing = remaining_players.copy()
+        players_still_drawing = self.unkicked_players.copy()
         while players_still_drawing:
             will_draw:PlayerDict[int] = await self.basic_no_yes(f"Will you draw another card?",players_still_drawing)
             players_who_drew:list[PlayerId] = list(player for player in will_draw if will_draw[player])
@@ -64,10 +63,9 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
                 exit_core = await self.eliminate_players(players_eliminated_this_draw)
                 if exit_core:
                     return
-            players_still_drawing = list(player for player in self.get_remaining_players() if not player in players_passed)
-        remaining_players = self.get_remaining_players()
+            players_still_drawing = list(player for player in self.unkicked_players if not player in players_passed)
         scores:dict[PlayerId,int] = {}
-        for player in remaining_players:
+        for player in self.unkicked_players:
             player_score = self.player_points(player)
             hand = self.hands[player]
             assert not hand is None
@@ -80,7 +78,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
         score_list:list[int] = list(set(scores[player] for player in scores))
         score_list.sort()
         low_score:int = score_list[0]
-        return list(player for player in remaining_players if scores[player] == low_score)
+        await self.eliminate_players(list(player for player in self.unkicked_players if scores[player] == low_score))
         
 
 

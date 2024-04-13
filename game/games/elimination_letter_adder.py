@@ -1,13 +1,12 @@
+#NEEDS TO BE TESTED
 from game.game_bases.elimination_base import Elimination_Base
 from game.game_bases.dictionary_base import Dictionary_Base
 from game.game_interface import Game_Interface
 from game.message import Message, make_no_yes_bullet_points, make_bullet_points
-from game.player_input import Player_Input, Player_Single_Selection_Input, Player_Text_Input, run_inputs
+from game.player_input import Player_Single_Selection_Input, Player_Text_Input, run_inputs
 from game.response_validator import text_validator_maker
 
 from game import PlayerId, PlayerPlacement
-
-from typing import Iterable
 
 import random
 
@@ -32,8 +31,8 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
         )
     async def game_outro(self,order:PlayerPlacement):
         pass
-    async def core_game(self,remaining_players:list[PlayerId]) -> list[PlayerId] | None:
-        num_letters_in_starting_word = START_LETTERS + random.randint(1,len(remaining_players))
+    async def core_game(self):
+        num_letters_in_starting_word = START_LETTERS + random.randint(1,len(self.unkicked_players))
         starting_word = self.random_word(num_letters_in_starting_word)
         offset = random.randint(0,num_letters_in_starting_word-START_LETTERS-1)
         letters = starting_word[offset:offset+START_LETTERS]
@@ -41,10 +40,10 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
         while True:
             #determine whose turn it is
             player = None
-            main_index = self.unkicked_players.index(self.last_player)
-            for i in range(1,len(self.unkicked_players)):
-                player = self.unkicked_players[(main_index+i)%len(self.unkicked_players)]
-                if player in remaining_players:
+            main_index = self.all_players.index(self.last_player)
+            for i in range(1,len(self.all_players)):
+                player = self.all_players[(main_index+i)%len(self.unkicked_players)]
+                if player in self.unkicked_players:
                     break
             #
             await self.basic_send(f"The letters are '{letters}'.")
@@ -85,6 +84,8 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                 await run_inputs(
                     inputs = [left_right_input,letter_input],
                 )
+                await self.kick_none_response(left_right_input.responses)
+                await self.kick_none_response(letter_input.responses)
             else:
                 await self.sender(will_challenge_message)
                 await self.sender(left_right_message)
@@ -92,7 +93,13 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                     inputs = [challenge_input,left_right_input,letter_input],
                     completion_sets= [{challenge_input},{left_right_input,letter_input}],
                 )
-
+                if not challenge_input.responses[player]:
+                    await self.kick_none_response(left_right_input.responses)
+                    await self.kick_none_response(letter_input.responses)
+            if player in self.kicked_players or self.last_player in self.kicked_players:
+                #if one of the two relevant players has been kicked, move to next round
+                self.last_player = player
+                return
             if not challenge_input.responses[player]:#add letter
                 letter = letter_input.responses[player]
                 assert not letter is None
@@ -109,9 +116,11 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                     await self.basic_send(
                         f"{self.format_players_md([player])} has spelled the word {letters}.{def_text}")
                     self.last_player = player
-                    return [player]
+                    self.eliminate_players([player])
+                    return
                 else:
                     self.last_player = player
+                    return 
             else:#challenge
                 message = Message(
                     f"{self.format_players_md([player])} has chosen to challenge {self.format_players_md([self.last_player])} on the letters '{letters}'. \n" +
@@ -125,6 +134,10 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                     message = message
                 )
                 await word_input.run()
+                await self.kick_none_response(word_input.responses)
+                if self.last_player in self.kicked_players:
+                    self.last_player = player
+                    return
                 word = word_input.responses[self.last_player]
                 assert not word is None
                 word = word.lower()
@@ -136,11 +149,12 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                         definition_text = f"\n{self.definition_string(definition)}"
                     await self.basic_send(f"The word {word} is valid!{definition_text}")
                     self.last_player = player
-                    return [player]
+                    self.eliminate_players([player])
+                    return
                 elif not self.is_word(word):
                     await self.basic_send(f"I'm sorry, {self.format_players_md([self.last_player])}, '{word}' is not a valid word.")
-                to_eliminate = self.last_player
-                self.last_player = player
-                return [to_eliminate]
+                    self.eliminate_players([self.last_player])
+                    self.last_player = player
+                    return
                 
                 
