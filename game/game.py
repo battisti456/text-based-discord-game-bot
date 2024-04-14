@@ -1,5 +1,5 @@
 
-from game import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional, KickFunc, KickReason, GameEndException, GameEndInsufficientPlayers, kick_text
+from game import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional, KickFunc, KickReason, GameEndException, GameEndInsufficientPlayers, kick_text, score_to_placement
 import game.emoji_groups
 from game.game_interface import Game_Interface
 from game.message import Message, Bullet_Point
@@ -29,12 +29,21 @@ class Game(object):
             self.classes_banned_from_speaking:list[type[Game]] = []
 
             self.kicked:PlayerDict[tuple[int,KickReason]] = {}
+            self.game_end_exception:Optional[GameEndException] = None
     @property
     def kicked_players(self) -> list[PlayerId]:
         return list(player for player in self.all_players if player in self.kicked)#maintian order
     @property 
     def unkicked_players(self) -> list[PlayerId]:
         return list(player for player in self.all_players if not player in self.kicked)
+    async def game_intro(self):
+        ...
+    async def game_setup(self):
+        ...
+    async def game_outro(self):
+        ...
+    async def game_unsetup(self):
+        ...
     async def _run(self):
         """
         the actual running of the game, meant to be overloaded
@@ -44,25 +53,19 @@ class Game(object):
         """
         intended function to run the selected game
         """
+        await self.game_setup()
+        await self.game_intro()
         try:
             await self._run()
         except GameEndException as e:
+            self.game_end_exception = e
             await self.basic_send(e.explanation)
+        await self.game_unsetup()
+        await self.game_outro()
     def generate_placements(self) -> PlayerPlacement:
         return []
     def generate_kicked_placements(self) -> PlayerPlacement:
-        players = self.kicked_players.copy()
-        players.sort(key=lambda player: self.kicked[player][0])
-        placement:PlayerPlacement = []
-        for i in range(len(players)):
-            if i > 0:
-                if self.kicked[players[i]][0] == self.kicked[players[i-1]][0]:
-                    placement[-1].append(players[i])
-                    continue
-            #else
-            placement.append([players[i]])
-        placement.reverse()
-        return placement
+        return [self.unkicked_players] + score_to_placement({player:self.kicked[player][0] for player in self.kicked},reverse=True)
     def format_players_md(self,players:Iterable[PlayerId]) -> str:
         """
         returns the senders fomatting of a list of players with markdown

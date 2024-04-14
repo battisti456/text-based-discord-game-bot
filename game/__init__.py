@@ -1,5 +1,6 @@
 from typing import TypeVar
 from typing import Hashable, Iterable, Optional, Callable, Mapping, Dict, Awaitable, Literal
+from numbers import Real
 
 DataType = TypeVar('DataType')
 R = TypeVar('R')
@@ -66,11 +67,17 @@ def treat_responses(self,responses:PlayerDictOptional[R],players:Optional[None]=
                 new_responses[player] = value
         return new_responses
 
-def make_player_dict(players:Iterable[PlayerId],value:DataType|Callable[[],DataType] = None) -> PlayerDict[DataType]:
+def make_player_dict(
+        players:Iterable[PlayerId],
+        value:DataType|Callable[[],DataType]|Callable[[PlayerId],DataType] = None
+        ) -> PlayerDict[DataType]:
     to_return:PlayerDict[DataType] = {}
     for player in players:
         if callable(value):
-            to_return[player] = value()
+            try:
+                to_return[player] = value(player) # type: ignore
+            except TypeError:
+                to_return[player] = value() # type: ignore
         else:
             to_return[player] = value
     return to_return
@@ -85,3 +92,42 @@ def correct_str(value:str|None) -> str:
         return ""
     else:
         return value
+    
+def score_to_placement(score:PlayerDict[float]|PlayerDict[int], reverse:bool = False) -> PlayerPlacement:
+    """
+    creates a player placement with lowest scores placing higher
+    
+    reverse reverses this order
+    """
+    players = list(score)
+    players.sort(key=lambda player: score[player],reverse=reverse)
+    to_return:PlayerPlacement = []
+    for i in range(len(players)):
+        if i:
+            if score[players[i]] == score[to_return[i-1][0]]:
+                to_return[i-1].append(players[i])
+                continue
+        to_return.append([players[i]])
+    return to_return
+def _merge_placements(pl1:PlayerPlacement,pl2:PlayerPlacement):
+    i:int = 0
+    while i < len(pl1):
+        if len(pl1[i]) > 1:
+            seperated:PlayerPlacement = []
+            for group in pl2:
+                new = list(player for player in pl1[i] if player in group)
+                if new:#if there were any relevant players in that group
+                    seperated.append(new)
+            pl1 = pl1[0:i] + seperated + pl1[i+1:-1]
+            i += len(seperated)
+        else:
+            i += 1
+    return pl1
+def merge_placements(*args:PlayerPlacement)-> PlayerPlacement:
+    """
+    merges placements with highes priority placements being eralier in the order
+    """
+    to_return:PlayerPlacement = args[0]
+    for pl in args[1:]:
+        to_return = _merge_placements(to_return,pl)
+    return to_return

@@ -1,8 +1,6 @@
-import game
 from game import PlayerId, PlayerDict, PlayerPlacement
 from game.game_interface import Game_Interface
 from game.game import Game, police_game_callable
-from typing import Iterable
 
 class Elimination_Base(Game):
     def __init__(self,gi:Game_Interface):
@@ -26,14 +24,9 @@ class Elimination_Base(Game):
                 await self.kick_players(players,'eliminated')
     @police_game_callable
     async def _run(self):
-        await self.game_intro()
         while len(self.unkicked_players) >= 2:
             await self.core_game()
-    async def game_intro(self):
-        pass
     async def core_game(self):
-        return []
+        ...
     async def generate_placements(self) -> PlayerPlacement:
-        placements:PlayerPlacement = self.generate_kicked_placements()
-        placements.insert(0,self.unkicked_players.copy())
-        return placements
+        return self.generate_kicked_placements()
