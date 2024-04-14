@@ -294,9 +294,16 @@ class Game(object):
         """
         if self.allowed_to_speak():
             await self.sender(message)
-    async def kick_none_response(self,responses:PlayerDictOptional,reason:KickReason='timeout'):
-        relevant_players = (player for player in self.unkicked_players if player in responses)
-        none_responders = (player for player in relevant_players if responses[player] is None)
+    async def kick_none_response(self,*args:PlayerDictOptional[R]|Player_Input[R],reason:KickReason='timeout'):
+        none_responders = set()
+        for arg in args:
+            responses:PlayerDictOptional[R]
+            if isinstance(arg,Player_Input):
+                responses = arg.responses
+            else:
+                responses = arg
+            relevant_players = (player for player in self.unkicked_players if player in responses)
+            none_responders.update(set(player for player in relevant_players if responses[player] is None)) 
         await self.kick_players(list(none_responders),reason)
     def max_kick_priority(self) -> int:
         if self.kicked:

@@ -1,4 +1,4 @@
-from game import PlayerId, PlayerDict, make_player_dict, PlayerPlacement, correct_int
+from game import PlayerId, PlayerDict, make_player_dict, PlayerPlacement, correct_int, merge_placements, score_to_placement
 
 from game.game import Game
 from game.game_interface import Game_Interface
@@ -38,7 +38,8 @@ class The_Great_Kitten_Race(Game):
         Game.__init__(self,gi)
         with open(DATA_PATH,'r') as file:
             self.kitten_config:KittenConfig = json.load(file)
-    async def _run(self) -> list[PlayerId|list[PlayerId]]:
+            self.times:PlayerDict[int] = {}
+    async def game_intro(self):
         await self.basic_send(
             "# Here y'all are, finally, at the great kitten race!\n" +
             "You have each spent the past year training your kitten to compete in our randomized obstacle course!\n" +
@@ -49,6 +50,7 @@ class The_Great_Kitten_Race(Game):
             "Now is the day where you kittens will finally race! The lowest time at the end wins!\n" +
             "All you can do now is watch and hope your training pulled off...."
         )
+    async def _run(self):
         obstacles = random.choices(list(self.kitten_config["obstacles"]),k=NUM_OBSTACLES)
         obstacle_text_list:list[str] = []
         for obstacle_name in obstacles:
@@ -58,7 +60,7 @@ class The_Great_Kitten_Race(Game):
                 f"An obstacle of **{obstacle_name}** which involves {wordify_iterable(formatted_stats)}."
             )
         await self.basic_send(
-            f"Before you began training you were told which obstacles would show up in today's competition.\n" +
+            f"Before you began training you were told which obstacles would show up in today's competition:\n" +
             "\n".join(obstacle_text_list) + '\n' + 
             "So let's have you introduce your kittens!")
         
@@ -100,10 +102,14 @@ class The_Great_Kitten_Race(Game):
                 content = "**And, what was your kitten's name again?**"
             )
         )
+
+        all_inputs = list(stat_input_dict[stat] for stat in self.kitten_config['stats']) + [name_input]
         
         await run_inputs(
-            list(stat_input_dict[stat] for stat in self.kitten_config['stats']) + [name_input],codependant=True
+            all_inputs,codependant=True
         )
+        
+        await self.kick_none_response(*all_inputs)
         
         make_kitten:Callable[[],Kitten] = lambda:{'name':"",'stats':{},'time':-1}
         kittens:PlayerDict[Kitten] = make_player_dict(self.unkicked_players,make_kitten)
@@ -151,7 +157,12 @@ class The_Great_Kitten_Race(Game):
             '\n'.join(cross_finish_text_list)
             )
         
-        return list([player] for player in order)
+        self.times = {player:kittens[player]['time'] for player in self.unkicked_players}
+    def generate_placements(self) -> PlayerPlacement:
+        return merge_placements(
+            score_to_placement(self.times),
+            self.generate_kicked_placements()
+        )
 
 
 

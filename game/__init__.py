@@ -127,6 +127,8 @@ def merge_placements(*args:PlayerPlacement)-> PlayerPlacement:
     """
     merges placements with highes priority placements being eralier in the order
     """
+
+    #add code to deal with players not being in all placements
     to_return:PlayerPlacement = args[0]
     for pl in args[1:]:
         to_return = _merge_placements(to_return,pl)
