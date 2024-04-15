@@ -93,7 +93,7 @@ def correct_str(value:str|None) -> str:
     else:
         return value
     
-def score_to_placement(score:PlayerDict[float]|PlayerDict[int], reverse:bool = False) -> PlayerPlacement:
+def score_to_placement(score:PlayerDict[float]|PlayerDict[int], all_players:Optional[list[PlayerId]] = None,reverse:bool = False) -> PlayerPlacement:
     """
     creates a player placement with lowest scores placing higher
     
@@ -108,6 +108,8 @@ def score_to_placement(score:PlayerDict[float]|PlayerDict[int], reverse:bool = F
                 to_return[i-1].append(players[i])
                 continue
         to_return.append([players[i]])
+    if not all_players is None and set(all_players) != set(players):
+        to_return.append(list(set(all_players)-set(players)))
     return to_return
 def _merge_placements(pl1:PlayerPlacement,pl2:PlayerPlacement):
     i:int = 0

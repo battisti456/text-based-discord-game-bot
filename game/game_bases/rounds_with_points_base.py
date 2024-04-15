@@ -65,6 +65,6 @@ class Rounds_With_Points_Base(Game):
         pass
     async def generate_placements(self) -> PlayerPlacement:
         return merge_placements(
-            score_to_placement(self.points,not self.reverse_scoring),
+            score_to_placement(self.points,self.all_players,not self.reverse_scoring),
             self.generate_kicked_placements()
         )

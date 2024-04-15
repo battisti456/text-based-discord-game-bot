@@ -160,7 +160,7 @@ class The_Great_Kitten_Race(Game):
         self.times = {player:kittens[player]['time'] for player in self.unkicked_players}
     def generate_placements(self) -> PlayerPlacement:
         return merge_placements(
-            score_to_placement(self.times),
+            score_to_placement(self.times,self.all_players),
             self.generate_kicked_placements()
         )
 
