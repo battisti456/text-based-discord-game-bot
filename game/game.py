@@ -1,30 +1,28 @@
+from game.interface_component import Interface_Component
 
-from game import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional, KickFunc, KickReason, GameEndException, GameEndInsufficientPlayers, kick_text, score_to_placement
+from game import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional, KickReason, GameEndException, GameEndInsufficientPlayers, kick_text, score_to_placement
 import game.emoji_groups
 from game.game_interface import Game_Interface
-from game.message import Message, Bullet_Point
-from game.sender import Sender
-from game.player_input import Player_Single_Selection_Input, Player_Text_Input, Player_Input
+from game.message import Message
+from game.player_input import Player_Input
 from game.grammer import ordinate, wordify_iterable
 import functools
 
-from typing import Optional, Iterable, TypeVar, Callable, Awaitable, ParamSpec, overload, Sequence
+from typing import Optional, TypeVar, Callable, Awaitable, ParamSpec, overload
 
 MULTIPLE_CHOICE_LINE_THRESHOLD = 30
 
 R = TypeVar('R')
 P = ParamSpec('P')
 
-class Game(object):
+class Game(Interface_Component):
     """
     the base objects all games are built upon
     """
     def __init__(self,gi:Game_Interface):
         if not hasattr(self,'initialized_bases'):#prevents double initialization, although it probably wouldn't hurt anyway
+            super().__init__(gi)
             self.initialized_bases:list[type[Game]] = [Game]
-            self.gi = gi
-            self.sender:Sender = self.gi.get_sender()
-            self.all_players:list[PlayerId] = self.gi.get_players()
             self.current_class_execution:Optional[type[Game]] = None
             self.classes_banned_from_speaking:list[type[Game]] = []
 
@@ -66,16 +64,6 @@ class Game(object):
         return []
     def generate_kicked_placements(self) -> PlayerPlacement:
         return [self.unkicked_players] + score_to_placement({player:self.kicked[player][0] for player in self.kicked},reverse=True)
-    def format_players_md(self,players:Iterable[PlayerId]) -> str:
-        """
-        returns the senders fomatting of a list of players with markdown
-        """
-        return self.sender.format_players_md(players)
-    def format_players(self,user_id:list[PlayerId]) -> str:
-        """
-        returns the senders formatting of a list of players without markdown
-        """
-        return self.sender.format_players(user_id)
     @overload
     async def basic_multiple_choice(
             self,content:Optional[str]=...,options:list[str]=...,who_chooses:PlayerId=...,
@@ -107,48 +95,26 @@ class Game(object):
 
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
-        wc:list[PlayerId] = []
-        if isinstance(who_chooses,list):
-            wc += who_chooses
-        elif who_chooses is None:
-            wc += self.unkicked_players
-        else:
-            wc.append(who_chooses)
-        emj:list[str] = []
-        if emojis is None:
-            emj += game.emoji_groups.COLORED_CIRCLE_EMOJI
-        else:
-            emj += emojis
-        bp:list[Bullet_Point] = []
-        for i in range(len(options)):
-            bp.append(
-                Bullet_Point(
-                    text = options[i],
-                    emoji=emj[i]
-                )
-            )
-        question = Message(
-            content = content,
+        one_response:bool = False
+        if not isinstance(who_chooses,list) or who_chooses is None:
+            who_chooses = [who_chooses]
+            one_response = True
+        responses:PlayerDictOptional = await self._basic_multiple_choice(
+            content=content,
+            options=options,
+            who_chooses=who_chooses,
+            emojis=emojis,
             channel_id=channel_id,
-            bullet_points=bp
+            allow_answer_change=allow_answer_change
+
         )
-        await self.sender(question)
-        player_input = Player_Single_Selection_Input(
-            name = "this multiple choice question",
-            gi = self.gi,
-            sender = self.sender,
-            players=wc,
-            message = question,
-            allow_edits=allow_answer_change
-        )
-        await player_input.run()
-        await self.kick_none_response(player_input.responses)
-        clean_responses = self.clean_player_dict(player_input,wc,self.unkicked_players)
-        if isinstance(who_chooses,list) or who_chooses is None:
+        await self.kick_none_response(responses)
+        clean_responses = self.clean_player_dict(responses,who_chooses,self.unkicked_players)
+        if not one_response:
             return clean_responses
         else:
-            if who_chooses in clean_responses:
-                return clean_responses[who_chooses]
+            if who_chooses[0] in clean_responses:
+                return clean_responses[who_chooses[0]]
             else:
                 return -1#The player did not respond and got kicked, function must still return though
     @overload
@@ -201,54 +167,26 @@ class Game(object):
 
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
-        wc:list[PlayerId] = []
-        if isinstance(who_chooses,list):
-            wc += who_chooses
-        elif who_chooses is None:
-            wc += self.unkicked_players
-        else:
-            wc.append(who_chooses)
-        question = Message(
+        one_response:bool = False
+        if not isinstance(who_chooses,list) or who_chooses is None:
+            who_chooses = [who_chooses]
+            one_response = True
+        responses:PlayerDictOptional = await self._basic_text_response(
             content=content,
-            channel_id=channel_id
+            who_chooses=who_chooses,
+            channel_id=channel_id,
+            allow_answer_change=allow_answer_change
+
         )
-        await self.sender(question)
-        player_input = Player_Text_Input(
-            name="this text answer question",
-            gi = self.gi,
-            sender = self.sender,
-            players=wc,
-            message=question,
-            allow_edits=allow_answer_change
-        )
-        await player_input.run()
-        await self.kick_none_response(player_input.responses)
-        clean_responses = self.clean_player_dict(player_input,wc,self.unkicked_players)
-        if isinstance(who_chooses,list) or who_chooses is None:
+        await self.kick_none_response(responses)
+        clean_responses = self.clean_player_dict(responses,who_chooses,self.unkicked_players)
+        if not one_response:
             return clean_responses
         else:
-            if who_chooses in clean_responses:
-                return clean_responses[who_chooses]
+            if who_chooses[0] in clean_responses:
+                return clean_responses[who_chooses[0]]
             else:
                 return ""#The player did not respond and got kicked, function must still return though
-
-    async def basic_send(self,content:Optional[str] = None,attatchements_data:list[str] = [],
-                   channel_id:Optional[ChannelId] = None):
-        """
-        creates a message with the given parameters and sends it with self.sender
-        
-        content: the text content of the message
-        
-        attatchements_data: a list of file paths to attatch to the message
-        
-        channel_id: what channel to send the message on
-        """
-        message = Message(
-            content = content,
-            attach_paths=attatchements_data,
-            channel_id=channel_id
-        )
-        await self.sender(message)
     def allowed_to_speak(self)->bool:
         """
         returns whether the current member function is restricted by being policed
@@ -283,11 +221,6 @@ class Game(object):
                 place += 1
 
         return await self.basic_send(f"The placements are: {wordify_iterable(text_list,comma=';')}.")
-    async def send(self,message:Message):
-        """
-        a wrapper of self.sender.__call__, for sending Message objects
-        """
-        await self.sender(message)
     async def policed_send(self,message:Message):
         """
         a wrapper of self.sender.__call__, for sending Message objects, if not restricted by policing

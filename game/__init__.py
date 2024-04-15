@@ -14,8 +14,9 @@ type PlayerPlacement = list[list[PlayerId]]
 type PlayerDictOptional[DataType] = dict[PlayerId,Optional[DataType]]
 type PlayerDict[DataType] = dict[PlayerId,DataType]
 
-type KickFunc = Callable[[list[PlayerId]],Awaitable[bool]]
 type KickReason = Literal['timeout','eliminated','unspecified']
+
+type Operators = Literal['command','run_game']
 
 #player/players being _______
 kick_text:dict[KickReason,str] = {

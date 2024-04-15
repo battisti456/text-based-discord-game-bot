@@ -1,9 +1,12 @@
-from typing import Any,Callable,Awaitable, Optional, Hashable
-from game import PlayerId, MessageId, ChannelId
+from typing import Any,Callable,Awaitable, Optional, Hashable, TYPE_CHECKING
+from game import PlayerId, MessageId, ChannelId, Operators
 from game.sender import Sender
 from game.message import Message, Reroute_Message
 from game.interaction import Interaction, InteractionType, INTERACTION_TYPES
 from game.grammer import wordify_iterable
+
+if TYPE_CHECKING:#avoid cyclic issues
+    from interface_operator import Interface_Operator
 
 type Action = Callable[[Interaction],Awaitable]
 
@@ -31,6 +34,8 @@ class Game_Interface(object):
         self.clear_actions()
         self.default_sender = Interface_Sender(self)
         self.tracked_messages:list[Message] = []
+
+        self.operators:dict[Operators,'Interface_Operator'] = {}
     async def reset(self):
         """
         clears all stored on_actions and messages
