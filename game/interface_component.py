@@ -91,7 +91,7 @@ class Interface_Component():
         )
         await self.sender(question)
         player_input = Player_Single_Selection_Input(
-            name = "this multiple choice question",
+            name = "this single selection multiple choice question",
             gi = self.gi,
             sender = self.sender,
             players=wc,

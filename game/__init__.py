@@ -44,7 +44,7 @@ class GameEndException(GameException):
         start:str = "The game has ended due to "
         end:str = "."
         if self.args:
-            end = f"caused by {self.args[0]}."
+            end = f" caused by {self.args[0]}."
         return f"{start}{self._explanation}{end}"
     def __str__(self) -> str:
         return f"{self.__class__.__name__}: {self.explanation}"

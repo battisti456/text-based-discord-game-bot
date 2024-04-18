@@ -37,10 +37,10 @@ class Guess_The_Word(Dictionary_Base, Basic_Secret_Message_Base, Rounds_With_Poi
         while len(definition_list) < NUM_DEFINITIONS:
             secret_word = self.random_word(random.randint(MIN_WORD_LEN,MAX_WORD_LEN))
             definition_dict = self.define(secret_word)
-            type_set = set()
             if definition_dict is None:
                 continue
             definition_list = definition_dict_to_list(definition_dict)
+            type_set = set(definition_dict)
         len_text = ""
         global_hint_letter = [False]*len(secret_word)
         player_hint_letter:PlayerDict[list[bool]] = {}
