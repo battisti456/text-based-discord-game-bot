@@ -1,6 +1,6 @@
 from config import config
 
-from typing import Literal
+from typing import Literal, TypedDict
 from docopt import docopt
 
 from game.game_interface import Game_Interface
@@ -11,13 +11,9 @@ CP = config['command_prefix']
 COMMAND_DOCSTRING= f"""
 
 Usage:
-    (-h | -help)
-
-Options:
-    -h --help shows operator options
+    {CP} h | help | -h | --help
 
 """
-
 
 
 type GameOperatorState = Literal[
@@ -37,5 +33,6 @@ class Game_Operator(Interface_Operator):
             if not interaction.content is None:
                 if interaction.content.startswith(config['command_prefix']):
                     if interaction.reply_to_message_id is None:
-                        args = docopt(COMMAND_DOCSTRING,interaction.content[len(CP):])
-                        print(args)
+                        args = docopt(COMMAND_DOCSTRING,interaction.content[len(CP):],default_help=False)
+                        if any(args[help_option] for help_option in ["h","help","-h","--help"]):
+                            await self.send(interaction.reply(COMMAND_DOCSTRING))

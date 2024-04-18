@@ -8,7 +8,7 @@ import discord
 from math import ceil
 from random import shuffle
 
-from game import PlayerId, MessageId, ChannelId
+from game import PlayerId, MessageId, ChannelId, InteractionId
 
 MESSAGE_MAX_LENGTH = 1800#actually 2000, but I leave extra for split indicators
 
@@ -63,7 +63,16 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
         if not message.attach_paths is None:
             for path in message.attach_paths:
                 attachments.append(discord.File(path))
-        if message.message_id is None:#new message
+        if message.message_id is None and not message.reply_to_id is None:
+            await self.client.wait_until_ready()
+            assert isinstance(message.reply_to_id,int)
+            to_reply = await channel.fetch_message(message.reply_to_id)
+            discord_message = await to_reply.reply(
+                content=message.content,
+                files=attachments
+            )
+            message.message_id = discord_message.id
+        elif message.message_id is None:#new message
             await self.client.wait_until_ready()
             discord_message = await channel.send(content=message.content,files = attachments)
             message.message_id = discord_message.id
