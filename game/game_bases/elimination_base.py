@@ -28,5 +28,5 @@ class Elimination_Base(Game):
             await self.core_game()
     async def core_game(self):
         ...
-    async def generate_placements(self) -> PlayerPlacement:
+    def generate_placements(self) -> PlayerPlacement:
         return self.generate_kicked_placements()

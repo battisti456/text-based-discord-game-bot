@@ -212,12 +212,6 @@ def tileing(image:PIL.Image.Image) -> PIL.Image.Image:
         new_image.paste(cropped_image,dest_boxes[k][0:2])
     
     return new_image
-        
-
-        
-
-
-
 
 
 ALTER_METHODS = {#...altered through ____ the image
@@ -263,13 +257,14 @@ SEARCH_TOPICS = {
 
 class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
     def __init__(self,gi:Game_Interface):
+
         Rounds_With_Points_Base.__init__(self,gi)
         Random_Image_Base.__init__(self,gi)
         self.num_rounds = NUM_ROUNDS
     async def game_intro(self):
         await self.basic_send(
-            "# Welcome to a game of guess what I searched!\n" +
-            "In this game, I will search through an online image database via a random search term.\n" +
+            "# Welcome to a game of guess what I searched!\n" + 
+            "DAFDSAFIn this game, I will search through an online image database via a random search term.\n" +
             "I will then take that image, and alter it to make it harder to guess.\n" +
             f"Then, for a point, you will attempt to correctly guess from {NUM_CHOICES} options which term I searched for.\n" +
             f"We will play {NUM_ROUNDS} rounds. Most points at the end wins!"

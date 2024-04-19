@@ -2,6 +2,7 @@ from typing import TypeVar
 from typing import Hashable, Iterable, Optional, Callable, Mapping, Dict, Awaitable, Literal
 from numbers import Real
 
+
 DataType = TypeVar('DataType')
 R = TypeVar('R')
 

@@ -63,7 +63,7 @@ class Rounds_With_Points_Base(Game):
                 await self.score(None,num=points_to_add)#announces score if core_game returned none, changes score if core_game returned values
     async def core_game(self):
         pass
-    async def generate_placements(self) -> PlayerPlacement:
+    def generate_placements(self) -> PlayerPlacement:
         return merge_placements(
             score_to_placement(self.points,self.all_players,not self.reverse_scoring),
             self.generate_kicked_placements()
