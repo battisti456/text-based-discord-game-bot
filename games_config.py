@@ -42,11 +42,58 @@ class ContainerBiddingConfig(TypedDict):
 class EliminationBlackjackConfig(TypedDict):
     hand_limit:int
     num_players_per_deck:int
+class EliminationLetterAdderConfig(TypedDict):
+    num_letters:int
+    start_letters:int
+class EliminationRockPaperScissorsConfig(TypedDict):
+    ...
+class EliminationTriviaConfig(TypedDict):
+    ...
+class EmojiCommunicationConfig(TypedDict):
+    num_rounds:int
+    num_options:int
+    points_for_guess:int
+    points_per_guesser:int
+    points_for_all_guess:int
+    bonus_num:int
+    bonus_points_per_guesser:int
+    max_emoji:int
+class GuessTheWordConfig(TypedDict):
+    num_rounds:int
+    min_word_len:int
+    max_word_len:int
+    num_definitions:int
+    guess_feedback:bool
+    length_hint:bool
+class LongestWordConfig(TypedDict):
+    num_letters:int
+    number_of_rounds:int
+    num_letters_can_refresh:int
+class PredictionTexasHoldemConfig(TypedDict):
+    num_rounds:int
+    player_cards:int
+    shared_cards:int
+class TheGreatKittenRaceConfig(TypedDict):
+    data_path:str
+    num_obstacles:int
+class TrickyTriviaConfig(TypedDict):
+    points_fool:int
+    points_guess:int
+    num_questions:int
 class GamesConfigDict(TypedDict):
     chess_puzzle_elimination:ChessPuzzleEliminationConfig
     altered_image_guess:AlteredImageGuessConfig
     container_bidding:ContainerBiddingConfig
     elimination_blackjack:EliminationBlackjackConfig
+    elimination_letter_adder:EliminationLetterAdderConfig
+    elimination_rock_paper_scissors:EliminationRockPaperScissorsConfig
+    elimination_trivia:EliminationTriviaConfig
+    emoji_communications:EmojiCommunicationConfig
+    guess_the_word:GuessTheWordConfig
+    longest_word:LongestWordConfig
+    prediction_texas_holdem:PredictionTexasHoldemConfig
+    the_great_kitten_race:TheGreatKittenRaceConfig
+    tricky_trivia:TrickyTriviaConfig
 
 games_config:GamesConfigDict = {
     "chess_puzzle_elimination": {
@@ -94,6 +141,49 @@ games_config:GamesConfigDict = {
     "elimination_blackjack" : {
         'hand_limit' : 21,
         'num_players_per_deck' : 7
+    },
+    "elimination_letter_adder" : {
+        'num_letters' : 4,
+        'start_letters' : 4
+    },
+    "elimination_rock_paper_scissors" : {},
+    "elimination_trivia": {},
+    "emoji_communications": {
+        'num_rounds': 1,
+        'num_options' : 5,
+        'points_for_guess': 2,
+        "points_per_guesser":1,
+        "points_for_all_guess":1,
+        "bonus_num":3,
+        "bonus_points_per_guesser":2,
+        "max_emoji":10
+    },
+    "guess_the_word" : {
+        'num_rounds' : 3,
+        'min_word_len' : 6,
+        'max_word_len' : 12,
+        'num_definitions' : 3,
+        'guess_feedback' : True,
+        'length_hint' : True
+    },
+    "longest_word" : {
+        'num_letters' : 10,
+        'number_of_rounds' : 3,
+        'num_letters_can_refresh' : 5
+    },
+    "prediction_texas_holdem" : {
+        'num_rounds' : 3,
+        'player_cards' : 2,
+        'shared_cards' : 5
+    },
+    "the_great_kitten_race" : {
+        'data_path' : "kitten_race_obstacles.json",
+        'num_obstacles' : 5
+    },
+    "tricky_trivia": {
+        'points_fool':1,
+        'points_guess':3,
+        'num_questions':3
     }
 }
 

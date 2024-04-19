@@ -1,3 +1,6 @@
+from games_config import games_config
+from config import config
+
 from game import PlayerId, PlayerDict, make_player_dict, PlayerPlacement, correct_int, merge_placements, score_to_placement
 
 from game.game import Game
@@ -14,8 +17,10 @@ import json
 
 from typing import TypedDict, Callable
 
-DATA_PATH = "data\\kitten_race_obstacles.json"
-NUM_OBSTACLES = 5
+CONFIG = games_config['the_great_kitten_race']
+
+DATA_PATH = config['data_path'] + '\\' + CONFIG['data_path']
+NUM_OBSTACLES = CONFIG['num_obstacles']
 
 class Obstacle(TypedDict):
     stat_checks:list[str]

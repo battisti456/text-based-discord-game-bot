@@ -1,18 +1,20 @@
 #NEEDS TO BE TESTED
+from games_config import games_config
+
 from game.game_bases.elimination_base import Elimination_Base
 from game.game_bases.dictionary_base import Dictionary_Base
 from game.game_interface import Game_Interface
 from game.message import Message, make_no_yes_bullet_points, make_bullet_points
 from game.player_input import Player_Single_Selection_Input, Player_Text_Input, run_inputs
 from game.response_validator import text_validator_maker
+from game.emoji_groups import LEFT_RIGHT_EMOJI
 
 from game import PlayerId, PlayerPlacement
 
 import random
 
-NUM_LETTERS = 4
-START_LETTERS = NUM_LETTERS
-LEFT_RIGHT_EMOJI = ['⬅️','➡️']
+NUM_LETTERS = games_config['elimination_letter_adder']['num_letters']
+START_LETTERS = games_config['elimination_letter_adder']['start_letters']
 
 class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
     def __init__(self,gi:Game_Interface):

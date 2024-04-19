@@ -1,5 +1,5 @@
 #NEEDS TO BE TESTED
-from game import PlayerId,PlayerDict
+from game import PlayerDict
 from game.game_bases import Elimination_Base, Trivia_Base
 from game.game_interface import Game_Interface
 

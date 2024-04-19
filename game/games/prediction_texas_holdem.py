@@ -1,3 +1,5 @@
+from games_config import games_config
+
 from game.game_interface import Game_Interface
 from game.game_bases import Rounds_With_Points_Base, Card_Base
 
@@ -7,10 +9,12 @@ from game.grammer import ordinate
 
 from game import PlayerId, PlayerDict, make_player_dict
 
-NUM_ROUNDS = 3
+CONFIG = games_config['prediction_texas_holdem']
 
-PLAYER_CARDS = 2
-SHARED_CARDS = 5
+NUM_ROUNDS = CONFIG['num_rounds']
+
+PLAYER_CARDS = CONFIG['player_cards']
+SHARED_CARDS = CONFIG['shared_cards']
 
 class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
     def __init__(self,gi:Game_Interface):

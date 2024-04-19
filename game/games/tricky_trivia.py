@@ -1,3 +1,5 @@
+from games_config import games_config
+
 from game import PlayerId, PlayerDict, make_player_dict
 from game.game_bases import Trivia_Base, Basic_Secret_Message_Base, Rounds_With_Points_Base
 from game.game_bases.trivia_base import TriviaDict
@@ -6,9 +8,11 @@ from game.grammer import wordify_iterable
 from game.game_interface import Game_Interface
 import random
 
-POINTS_FOOL = 1
-POINTS_GUESS = 3
-NUM_QUESTIONS = 3
+CONFIG = games_config['tricky_trivia']
+
+POINTS_FOOL = CONFIG['points_fool']
+POINTS_GUESS = CONFIG['points_guess']
+NUM_QUESTIONS = CONFIG['num_questions']
 
 class Tricky_Trivia(Basic_Secret_Message_Base,Trivia_Base,Rounds_With_Points_Base):
     def __init__(self,gi:Game_Interface):
