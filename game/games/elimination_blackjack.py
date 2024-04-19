@@ -1,4 +1,6 @@
 #NEEDS TO BE TESTED
+from games_config import games_config
+
 from game.game_bases import Card_Base
 from game.game_bases import Elimination_Base
 
@@ -10,8 +12,8 @@ from math import ceil
 from typing import Iterable
 from game import PlayerId, PlayerPlacement, PlayerDict
 
-HAND_LIMIT = 21
-NUM_PLAYERS_PER_DECK = 7
+HAND_LIMIT = games_config['elimination_blackjack']["hand_limit"]
+NUM_PLAYERS_PER_DECK = games_config['elimination_blackjack']['num_players_per_deck']
 
 class Elimination_Blackjack(Card_Base,Elimination_Base):
     def __init__(self,gi:Game_Interface):

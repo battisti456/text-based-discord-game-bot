@@ -1,3 +1,6 @@
+from games_config import games_config
+from config import config
+
 from typing import TypedDict
 from game import PlayerId, PlayerDict, make_player_dict
 from game.game_bases import Rounds_With_Points_Base, Basic_Secret_Message_Base
@@ -8,13 +11,14 @@ from game.grammer import wordify_iterable
 
 import json
 import random
-import logging
 
-NUM_CONTAINERS = 5
-DATA_PATH = "data\\container_contents.json"
-STARTING_MONEY = 1000
-PERCENTILE_VAR = 10
-END_OF_GAME_INTEREST = 20
+CONFIG = games_config['container_bidding']
+
+NUM_CONTAINERS = CONFIG['num_containers']
+DATA_PATH = config['data_path'] + '\\' + CONFIG['data_path']
+STARTING_MONEY = CONFIG['starting_money']
+PERCENTILE_VAR = CONFIG['percentile_var']
+END_OF_GAME_INTEREST = CONFIG['end_of_game_interest']
 
 class DescDict(TypedDict):
     starting_bid_range:tuple[int,int]

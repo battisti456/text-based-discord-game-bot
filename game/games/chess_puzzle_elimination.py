@@ -1,4 +1,7 @@
 #NEEDS TO BE TESTED
+from games_config import games_config
+from config import config
+
 from game import PlayerId
 from typing import TypedDict, Optional
 
@@ -17,14 +20,16 @@ import random
 
 import pandas
 
-DATA_PATH = "data\\lichess_db_puzzle.csv"
+CONFIG = games_config['chess_puzzle_elimination']
+
+DATA_PATH = config['data_path'] + "\\" + CONFIG['data_path']
 ORIGINAL_BG_COLOR = (0,0,0)
 
-RATING_RANGE = (400,800)
-POPULARITY_RANGE = None
-NUM_TO_SAMPLE = 500
+RATING_RANGE = CONFIG['rating_range']
+POPULARITY_RANGE = CONFIG['popularity_range']
+NUM_TO_SAMPLE = CONFIG['num_to_sample']
 
-NUM_MOVE_OPTIONS = 5
+NUM_MOVE_OPTIONS = CONFIG['num_move_options']
 
 COLOR_NAMES = {
     chess.WHITE : 'white',
@@ -46,25 +51,25 @@ CASTLE_UCI_DICT = {
     'e1b1': "white castles queenside",
     'e8g8': "black castles kingside"
 }
-PUZZLE_RATING_CAP_ESCALATION = 200
+PUZZLE_RATING_CAP_ESCALATION = CONFIG['puzzle_rating_cap_escalation']
 ORIGINAL_BOARD_SIZE = (600,600)
 ORIGINAL_BOARDER_WIDTH = 100
 
-SET_IMAGE_SIZE = (1500,1500)
+SET_IMAGE_SIZE = CONFIG['set_image_size']
 
-TEXT_COLOR = (255,255,255)
-NEW_BOARDER_WIDTH = 100
-NEW_BOARDER_COLOR = (0,0,0)
+TEXT_COLOR = CONFIG['text_color']
+NEW_BOARDER_WIDTH = CONFIG['new_border_width']
+NEW_BOARDER_COLOR = CONFIG['new_border_color']
 
 COL_LABELS = "abcdefgh"
 ROW_LABELS = "12345678"
 NUM_TILES = 8
 SIDE_LABEL_OFFSET = int(NEW_BOARDER_WIDTH/4)
 BOTTOM_LABEL_OFFSET = SET_IMAGE_SIZE[1]+NEW_BOARDER_WIDTH
-LABEL_FONT_SIZE = 65
+LABEL_FONT_SIZE = CONFIG['label_font_size']
 
-LAST_MOVE_HIGHLIGHT = (255,255,204,100)
-CHECK_HIGHLIGHT = (255,0,0,100)
+LAST_MOVE_HIGHLIGHT = CONFIG['last_move_highlight']
+CHECK_HIGHLIGHT = CONFIG['check_highlight']
 
 def piece_name(symbol:str):
     color = 'white'
@@ -123,7 +128,11 @@ class Chess_Puzzle_Elimination(Elimination_Base):
         self.display_surface = pygame.Surface(ORIGINAL_BOARD_SIZE)
         self.display_board = chessboard.board.Board(ORIGINAL_BG_COLOR,self.display_surface)
         self.board:chess.Board = chess.Board()
-        self.rating_range = RATING_RANGE
+        self.rating_range:tuple[int,int]
+        if RATING_RANGE is None:
+            self.rating_range = (0,50000)#makes the range arbitrary
+        else:
+            self.rating_range = RATING_RANGE
     def move_text(self,move_uci:str) -> str:
         def get_piece(uci:str) -> chess.Piece | None:
             piece = self.board.piece_at(eval(f"chess.{uci.upper()}"))
@@ -286,7 +295,7 @@ class Chess_Puzzle_Elimination(Elimination_Base):
         await self.basic_send(
             "# Welcome to a game of elimination chess puzzles!\n" + 
             "In this game you will be presented with chess puzzles.\n" +
-            f"These puzzles will start with a chess rating between {RATING_RANGE[0]} and {RATING_RANGE[1]}, but may escalate if y'all do well.\n" +
+            "" if RATING_RANGE is None else f"These puzzles will start with a chess rating between {RATING_RANGE[0]} and {RATING_RANGE[1]}, but may escalate if y'all do well.\n" +
             f"You must then pick the best move for the position out of {NUM_MOVE_OPTIONS} options that I provide you," +
             "keeping in mind that this puzzle may extend through a multi-move strategy.\n" +
             "If you pick the wrong move, you are eliminated (unless no one gets it right).\n" +

@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import TypedDict, Optional
 
 class AlteredImageGuessConfig(TypedDict):
     num_rounds:int
@@ -19,12 +19,51 @@ class AlteredImageGuessConfig(TypedDict):
     scribble_points_per_line:int
     scribble_width:int
     tile_ratio:float
-
-
+class ChessPuzzleEliminationConfig(TypedDict):
+    data_path:str
+    rating_range:Optional[tuple[int,int]]
+    popularity_range:Optional[tuple[int,int]]
+    num_to_sample:int
+    num_move_options:int
+    puzzle_rating_cap_escalation:int
+    set_image_size:tuple[int,int]
+    text_color:tuple[int,int,int]
+    new_border_width:int
+    new_border_color:tuple[int,int,int]
+    label_font_size:int
+    last_move_highlight:tuple[int,int,int,int]
+    check_highlight:tuple[int,int,int,int]
+class ContainerBiddingConfig(TypedDict):
+    num_containers:int
+    data_path:str
+    starting_money:int
+    percentile_var:int
+    end_of_game_interest:int
+class EliminationBlackjackConfig(TypedDict):
+    hand_limit:int
+    num_players_per_deck:int
 class GamesConfigDict(TypedDict):
+    chess_puzzle_elimination:ChessPuzzleEliminationConfig
     altered_image_guess:AlteredImageGuessConfig
+    container_bidding:ContainerBiddingConfig
+    elimination_blackjack:EliminationBlackjackConfig
 
 games_config:GamesConfigDict = {
+    "chess_puzzle_elimination": {
+        'data_path':"lichess_db_puzzle.csv",
+        'rating_range':(400,800),
+        'popularity_range':None,
+        'num_to_sample':500,
+        'num_move_options':5,
+        'puzzle_rating_cap_escalation':200,
+        'set_image_size':(1500,1500),
+        'text_color':(255,255,255),
+        'new_border_width':100,
+        'new_border_color':(0,0,0),
+        'label_font_size':65,
+        'last_move_highlight':(255,255,204,100),
+        'check_highlight':(255,0,0,100)
+    },
     "altered_image_guess" : {
         "num_rounds" : 5,
         "min_image_size" : (300,300),
@@ -44,6 +83,17 @@ games_config:GamesConfigDict = {
         "scribble_points_per_line" : 10,
         "scribble_width" : 20,
         "tile_ratio" : 0.03
+    },
+    "container_bidding" : {
+        'num_containers' : 5,
+        'data_path':"container_contents.json",
+        'starting_money':1000,
+        'percentile_var':10,
+        'end_of_game_interest':20
+    },
+    "elimination_blackjack" : {
+        'hand_limit' : 21,
+        'num_players_per_deck' : 7
     }
 }
 
