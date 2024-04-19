@@ -305,23 +305,3 @@ def police_game_callable(func:Callable[P,Awaitable[R]]) -> Callable[P,Awaitable[
         args[0].current_class_execution = stored
         return to_return
     return wrapped
-
-def module_name_to_game_name(name:str) -> str:
-    return "_".join(word.capitalize() for word in name.split('_'))
-def import_games(
-        path:str,
-        store_modules:dict[str,ModuleType],
-        store_games:dict[str,type[Game]]):
-    base_package = path.replace('\\','.').replace('/','.')
-    game_names = list(
-        item[:-3] for item in os.listdir(path) 
-        if not item in ['__init__.py','__pycache__'])
-    os.listdir(path)
-    for name in game_names:
-        store_modules[name] = importlib.import_module(base_package+'.' + name)
-        store_games[name] = getattr(store_modules[name],module_name_to_game_name(name))
-        setattr(
-            sys.modules[base_package],
-            store_games[name].__name__,
-            store_games[name]
-        )

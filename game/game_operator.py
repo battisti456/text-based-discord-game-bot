@@ -24,7 +24,6 @@ Usage:
     {CP} get_state
     {CP} run_game [<name>]
     {CP} list_games
-    {CP} reload [games|game_bases]
     {CP} stop_run
 
 """
@@ -73,11 +72,11 @@ class Game_Operator(Interface_Operator):
                             if args['<name>'] is None:
                                 game_type = random_game()
                             else:
-                                options = list(games)
+                                options = list(game_type for game_type in games if game_type.__name__ == args['<name>'])
                                 if len(options) == 0:
                                     await send(f"'{args['<name>']}' is not the name of a valid game.")
                                     return
-                                game_type = games[options[0]]
+                                game_type = options[0]
                             self.game = game_type(self.gi)
                             self.state = 'run_individual_game'
                             self.run_task = asyncio.create_task(self.game.run())
@@ -89,18 +88,8 @@ class Game_Operator(Interface_Operator):
                             self.state = 'idle'
                         elif args['list_games']:
                             await send(
-                                "Our current games are: " + wordify_iterable(list(games)) + "."
+                                "Our current games are: " + wordify_iterable(list(game_type.__name__ for game_type in games)) + "."
                             )
-                        elif args['reload']:
-                            no_arg: bool = not any(args[mod] in args for mod in ['game_bases','games'])
-                            if args['game_bases'] or no_arg:
-                                reload(game.game_bases)
-                                game.game_bases.reload()
-                                await send("Game bases have been reloaded.")
-                            if args['games'] or no_arg:
-                                reload(game.games)
-                                game.games.reload()
-                                await send("Games have been reloaded.")
                         elif args['stop_run']:
                             if self.run_task is None:
                                 await send("There is nothing currently running.")
