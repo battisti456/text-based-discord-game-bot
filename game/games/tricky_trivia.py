@@ -36,7 +36,7 @@ class Tricky_Trivia(Basic_Secret_Message_Base,Trivia_Base,Rounds_With_Points_Bas
         while trivia_dict['question'][0:5] == "Which" or "hich of these" in trivia_dict['question']:#hopefully prevent some bad qs
             trivia_dict = await self.get_trivia(type_ = self.type_.Multiple_Choice)
 
-        question_text = f"*{trivia_dict['question']}*\nAn example of an incorrect answer '*{trivia_dict['incorrect_answers'][0]}*'."
+        question_text = f"*{trivia_dict['question']}*\nAn example of an incorrect answer is: '*{trivia_dict['incorrect_answers'][0]}*'."
         await self.basic_send(question_text)
         responses:PlayerDict[str] = await self.basic_secret_text_response(self.unkicked_players,
             content = f"{question_text}\nWhat is a possible answer to this qustion that might fool your competitors?")

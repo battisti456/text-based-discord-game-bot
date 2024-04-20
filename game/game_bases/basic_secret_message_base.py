@@ -85,17 +85,18 @@ class Basic_Secret_Message_Base(Game):
             list(inputs[player] for player in p),
             sender = self.sender,
             basic_feedback=True)
+        raw_responses:PlayerDictOptional[str] = {
+            player:inputs[player].responses[player] for player in p
+        }
+        await self.kick_none_response(raw_responses)
+        responses:PlayerDict[str] = self.clean_player_dict(raw_responses)
         if players is None or isinstance(players,list):
-            to_return_dict:PlayerDict[str] = {}
-            for player in p:
-                response = inputs[player].responses[player]
-                assert not response is None
-                to_return_dict[player] = response
-            return to_return_dict
+            return responses
         else:
-            to_return = inputs[players].responses[players]
-            assert isinstance(to_return,str)
-            return to_return
+            if players in responses:
+                return responses[player]
+            else:
+                return ""
     @overload
     async def basic_secret_multiple_choice(
             self,players:PlayerId=...,
@@ -172,17 +173,18 @@ class Basic_Secret_Message_Base(Game):
             list(inputs[player] for player in p),
             sender = self.sender,
             basic_feedback=True)
+        raw_responses:PlayerDictOptional[int] = {
+            player:inputs[player].responses[player] for player in p
+        }
+        await self.kick_none_response(raw_responses)
+        responses:PlayerDict[int] = self.clean_player_dict(raw_responses)
         if players is None or isinstance(players,list):
-            to_return_dict:PlayerDict[int] = {}
-            for player in p:
-                response = inputs[player].responses[player]
-                assert not response is None
-                to_return_dict[player] = response
-            return to_return_dict
+            return responses
         else:
-            to_return = inputs[players].responses[players]
-            assert isinstance(to_return,str)
-            return to_return
+            if players in responses:
+                return responses[player]
+            else:
+                return -1
     @overload
     async def basic_secret_no_yes(
             self,players:PlayerId=...,

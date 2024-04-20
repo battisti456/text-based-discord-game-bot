@@ -264,7 +264,7 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
     async def game_intro(self):
         await self.basic_send(
             "# Welcome to a game of guess what I searched!\n" + 
-            "DAFDSAFIn this game, I will search through an online image database via a random search term.\n" +
+            "In this game, I will search through an online image database via a random search term.\n" +
             "I will then take that image, and alter it to make it harder to guess.\n" +
             f"Then, for a point, you will attempt to correctly guess from {NUM_CHOICES} options which term I searched for.\n" +
             f"We will play {NUM_ROUNDS} rounds. Most points at the end wins!"

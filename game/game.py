@@ -217,13 +217,13 @@ class Game(Interface_Component):
         """
         text_list:list[str] = []
         place = 1
-        for item in placement:
-            if isinstance(item,list):
-                places = list(ordinate(place+i) for i in range(len(item)))
-                text_list.append(f"tied in {wordify_iterable(places)} places we have {self.format_players_md(item)}")
-                place += len(item)
+        for group in placement:
+            if len(group) >1:
+                places = list(ordinate(place+i) for i in range(len(group)))
+                text_list.append(f"tied in {wordify_iterable(places)} places we have {self.format_players_md(group)}")
+                place += len(group)
             else:
-                text_list.append(f"in {ordinate(place)} place we have {self.format_players_md(item)}")
+                text_list.append(f"in {ordinate(place)} place we have {self.format_players_md(group)}")
                 place += 1
 
         return await self.basic_send(f"The placements are: {wordify_iterable(text_list,comma=';')}.")
@@ -266,7 +266,7 @@ class Game(Interface_Component):
         for player in players:
             self.kicked[player] = (priority,reason)
         if len(self.unkicked_players) <= 1:
-            raise GameEndInsufficientPlayers(f"{self.sender.format_players_md(players)} being {kick_text[reason]}.")
+            raise GameEndInsufficientPlayers(f"{self.sender.format_players_md(players)} being {kick_text[reason]}")
     def clean_player_dict(self,responses:Player_Input[R]|PlayerDictOptional[R],*args:list[PlayerId]) -> PlayerDict[R]:
         clean_responses:PlayerDict = {}
         if isinstance(responses,Player_Input):

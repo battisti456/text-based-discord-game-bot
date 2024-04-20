@@ -21,7 +21,7 @@ type Operators = Literal['command','run_game']
 
 #player/players being _______
 kick_text:dict[KickReason,str] = {
-    'timeout': 'removed due to exceeding the timeout',
+    'timeout': 'removed for exceeding the timeout',
     'eliminated': 'eliminated from the game',
     'unspecified': 'kicked for unspecified reasons'
 }

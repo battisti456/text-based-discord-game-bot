@@ -9,6 +9,8 @@ class ConfigDict(TypedDict):
     players:list[PlayerId]
     temp_path:str
     data_path:str
+    default_timeout:int
+    default_warnings:list[int]
 
 config:ConfigDict = {
     'command_prefix' : ">> ",
@@ -16,7 +18,9 @@ config:ConfigDict = {
     "main_channel_id" : 0,
     "players" : [],
     "temp_path":"temp",
-    "data_path":"data"
+    "data_path":"data",
+    "default_timeout" : 86400,#24 h
+    "default_warnings": [10,43200,72000,82800]#12 h, 20 h, 23 h
 }
 
 try:

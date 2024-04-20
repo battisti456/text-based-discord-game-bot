@@ -65,6 +65,10 @@ class Longest_Word(Dictionary_Base,Rounds_With_Points_Base):
             else:
                 choose_word_input.reset()
                 await choose_word_input.run()
+            if choose_word_input.responses[player] is None:
+                if not num_letters_can_refresh or change_letter_input.responses[player] is None:
+                    await self.kick_players([player],reason='timeout')
+                    return ""
             if choose_word_input.has_recieved_all_responses():
                 chosen_word = choose_word_input.responses[player]
             else:
@@ -81,6 +85,8 @@ class Longest_Word(Dictionary_Base,Rounds_With_Points_Base):
     async def core_game(self):
         for player in self.unkicked_players:
             word = await self.longest_word_question(player)
+            if player in self.kicked_players:
+                continue
             if self.is_word(word):
                 p= POINT_FUNCTION(word)
                 await self.score([player],p)
