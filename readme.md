@@ -1,4 +1,4 @@
-## Discord Text-Based Minigame Bot
+# Discord Text-Based Minigame Bot
 
 Several discalimers!
 
