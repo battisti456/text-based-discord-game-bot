@@ -7,3 +7,4 @@ COLORED_CIRCLE_EMOJI:Sequence[str] = tuple(" 🔴 🟠 🟡 🟢 🔵 🟣 🟤 
 COLORED_SQUARE_EMOJI:Sequence[str] = tuple(" 🟥 🟧 🟨 🟩 🟦 🟪 🟫 ⬛ ⬜".split())
 NUMBERED_KEYCAP_EMOJI:Sequence[str] = ("0️⃣","1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣","🔟")
 ROCK_PAPER_SCISSORS_EMOJI:Sequence[str] = ['🪨','📜','✂️','🔫']
+LEFT_RIGHT_EMOJI = ['⬅️','➡️']

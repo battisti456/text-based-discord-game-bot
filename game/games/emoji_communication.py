@@ -1,3 +1,5 @@
+from games_config import games_config
+
 from game.game_interface import Game_Interface
 from game import PlayerId, PlayerDict
 from game.game_bases import Basic_Secret_Message_Base,Rounds_With_Points_Base
@@ -5,17 +7,19 @@ import wonderwords
 import emoji
 import random
 
-NUM_ROUNDS = 1
-NUM_OPTIONS = 5
+CONFIG = games_config['emoji_communications']
 
-POINTS_FOR_GUESS = 2
-POINTS_PER_GUESSER = 1
-POINTS_FOR_ALL_GUESS = 1
+NUM_ROUNDS = CONFIG['num_rounds']
+NUM_OPTIONS = CONFIG['num_options']
 
-BONUS_NUM = 3
-BONUS_POINTS_PER_GUESSER = 2
+POINTS_FOR_GUESS = CONFIG['points_for_guess']
+POINTS_PER_GUESSER = CONFIG['points_per_guesser']
+POINTS_FOR_ALL_GUESS = CONFIG['points_for_all_guess']
 
-MAX_EMOJI = 10
+BONUS_NUM = CONFIG['bonus_num']
+BONUS_POINTS_PER_GUESSER = CONFIG['bonus_points_per_guesser']
+
+MAX_EMOJI = CONFIG['max_emoji']
 
 def only_emoji(text:str) -> str:
 
@@ -56,19 +60,19 @@ class Emoji_Communication(Basic_Secret_Message_Base,Rounds_With_Points_Base):
         )
     async def core_game(self):
         player_prompts:PlayerDict[str] = {}
-        for current_player in self.players:
+        for current_player in self.unkicked_players:
             player_prompts[current_player] = self.ww_sentence.sentence()
         player_questions = {}
-        for current_player in self.players:
+        for current_player in self.unkicked_players:
             player_questions[current_player] = f"Please do your best to convey this sentence through emoji.\n'{player_prompts[current_player]}'"
 
-        emoji_responses = await self.basic_secret_text_response(self.players,player_questions,response_validator=emoji_response_validator)
+        emoji_responses = await self.basic_secret_text_response(self.unkicked_players,player_questions,response_validator=emoji_response_validator)
 
         emoji_prompts = {}
-        for current_player in self.players:
+        for current_player in self.unkicked_players:
             emoji_prompts[current_player] = only_emoji(emoji_responses[current_player])
-        for current_player in self.players:
-            players_to_ask = list(player for player in self.players if player != current_player)
+        for current_player in self.unkicked_players:
+            players_to_ask = list(player for player in self.unkicked_players if player != current_player)
             options = []
             for i in range(NUM_OPTIONS-1):
                 options.append(self.ww_sentence.sentence())

@@ -1,4 +1,5 @@
-import game
+from games_config import games_config
+
 from game import PlayerId, PlayerDict
 from game.game_interface import Game_Interface
 from game.game_bases import Rounds_With_Points_Base,Random_Image_Base
@@ -10,27 +11,29 @@ import PIL.Image
 import PIL.ImageFilter
 import PIL.ImageDraw
 
-NUM_ROUNDS = 5
-MIN_IMAGE_SIZE = (300,300)
-NUM_CHOICES = 5
-ZOOM_CROP_BOX_SIZE = (30,30)
-ZOOM_CROP_BOX_DISPLAY_SIZE = (400,400)
-ZOOM_CROP_NO_EDGE_PORTION = 0.2
-BLUR_RADIUS = 50
-REMOVAL_COLOR = (0,0,0)
-REMOVAL_KEEP_PORTION = 0.05
-BAD_CONVERSION_RESIZE = 0.5
+CONFIG = games_config['altered_image_guess']
 
-POLKA_DOT_SIZE_SCALAR = (0.06,0.1)
-PIXELS_IN_IMAGE_PER_POLKA_DOT = 5000
-PATTERN_RADIAL_PORTION_VISABLE = 0.2
-PATTERN_RADIAL_NUM_RAYS = 100
+NUM_ROUNDS = games_config["altered_image_guess"]['num_rounds']
+MIN_IMAGE_SIZE = games_config['altered_image_guess']['min_image_size']
+NUM_CHOICES = games_config['altered_image_guess']['num_choices']
+ZOOM_CROP_BOX_SIZE = games_config['altered_image_guess']['zoom_crop_box_size']
+ZOOM_CROP_BOX_DISPLAY_SIZE = games_config['altered_image_guess']['zoom_crop_box_display_size']
+ZOOM_CROP_NO_EDGE_PORTION = games_config['altered_image_guess']['zoom_crop_no_edge_portion']
+BLUR_RADIUS = games_config['altered_image_guess']['blur_radius']
+REMOVAL_COLOR = games_config['altered_image_guess']['removal_color']
+REMOVAL_KEEP_PORTION = games_config['altered_image_guess']['removal_keep_portion']
+BAD_CONVERSION_RESIZE = games_config['altered_image_guess']['bad_conversion_resize']
 
-SCRIBBLE_NUM_LINES = 40
-SCRIBBLE_POINTS_PER_LINE = 10
-SCRIBBLE_WIDTH = 20
+POLKA_DOT_SIZE_SCALAR = CONFIG['polka_dot_size_scalar']
+PIXELS_IN_IMAGE_PER_POLKA_DOT = CONFIG['pixels_in_image_per_polka_dot']
+PATTERN_RADIAL_PORTION_VISABLE = CONFIG['pattern_radial_portion_visable']
+PATTERN_RADIAL_NUM_RAYS = CONFIG['pattern_radial_num_rays']
 
-TILE_RATIO = 0.03
+SCRIBBLE_NUM_LINES = CONFIG['scribble_num_lines']
+SCRIBBLE_POINTS_PER_LINE = CONFIG['scribble_points_per_line']
+SCRIBBLE_WIDTH = CONFIG['scribble_width']
+
+TILE_RATIO = CONFIG['tile_ratio']
 
 def zoom_crop(image:PIL.Image.Image) -> PIL.Image.Image:
     zoom_range:tuple[int,int,int,int] = (
@@ -209,12 +212,6 @@ def tileing(image:PIL.Image.Image) -> PIL.Image.Image:
         new_image.paste(cropped_image,dest_boxes[k][0:2])
     
     return new_image
-        
-
-        
-
-
-
 
 
 ALTER_METHODS = {#...altered through ____ the image
@@ -260,12 +257,13 @@ SEARCH_TOPICS = {
 
 class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
     def __init__(self,gi:Game_Interface):
+
         Rounds_With_Points_Base.__init__(self,gi)
         Random_Image_Base.__init__(self,gi)
         self.num_rounds = NUM_ROUNDS
     async def game_intro(self):
         await self.basic_send(
-            "# Welcome to a game of guess what I searched!\n" +
+            "# Welcome to a game of guess what I searched!\n" + 
             "In this game, I will search through an online image database via a random search term.\n" +
             "I will then take that image, and alter it to make it harder to guess.\n" +
             f"Then, for a point, you will attempt to correctly guess from {NUM_CHOICES} options which term I searched for.\n" +
@@ -292,11 +290,11 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
         responses:PlayerDict[int] = await self.basic_multiple_choice(
             f"Which of these search prompts does this image correspond to?",
             search_options,
-            who_chooses=self.players,
+            who_chooses=self.unkicked_players,
             emojis = list(SEARCH_TOPICS[topic] for topic in search_options)
         )
 
-        correct_players = list(player for player in self.players if search_options[responses[player]] == actual_search)
+        correct_players = list(player for player in self.unkicked_players if search_options[responses[player]] == actual_search)
 
         await self.basic_send(
             f"I actually searched for '{actual_search}'.",

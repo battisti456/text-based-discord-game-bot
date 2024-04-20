@@ -64,7 +64,7 @@ class Trivia_Base(Game):
             self.trivia_client = pytrivia.Trivia(True)
             raw = self.trivia_client.request(1,**kwargs)
         return raw['results'][0]
-    async def ask_trivia(
+    async def basic_ask_trivia(
             self,players:list[PlayerId],
             category:Optional[pytrivia.Category] = None,
             difficulty:Optional[pytrivia.Diffculty] = None,
@@ -82,6 +82,6 @@ class Trivia_Base(Game):
         await self.basic_send(f"The correct answer was '{question['correct_answer']}'.")
         correct_index = options.index(question['correct_answer'])
         player_correct:dict[PlayerId,bool] = {}
-        for player in players:
+        for player in set(players) & set(self.unkicked_players):
             player_correct[player] = choices[player] == correct_index
         return player_correct

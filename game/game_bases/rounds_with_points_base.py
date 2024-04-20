@@ -1,9 +1,8 @@
-import game 
 from game.game import Game, police_game_callable
 from game.game_interface import Game_Interface
 from game.message import Message
 from game.grammer import wordify_iterable
-from game import PlayerId, PlayerDict, make_player_dict, correct_int, PlayerPlacement
+from game import PlayerId, PlayerDict, make_player_dict, PlayerPlacement, merge_placements, score_to_placement
 from typing import Callable, Optional
 
 class Rounds_With_Points_Base(Game):
@@ -12,7 +11,7 @@ class Rounds_With_Points_Base(Game):
         if not Rounds_With_Points_Base in self.initialized_bases:
             self.initialized_bases.append(Rounds_With_Points_Base)
             self.points:PlayerDict[int] = {}
-            for player in self.players:
+            for player in self.unkicked_players:
                 self.points[player] = 0
             self.num_rounds:int = 3
             self.points_format:Callable = lambda x: f"{x} points"
@@ -55,33 +54,17 @@ class Rounds_With_Points_Base(Game):
         ))
 
     @police_game_callable
-    async def run(self) -> PlayerPlacement:
-        await self.game_intro()
-        await self.game_setup()
+    async def _run(self):
         for round in range(self.num_rounds):
             if self.num_rounds != 1:
                 await self.basic_policed_send(f"Now beggining {self.round_name} #{round+1} of {self.num_rounds}.")
             points_to_add:PlayerDict[int]|None = await self.core_game()
             if not points_to_add is None:
                 await self.score(None,num=points_to_add)#announces score if core_game returned none, changes score if core_game returned values
-        await self.game_cleanup()
-        scores:list[int] = list(set(correct_int(self.points[player]) for player in self.points))
-        scores.sort()
-        if not self.reverse_scoring:
-            scores.reverse()
-        rank:PlayerPlacement = []
-        for score in scores:
-            players_at_score = list(player for player in self.players if self.points[player] == score)
-            rank.append(players_at_score)
-        await self.game_outro(rank)
-        return rank
-    async def game_setup(self):
+    async def core_game(self):
         pass
-    async def game_cleanup(self):
-        pass
-    async def game_intro(self):
-        pass
-    async def game_outro(self,rank:PlayerPlacement):
-        pass
-    async def core_game(self) -> PlayerDict[int] | None:
-        pass
+    def generate_placements(self) -> PlayerPlacement:
+        return merge_placements(
+            score_to_placement(self.points,self.all_players,not self.reverse_scoring),
+            self.generate_kicked_placements()
+        )

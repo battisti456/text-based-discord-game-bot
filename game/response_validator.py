@@ -19,7 +19,9 @@ def text_validator_maker(
         not_is_in:Optional[list[str]] = None,
         is_composed_of:Optional[str] = None,
         is_stricly_composed_of:Optional[str] = None,
-        check_lower_case:bool = False
+        check_lower_case:bool = False,
+        min_num_words:Optional[int] = None,
+        max_num_words:Optional[int] = None
         
 ) -> ResponseValidator[str]:
     """creates a response validator for str's matching given validation, and with feedback given on problems with the input"""
@@ -68,5 +70,12 @@ def text_validator_maker(
                     list_letters.remove(letter)
                 else:
                     return (False,f"given value '{value}' contains more characters than are found in '{is_stricly_composed_of}'")
+        num_words =  len(value.split())
+        if not min_num_words is None:
+            if num_words < min_num_words:
+                return (False,f"given value '{value}' contains {num_words} word(s) which is less than the minimum of {min_num_words} words")
+        if not max_num_words is None:
+            if num_words > max_num_words:
+                return (False,f"given value '{value}' contains {num_words} word(s) which is more than the maximum of {min_num_words} words")
         return (True,None)
     return validator

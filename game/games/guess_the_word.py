@@ -37,25 +37,25 @@ class Guess_The_Word(Dictionary_Base, Basic_Secret_Message_Base, Rounds_With_Poi
         while len(definition_list) < NUM_DEFINITIONS:
             secret_word = self.random_word(random.randint(MIN_WORD_LEN,MAX_WORD_LEN))
             definition_dict = self.define(secret_word)
-            type_set = set()
             if definition_dict is None:
                 continue
             definition_list = definition_dict_to_list(definition_dict)
+            type_set = set(definition_dict)
         len_text = ""
         global_hint_letter = [False]*len(secret_word)
         player_hint_letter:PlayerDict[list[bool]] = {}
-        for player in self.players:
+        for player in self.unkicked_players:
             player_hint_letter[player] = [False]*len(secret_word)
         if LENGTH_HINT:
             len_text = f" of length {len(secret_word)} and type(s) {wordify_iterable(type_set)}"
         random.shuffle(definition_list)
-        players_not_guessed:list[PlayerId] = list(self.players)
+        players_not_guessed:list[PlayerId] = list(self.unkicked_players)
         await self.basic_send(f"The secret word{len_text} has been chosen!")
         for sub_round in range(NUM_DEFINITIONS):
             def_str = self.definition_string([definition_list[sub_round]])
             await self.basic_send(f"Here is definition #{sub_round + 1} of the word{len_text}:\n{def_str}")
             if GUESS_FEEDBACK:
-                for player in self.players:
+                for player in self.unkicked_players:
                     if player in players_not_guessed and (any(player_hint_letter[player]) or any(global_hint_letter)):
                         feedback = ""
                         for j in range(len(secret_word)):

@@ -1,6 +1,8 @@
 from game import PlayerId,MessageId,ChannelId,InteractionId
 from typing import Optional, Literal, get_args
 
+from game.message import Message
+
 InteractionType = Literal[
     'send_message',
     'delete_message',
@@ -24,4 +26,10 @@ class Interaction(object):
         self.interaction_type:InteractionType = interaction_type
 
         self.choice_index:Optional[int] = None
+    def reply(self,content:str) -> Message:
+        return Message(
+            content = content,
+            channel_id=self.channel_id,
+            reply_to_id=self.interaction_id
+        )
         
