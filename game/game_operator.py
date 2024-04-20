@@ -20,11 +20,11 @@ CP = config['command_prefix']
 COMMAND_DOCSTRING= f"""
 
 Usage:
-    {CP} h | help | -h | --help
-    {CP} get_state
-    {CP} run_game [<name>]
-    {CP} list_games
-    {CP} stop_run
+    {CP} h | help | -h | --help #return this text
+    {CP} get_state #return the current state of the game operator
+    {CP} run_game [<name>] #runs the game given by <name>, or if nothing is given runs a random game
+    {CP} list_games #lists all games available to run
+    {CP} stop_run #stops the currently running function
 
 """
 
