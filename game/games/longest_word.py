@@ -1,3 +1,5 @@
+from games_config import games_config
+
 from game import PlayerId,MessageId
 from game.game_bases import Dictionary_Base,Rounds_With_Points_Base
 from game.game_interface import Game_Interface
@@ -5,10 +7,12 @@ from game.message import Message, Alias_Message
 from game.player_input import Player_Text_Input, run_inputs
 from game.response_validator import text_validator_maker
 
-NUM_LETTERS = 10
+CONFIG = games_config['longest_word']
+
+NUM_LETTERS = CONFIG['num_letters']
 POINT_FUNCTION = lambda word: len(word)**2
-NUMBER_OF_ROUNDS = 3
-NUM_LETTERS_CAN_REFRESH:int = 5
+NUMBER_OF_ROUNDS = CONFIG['number_of_rounds']
+NUM_LETTERS_CAN_REFRESH:int = CONFIG['num_letters_can_refresh']
 
 class Longest_Word(Dictionary_Base,Rounds_With_Points_Base):
     def __init__(self,gi:Game_Interface):
@@ -61,6 +65,10 @@ class Longest_Word(Dictionary_Base,Rounds_With_Points_Base):
             else:
                 choose_word_input.reset()
                 await choose_word_input.run()
+            if choose_word_input.responses[player] is None:
+                if not num_letters_can_refresh or change_letter_input.responses[player] is None:
+                    await self.kick_players([player],reason='timeout')
+                    return ""
             if choose_word_input.has_recieved_all_responses():
                 chosen_word = choose_word_input.responses[player]
             else:
@@ -75,8 +83,10 @@ class Longest_Word(Dictionary_Base,Rounds_With_Points_Base):
         return chosen_word
     
     async def core_game(self):
-        for player in self.players:
+        for player in self.unkicked_players:
             word = await self.longest_word_question(player)
+            if player in self.kicked_players:
+                continue
             if self.is_word(word):
                 p= POINT_FUNCTION(word)
                 await self.score([player],p)

@@ -278,15 +278,15 @@ class Card_Base(Game):
         Game.__init__(self,gi)
         if not Card_Base in self.initialized_bases:
             self.initialized_bases.append(Card_Base)
-            self.hand_threads:PlayerDict[ChannelId] = make_player_dict(self.players,None)
-            self.hand_message:PlayerDict[Message] = make_player_dict(self.players,Message)
+            self.hand_threads:PlayerDict[ChannelId] = make_player_dict(self.unkicked_players,None)
+            self.hand_message:PlayerDict[Message] = make_player_dict(self.unkicked_players,Message)
     async def setup_cards(self,num_decks:int = 1):
         self.deck:Deck = Deck(num_decks)
         self.discard = Card_Holder()
         self.hands:PlayerDict[Hand] = {}
-        for player in self.players:
+        for player in self.unkicked_players:
             self.hands[player] = Hand()
-        for player in self.players:
+        for player in self.unkicked_players:
             if not player in self.hand_threads:#if first time
                 thread_id = await self.gi.new_channel("Your hand",[player])
                 self.hand_threads[player] = thread_id

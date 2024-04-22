@@ -1,11 +1,13 @@
-from game import PlayerId, MessageId, ChannelId
-from game.interaction import Interaction
+from game import PlayerId, MessageId, ChannelId, InteractionId
 from game.grammer import wordify_iterable
 from game.emoji_groups import NO_YES_EMOJI
 
 from math import ceil
 
-from typing import Optional, Callable, TypeVar, Literal, Sequence
+from typing import Optional, Callable, TypeVar, Literal, Sequence, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from game.interaction import Interaction
 
 type MessageSearchStrictness = Literal["original","aliases","children",'sub_aliases','sub_children']
 
@@ -59,18 +61,20 @@ class Message(object):
             self,content:Optional[str] = None,attach_paths:Optional[list[str]] = None,
             channel_id:Optional[ChannelId] = None,message_id:Optional[MessageId] = None, 
             players_who_can_see:Optional[list[PlayerId]] = None,
-            bullet_points:Optional[list[Bullet_Point]] = None):
+            bullet_points:Optional[list[Bullet_Point]] = None,
+            reply_to_id:Optional[MessageId|InteractionId] = None):
         self.content = content
         self.attach_paths = attach_paths
         self.channel_id = channel_id
         self.message_id = message_id
         self.players_who_can_see = players_who_can_see
         self.bullet_points = bullet_points
+        self.reply_to_id = reply_to_id
         self.children:list[Message] = []
     def is_sent(self) -> bool:
         """return weather or not this Message object refers to an already sent message"""
         return not self.message_id is None
-    def is_response(self,interaction:Interaction,allow:MessageSearchStrictness = 'sub_children') -> bool:
+    def is_response(self,interaction:'Interaction',allow:MessageSearchStrictness = 'sub_children') -> bool:
         """
         returns whether an interaction refers to this message with its reply_to_message_id
         
@@ -165,6 +169,12 @@ class Message(object):
                 )
             )
         return to_return
+    def reply(self,content:str) -> 'Message':
+        return Message(
+            content = content,
+            channel_id=self.channel_id,
+            reply_to_id=self.message_id
+        )
 
 def make_bullet_points(contents:list[str],emojis:Sequence[str]) -> list[Bullet_Point]:
     """turns lists of texts and emojis into a list of bullet_points with the corresponding values"""
@@ -195,7 +205,8 @@ class Alias_Message(Child_Message):
             channel_id_modifier:OptionalModifier[ChannelId] = do_not_modify,
             message_id_modifier:OptionalModifier[MessageId] = do_not_modify,
             players_who_can_see_modifier:OptionalModifier[list[PlayerId]] = do_not_modify,
-            bullet_points_modifier:OptionalModifier[list[Bullet_Point]] = do_not_modify):
+            bullet_points_modifier:OptionalModifier[list[Bullet_Point]] = do_not_modify,
+            reply_to_id_modifier:OptionalModifier[MessageId|InteractionId] = do_not_modify):
         Child_Message.__init__(self,parent_message)
         self.content_modifier = content_modifier
         self.attach_paths_modifier = attach_paths_modifier
@@ -203,6 +214,7 @@ class Alias_Message(Child_Message):
         self.message_id_modifier = message_id_modifier
         self.players_who_can_see_modifier = players_who_can_see_modifier
         self.bullet_points_modifier = bullet_points_modifier
+        self.reply_to_id_mnodifier = reply_to_id_modifier
     @property
     def content(self) -> str | None:
         return self.content_modifier(self.parent_message.content)
@@ -224,6 +236,9 @@ class Alias_Message(Child_Message):
     @property
     def bullet_points(self) -> list[Bullet_Point] | None:
         return self.bullet_points_modifier(self.parent_message.bullet_points)
+    @property
+    def reply_to_id(self) -> InteractionId|MessageId|None:
+        return self.reply_to_id_mnodifier(self.parent_message.reply_to_id)
 class Unique_Id_Alias_Message(Alias_Message):
     """creates an alias message capable of having its message_id set independantly of it's parent's message_id"""
     def __init__(self,parent_message:'Message',
