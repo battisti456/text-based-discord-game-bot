@@ -20,7 +20,7 @@ config:ConfigDict = {
     "temp_path":"temp",
     "data_path":"data",
     "default_timeout" : 86400,#24 h
-    "default_warnings": [10,43200,72000,82800]#12 h, 20 h, 23 h
+    "default_warnings": [43200,72000,82800]#12 h, 20 h, 23 h
 }
 
 try:

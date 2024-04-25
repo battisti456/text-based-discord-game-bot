@@ -1,10 +1,8 @@
 from config import config
 
-from typing import Literal, TypedDict, Optional
-from types import ModuleType
+from typing import Literal, Optional
 from docopt import docopt, DocoptExit
 import asyncio
-from importlib import reload
 
 from game.game_interface import Game_Interface
 from game.interface_operator import Interface_Operator
@@ -13,18 +11,15 @@ from game.game import Game
 from game.games import random_game, games
 from game.grammer import wordify_iterable
 
-import game.games
-import game.game_bases
 
 CP = config['command_prefix']
 COMMAND_DOCSTRING= f"""
-
 Usage:
-    {CP} h | help | -h | --help #return this text
-    {CP} get_state #return the current state of the game operator
-    {CP} run_game [<name>] #runs the game given by <name>, or if nothing is given runs a random game
-    {CP} list_games #lists all games available to run
-    {CP} stop_run #stops the currently running function
+    {CP} h | help | -h | --help
+    {CP} get_state
+    {CP} run_game [<name>]
+    {CP} list_games
+    {CP} stop_run
 
 """
 

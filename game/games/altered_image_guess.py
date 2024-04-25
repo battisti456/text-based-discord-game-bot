@@ -54,7 +54,7 @@ def zoom_crop(image:PIL.Image.Image) -> PIL.Image.Image:
     )
     return image.crop(zoom_crop).resize(ZOOM_CROP_BOX_DISPLAY_SIZE)
 def blur(image:PIL.Image.Image) -> PIL.Image.Image:
-    return image.filter(PIL.ImageFilter.GaussianBlur(radius = BLUR_RADIUS))
+    return image.filter(PIL.ImageFilter.GaussianBlur(radius = int(BLUR_RADIUS)))
 def black_and_white(image:PIL.Image.Image) -> PIL.Image.Image:
     image = image.resize((int(image.size[0]*BAD_CONVERSION_RESIZE),int(image.size[1]*BAD_CONVERSION_RESIZE)))
     sum_all_values:int = 0
@@ -96,7 +96,7 @@ def remove_center(image:PIL.Image.Image) -> PIL.Image.Image:
     if i == 0:
         draw.rectangle(rectangle,fill = REMOVAL_COLOR)
     elif i == 1:
-        draw.rounded_rectangle(rectangle,radius = min(image.size)/4,fill = REMOVAL_COLOR)
+        draw.rounded_rectangle(rectangle,radius = int(min(image.size)/4),fill = REMOVAL_COLOR)
     elif i == 2:
         draw.ellipse(edge_rectangle,fill = REMOVAL_COLOR)
     elif i == 3:

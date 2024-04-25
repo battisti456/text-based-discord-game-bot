@@ -1,5 +1,6 @@
 from game.game import Game
 from game.game_interface import Game_Interface
+from game.grammer import temp_file_path
 from typing import TypedDict, Optional
 
 import PIL.Image
@@ -66,6 +67,11 @@ class Random_Image_Base(Game):
             return image
         else:
             return self.random_image(author,size,search_terms)
+    def temp_random_image(self,author:Optional[str] = None, size:Optional[tuple[int,int]] = None,search_terms:Optional[list[str]]=None) -> str:
+        image:PIL.Image.Image = self.random_image(author,size,search_terms)
+        path = temp_file_path(".png")
+        image.save(path)
+        return path
             
         
     
