@@ -11,8 +11,12 @@ So be warned.
 
 Here are the steps to set the code up.
 
-- Install all nessasary python libraries.
-  - "fogleman_TWL06_scrabble" is not an available library, but is merely the "twl.py" file from "https://github.com/fogleman/TWL06" by Michael Fogleman
+- Install all nessasary python libraries using the following command from the inside the top directory of the project:
+
+```console
+pip install -r requirements.txt
+```
+
 - Download missing data resources.
   - I have excluded 'data/lichess_db_puzzle.csv' from this repository as it is rather large.
     - I found this chess puzzle .csv at "https://database.lichess.org/#puzzles".
