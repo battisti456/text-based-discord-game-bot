@@ -1,6 +1,9 @@
 from game import PlayerId
 from typing import Callable, Any, Optional
 
+from config import config
+from profanity_check import predict_prob
+
 type Validation = tuple[bool,str|None]
 type ResponseValidator[DataType] = Callable[[PlayerId,DataType|None],Validation]
 
@@ -28,6 +31,8 @@ def text_validator_maker(
     def validator(player:PlayerId,value:Optional[str]) -> Validation:
         if value is None:
             return (False,None)
+        if predict_prob(value)[0] >= config['profanity_threshold']:
+            return (False,"given value set off the profanity filter")
         if check_lower_case:
             value = value.lower()
         if not is_substr_of is None:
@@ -79,3 +84,4 @@ def text_validator_maker(
                 return (False,f"given value '{value}' contains {num_words} word(s) which is more than the maximum of {min_num_words} words")
         return (True,None)
     return validator
+default_text_validator:ResponseValidator = text_validator_maker()

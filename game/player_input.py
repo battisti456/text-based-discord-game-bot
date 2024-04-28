@@ -5,13 +5,12 @@ from game.sender import Sender
 from game.message import Message, Alias_Message
 from game.game_interface import Game_Interface
 from game.interaction import Interaction
-from game.response_validator import ResponseValidator, Validation, not_none
+from game.response_validator import ResponseValidator, Validation, not_none, default_text_validator
 from game.grammer import nice_time, ordinate
 
 from typing import Optional, Any, Callable, Awaitable
 
 import asyncio
-from inspect import iscoroutinefunction
 from time import time
 type Condition = dict[Player_Input,bool]
 
@@ -213,7 +212,7 @@ class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
     """
     def __init__(
             self, name:str, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
-            response_validator:ResponseValidator[str] = not_none,
+            response_validator:ResponseValidator[str] = default_text_validator,
             who_can_see:Optional[list[PlayerId]] = None, 
             timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings'],
             message:Optional[Message] = None,
