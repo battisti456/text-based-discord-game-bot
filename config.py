@@ -12,6 +12,8 @@ class ConfigDict(TypedDict):
     default_timeout:int
     default_warnings:list[int]
     profanity_threshold:float
+    python_cmd:str
+    main:str
 
 config:ConfigDict = {
     'command_prefix' : ">> ",
@@ -22,7 +24,9 @@ config:ConfigDict = {
     "data_path":"data",
     "default_timeout" : 86400,#24 h
     "default_warnings": [43200,72000,82800],#12 h, 20 h, 23 h
-    "profanity_threshold" : 0.5#to disable set 1
+    "profanity_threshold" : 0.5,#to disable set >1
+    "python_cmd" : 'python',
+    "main" : "main.py"
 }
 
 try:

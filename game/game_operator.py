@@ -3,6 +3,8 @@ from config import config
 from typing import Literal, Optional
 from docopt import docopt, DocoptExit
 import asyncio
+import sys
+import git
 
 from game.game_interface import Game_Interface
 from game.interface_operator import Interface_Operator
@@ -20,6 +22,8 @@ Usage:
     {CP} run_game [<name>]
     {CP} list_games
     {CP} stop_run
+    {CP} restart_server
+    {CP} update_server
 
 """
 
@@ -92,6 +96,15 @@ class Game_Operator(Interface_Operator):
                                 self.run_task.cancel()
                                 self.run_task = None
                                 await send("The running task has been cancelled.")
+                        elif args['restart_server']:
+                            sys.exit(0)
+                        elif args['update_server']:
+                            local_git = git.Git()
+                            info_text = local_git.pull()
+                            await send(
+                                f"{info_text}\nFor some changes you may need to restart the server."
+                            )
+                        
 
 
 
