@@ -1,4 +1,6 @@
 from config import config
+from config_tools import ConfigError,ConfigAction
+from config_tools import edit as config_edit
 
 from typing import Literal, Optional
 from docopt import docopt, DocoptExit
@@ -24,7 +26,15 @@ Usage:
     {CP} stop_run
     {CP} restart_server
     {CP} update_server
+    {CP} edit_config <val> (-s|-a|-r) <keys>...
 
+Options:
+    <name>      name of game to launch
+    <val>       value to be edited in
+    -s          set the value into config with that key path
+    -a          add the value to a list at the key path
+    -r          remove the value from a list at the key path
+    <keys>      path of keys to navigate through config with, starting with config name
 """
 
 
@@ -104,6 +114,21 @@ class Game_Operator(Interface_Operator):
                             await send(
                                 f"{info_text}\nFor some changes you may need to restart the server."
                             )
+                        elif args['edit_config']:
+                            cmd:ConfigAction = 'set'
+                            if args['-r']:
+                                cmd = 'remove'
+                            elif args['-a']:
+                                cmd = 'add'
+                            try:
+                                config_edit(args['<keys>'],cmd,args['<val>'])
+                                await send("Successfully edited config.")
+                            except ConfigError as e:
+                                await send(
+                                    f"Failed to edit config:\n{e}"
+                                )
+
+
                         
 
 

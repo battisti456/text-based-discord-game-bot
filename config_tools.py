@@ -3,7 +3,7 @@ from game import PlayerId, ChannelId
 from typing import Literal, TypedDict, Optional, Any
 from typing import _TypedDictMeta # type: ignore
 import ruamel.yaml.comments
-from typeguard import check_type
+from typeguard import check_type, TypeCheckError
 
 from ast import literal_eval
 
@@ -166,7 +166,7 @@ def edit(keys:list[str],action:ConfigAction,val_str:str):
             check_type([val],current)
         else:
             check_type(val,current)
-    except TypeError:
+    except TypeCheckError:
         raise BaseConfigTypeMismatch(f"Value: {val} is not allowed in Type: {current}")
     
     local:dict = local_config
@@ -201,5 +201,6 @@ def _merge(f:dict[str,Any],t:dict[str,Any]):
         else:
             t[key] = f[key]
 def merge_local(config_name:ConfigName,config:dict[str,Any]):
-    source = local_config[config_name]
-    _merge(source,config)
+    if config_name in local_config:
+        source = local_config[config_name]
+        _merge(source,config)
