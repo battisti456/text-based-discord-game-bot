@@ -25,31 +25,19 @@ pip install -r requirements.txt
     > "PuzzleId,FEN,Moves,Rating, RatingDeviation,Popularity,NbPlays,Themes,GameUrl,OpeningTags"
     - I only use FEN, Moves, Rating, and Popularity.
     - Moves are seperated by spaces, and the first move is the opponents move.
-- Create your "discord_config_local.py" file in the main directory like so:
-  - add your bot's discord api token
+- Create your "local_config.yaml" file in the base directory as shown
 
-``` python
-    discord_config = {
-        "token" : "<your discord bot's api token here>", #https://discord.com/developers/docs/intro
-    }
-```
-
-- Then create you "config_local.py" file in the main directory like so:
-  - add the channel id your game should run out of
-  - add the player id's of who will be playing
-  - add the player id's of who should have command access
-
-``` python
-    config:'ConfigDict' = {
-        'command_users' : [00000,00000],#user id's of users who can use commands
-        'main_channel_id' : 00000, #channel id of the channel the games will run in
-        'players' : [#user id's of players
-            00000,
-            00000,
-            00000,
-            00000
-        ]
-    }
+``` yaml
+discord_config:
+  token: "" #insert your token here
+config:
+  command_users: [0,0] #list you command users's discord ids in here
+  main_channel_id: 0 #add the bot's main channel id here
+  players: [ #add your players discord id's here
+    0,
+    0,
+    0
+  ]
 ```
 
 - Run 'main.py' to launch a game!
