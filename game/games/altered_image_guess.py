@@ -10,7 +10,7 @@ import math
 import PIL.Image
 import PIL.ImageFilter
 import PIL.ImageDraw
-
+#region unpacking config
 CONFIG = games_config['altered_image_guess']
 
 NUM_ROUNDS = games_config["altered_image_guess"]['num_rounds']
@@ -34,7 +34,8 @@ SCRIBBLE_POINTS_PER_LINE = CONFIG['scribble_points_per_line']
 SCRIBBLE_WIDTH = CONFIG['scribble_width']
 
 TILE_RATIO = CONFIG['tile_ratio']
-
+#endregion
+#region alter funcs
 def zoom_crop(image:PIL.Image.Image) -> PIL.Image.Image:
     zoom_range:tuple[int,int,int,int] = (
         int(image.size[0]*ZOOM_CROP_NO_EDGE_PORTION),#tl x
@@ -212,7 +213,7 @@ def tileing(image:PIL.Image.Image) -> PIL.Image.Image:
         new_image.paste(cropped_image,dest_boxes[k][0:2])
     
     return new_image
-
+#endregion
 
 ALTER_METHODS = {#...altered through ____ the image
     "zooming into a random point on" : zoom_crop,

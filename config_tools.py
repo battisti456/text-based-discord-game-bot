@@ -131,7 +131,7 @@ CONFIG_TYPES:dict[ConfigName,_TypedDictMeta] = {
     'games_config' : GamesConfigDict,
     'discord_config' : DiscordConfigDict
 }
-
+#region config errors
 class ConfigError(Exception):
     ...
 class IncoprehensibleValueString(ConfigError):
@@ -144,7 +144,7 @@ class ListValueDoesNotExist(ConfigError):
     ...
 class ListValueAlreadyExists(ConfigError):
     ...
-
+#endregion
 with open(LOCAL_CONFIG_FILE,'r') as f:
     local_config:ruamel.yaml.comments.CommentedMap = yaml.load(f)
 
