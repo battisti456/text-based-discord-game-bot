@@ -187,7 +187,7 @@ def edit(keys:list[str],action:ConfigAction,val_str:str):
             local[keys[-1]].append(val)
         case 'remove':
             try:
-                local[keys[-1]]
+                local[keys[-1]].remove(val)
             except (ValueError,KeyError):
                 raise ListValueDoesNotExist(f"Value: {val} does not exist to be removed in {keys[-1]}.")
     

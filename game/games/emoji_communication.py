@@ -28,11 +28,13 @@ def only_emoji(text:str) -> str:
     return "".join(emj)
 def num_emoji(text:str) -> int:
     return len(list(token for token in emoji.analyze(text,False,True)))
+def is_only_emoji(text:str) -> bool:
+    return not any(not emoji.is_emoji(token.chars) for token in emoji.analyze(text,False,False))
 
 def emoji_response_validator(player:PlayerId,value:str|None) -> tuple[bool,str|None]:
     if value is None:
         return (False,None)
-    if only_emoji(value) != "".join(value.split()):
+    if not is_only_emoji(value):
         return (False,f"response '{value}' contains non-emoji characters")
     if num_emoji(value) > MAX_EMOJI:
         return (False,f"response '{value}' with {num_emoji(value)} emoji exceeds the maximum number of emoji allowed of {MAX_EMOJI}")
