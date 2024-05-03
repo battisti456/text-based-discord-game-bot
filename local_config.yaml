@@ -1,0 +1,10 @@
+discord_config:
+  token: "" #insert your token here
+config:
+  command_users: [0,0] #list you command users's discord ids in here
+  main_channel_id: 0 #add the bot's main channel id here
+  players: [ #add your players discord id's here
+    0,
+    0,
+    0
+  ]
