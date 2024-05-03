@@ -22,21 +22,23 @@ BONUS_POINTS_PER_GUESSER = CONFIG['bonus_points_per_guesser']
 MAX_EMOJI = CONFIG['max_emoji']
 
 def only_emoji(text:str) -> str:
-
-    emj:list[str] = list(token.chars for token in emoji.analyze(text,False,False) if emoji.is_emoji(token.chars))
+    emj:list[str] = list(
+        token.chars 
+        for token in emoji.analyze(text,True,True) 
+        if isinstance(token.value,emoji.EmojiMatch)
+        )
     emj = emj[0:MAX_EMOJI]
     return "".join(emj)
 def num_emoji(text:str) -> int:
     return len(list(
         isinstance(token.value,emoji.EmojiMatch) 
         for token in 
-        emoji.analyze("".join(text.split()),False,False)
+        emoji.analyze("".join(text.split()),True,True)
         ))
 def is_only_emoji(text:str) -> bool:
     return not any(
         isinstance(token.value,str) 
-        for token in 
-        emoji.analyze("".join(text.split()),False,False)
+        for token in emoji.analyze("".join(text.split()),True,True)
         )
 
 def emoji_response_validator(player:PlayerId,value:str|None) -> tuple[bool,str|None]:
