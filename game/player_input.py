@@ -352,7 +352,6 @@ async def run_inputs(
     """timeout_mins = list(min(
         (pinput.timeout if not pinput.timeout is None else float('inf'))
         for pinput in group) for group in completion_sets)"""
-    print("goo")
     await asyncio.wait(all_tasks)
     """for task in all_tasks:
         task.cancel()"""

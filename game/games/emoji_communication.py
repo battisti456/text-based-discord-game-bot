@@ -3,7 +3,7 @@ from games_config import games_config
 from game.game_interface import Game_Interface
 from game import PlayerId, PlayerDict
 from game.game_bases import Basic_Secret_Message_Base,Rounds_With_Points_Base,Game_Word_Base
-from game.utils.word_tools import Sentence, find_related_scentences
+from game.utils.word_tools import Sentence, find_random_related_scentences
 from game.utils.grammer import nice_sentence
 import emoji
 import random
@@ -21,7 +21,7 @@ BONUS_NUM = CONFIG['bonus_num']
 BONUS_POINTS_PER_GUESSER = CONFIG['bonus_points_per_guesser']
 
 MAX_EMOJI = CONFIG['max_emoji']
-SWAP_RANGE = (2,3)
+SWAP_RANGE = (1,1)
 GIVE_AVOID_OPTIONS = True
 #endregion
 #region emoji funcs
@@ -80,14 +80,14 @@ class Emoji_Communication(Basic_Secret_Message_Base,Rounds_With_Points_Base,Game
         for player in self.unkicked_players:
             while not player in base_str:
                 raw = self.ww_sentence.sentence()
-                sentence = list(word for word in raw.lower().split() if word.isalpha())
-                related = find_related_scentences(
+                sentence = list(word for word in raw.lower()[:-1].split())
+                related = find_random_related_scentences(
                     sentence,
-                    list(range(SWAP_RANGE[0],SWAP_RANGE[1]+1))
+                    list(range(SWAP_RANGE[0],SWAP_RANGE[1]+1)),
+                    num_scentences=NUM_OPTIONS
                     )
                 if len(related) < NUM_OPTIONS:
                     continue
-                random.shuffle(related)
                 base_str[player] = nice_sentence(sentence)
                 opt_str[player] = list(nice_sentence(rel) for rel in related[:NUM_OPTIONS])
 

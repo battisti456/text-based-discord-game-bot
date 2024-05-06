@@ -5,9 +5,9 @@ from nltk.tag.perceptron import PerceptronTagger
 from nltk.corpus.reader.wordnet import Synset, Lemma
 from word_forms.word_forms import get_word_forms #type: ignore
 from dataclasses import dataclass
-from itertools import permutations
+import random
 
-from typing import Literal, overload, get_args, Any
+from typing import Literal, overload, get_args
 
 type SimplePartOfSpeach = Literal['Noun','Verb','Adjective','Adverb']
 
@@ -25,6 +25,7 @@ WORDNET_POS_MAP:dict[str,SimplePartOfSpeach]  = {
     'r' : 'Adverb',
     'v' : 'Verb'
 }
+MAX_RANDOM_SCENTENCE_LOOPS = 1000
 
 @dataclass(frozen=True)
 class Definition():
@@ -178,27 +179,45 @@ def find_related_words_in_context(
     if context[word_index] in success:
         success.remove(context[word_index])
     return frozenset(success)
+def validate_scentence(scentence:Sentence,min_conf = 0.95) -> bool:
+    return not any(
+        conf < min_conf for _,_,conf in tagger.tag(scentence,return_conf=True)
+    )
 
-def find_related_scentences(
+def find_random_related_scentences(
             sentence:Sentence,
             num_to_change:list[int],
+            num_scentences:int,
             relationships:list[WordRelationship] = []
             ) -> list[list[str]]:
         option_groups:list[list[str]] = []
         for i in range(len(sentence)):
             option_groups.append(
-                list(find_related_words_in_context(
+                [sentence[i]] + list(find_related_words_in_context(
                     i,sentence,relationships
                 ))
             )
-        combos:list[tuple[int,...]] = list(
-            combo for combo in 
-            permutations(range(max(len(option_group) for option_group in option_groups)),len(option_groups))
-            if not any(
-                combo[i] >= len(option_groups[i]) 
-                for i in range(len(option_groups)))
-                and sum(int(i==0) for i in range(len(option_groups))) in num_to_change
+        if len(option_groups) == 0:
+            return []
+        combos:set[tuple[int,...]] = set()
+        num_loops:int = 0
+        _valid_options = tuple(
+            i for i in range(1,len(option_groups)) if len(option_groups) > 1
+        )
+        _valid_num_to_change = tuple(
+            n for n in num_to_change if n <= len(_valid_options)
+        )
+        if len(_valid_num_to_change) == 0:
+            return []
+        while len(combos) < num_scentences and num_loops < MAX_RANDOM_SCENTENCE_LOOPS:
+            indexes_to_change = random.sample(_valid_options,random.choice(_valid_num_to_change))
+            combo:tuple[int,...] = tuple(
+                0 if i not in indexes_to_change else random.randint(0,len(option_groups[i])-1) for i in range(len(option_groups))
             )
+            scen = list(option_groups[i][combo[i]] for i in range(len(option_groups)))
+            if not validate_scentence(scen):
+                continue
+            combos.add(combo)
         return list(list(option_groups[i][combo[i]] for i in range(len(combo))) for combo in combos)
 
 def get_word_definition(word:Word) -> Word_Definition:
