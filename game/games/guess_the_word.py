@@ -1,10 +1,10 @@
 from game import PlayerId, PlayerDict
 
-from game.game_bases import Dictionary_Base, Basic_Secret_Message_Base, Rounds_With_Points_Base
+from game.game_bases import Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Points_Base
 
-from game.game_bases.dictionary_base import PartOfSpeach, DefinitionList, definition_dict_to_list
 from game.game_interface import Game_Interface
-from game.grammer import wordify_iterable
+from game.utils.grammer import wordify_iterable
+from game.utils.word_tools import SimplePartOfSpeach, DefinitionList, definition_dict_to_list
 import random
 
 NUM_ROUNDS = 3
@@ -15,9 +15,9 @@ NUM_DEFINITIONS = 3
 GUESS_FEEDBACK = True
 LENGTH_HINT = True
 
-class Guess_The_Word(Dictionary_Base, Basic_Secret_Message_Base, Rounds_With_Points_Base):
+class Guess_The_Word(Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Points_Base):
     def __init__(self,gi:Game_Interface):
-        Dictionary_Base.__init__(self,gi)
+        Game_Word_Base.__init__(self,gi)
         Basic_Secret_Message_Base.__init__(self,gi)
         Rounds_With_Points_Base.__init__(self,gi)
         self.num_rounds = NUM_ROUNDS
@@ -32,7 +32,7 @@ class Guess_The_Word(Dictionary_Base, Basic_Secret_Message_Base, Rounds_With_Poi
                         "CAUTION: Sometimes words can be spelled other ways....")
     async def core_game(self):
         definition_list:DefinitionList = []
-        type_set:set[PartOfSpeach] = set()
+        type_set:set[SimplePartOfSpeach] = set()
         secret_word:str= ""
         while len(definition_list) < NUM_DEFINITIONS:
             secret_word = self.random_word(random.randint(MIN_WORD_LEN,MAX_WORD_LEN))

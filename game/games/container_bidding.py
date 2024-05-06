@@ -6,7 +6,7 @@ from game import PlayerId, PlayerDict, make_player_dict
 from game.game_bases import Rounds_With_Points_Base, Basic_Secret_Message_Base
 
 from game.game_interface import Game_Interface
-from game.grammer import wordify_iterable
+from game.utils.grammer import wordify_iterable
 
 
 import json

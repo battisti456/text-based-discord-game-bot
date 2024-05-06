@@ -1,11 +1,11 @@
 from game.interface_component import Interface_Component
 
 from game import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional, KickReason, GameEndException, GameEndInsufficientPlayers, kick_text, score_to_placement
-import game.emoji_groups
+import game.utils.emoji_groups
 from game.game_interface import Game_Interface
 from game.message import Message
 from game.player_input import Player_Input
-from game.grammer import ordinate, wordify_iterable
+from game.utils.grammer import ordinate, wordify_iterable
 import functools
 import sys
 import os
@@ -148,7 +148,7 @@ class Game(Interface_Component):
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
         #returns 0 for no and 1 for yes to a yes or no question, waits for user to respond
-        return await self.basic_multiple_choice(content,["no","yes"],who_chooses,list(game.emoji_groups.NO_YES_EMOJI),channel_id,allow_answer_change)
+        return await self.basic_multiple_choice(content,["no","yes"],who_chooses,list(game.utils.emoji_groups.NO_YES_EMOJI),channel_id,allow_answer_change)
     @overload
     async def basic_text_response(
             self,content:str,who_chooses:PlayerId=...,

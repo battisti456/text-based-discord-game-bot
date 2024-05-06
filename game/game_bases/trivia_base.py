@@ -3,7 +3,7 @@ from game.game import Game
 from game.game_interface import Game_Interface
 import pytrivia
 
-from typing import Iterable, TypedDict, Optional
+from typing import TypedDict, Optional
 
 import random
 

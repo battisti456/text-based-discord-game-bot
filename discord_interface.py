@@ -2,7 +2,7 @@ from typing import Optional, Iterable
 from game.game_interface import Channel_Limited_Game_Interface, Channel_Limited_Interface_Sender
 from game.message import Message, Add_Bullet_Points_To_Content_Alias_Message
 from game.interaction import Interaction
-from game.grammer import wordify_iterable
+from game.utils.grammer import wordify_iterable
 
 import discord
 from math import ceil

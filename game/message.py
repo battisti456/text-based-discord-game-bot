@@ -1,6 +1,6 @@
 from game import PlayerId, MessageId, ChannelId, InteractionId
-from game.grammer import wordify_iterable
-from game.emoji_groups import NO_YES_EMOJI
+from game.utils.grammer import wordify_iterable
+from game.utils.emoji_groups import NO_YES_EMOJI
 
 from math import ceil
 

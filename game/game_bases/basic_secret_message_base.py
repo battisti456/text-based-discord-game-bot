@@ -2,7 +2,7 @@ from game.game import Game, police_game_callable
 from game.game_interface import Game_Interface
 from game.message import Message, make_bullet_points
 from game.player_input import Player_Single_Selection_Input, Player_Text_Input, run_inputs
-from game.emoji_groups import COLORED_CIRCLE_EMOJI, NO_YES_EMOJI
+from game.utils.emoji_groups import COLORED_CIRCLE_EMOJI, NO_YES_EMOJI
 from game.response_validator import ResponseValidator, not_none
 
 from game import PlayerId,PlayerDict, PlayerDictOptional, make_player_dict

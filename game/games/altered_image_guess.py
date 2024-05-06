@@ -3,7 +3,7 @@ from games_config import games_config
 from game import PlayerId, PlayerDict
 from game.game_interface import Game_Interface
 from game.game_bases import Rounds_With_Points_Base,Random_Image_Base
-from game.grammer import temp_file_path
+from game.utils.grammer import temp_file_path
 
 import random
 import math

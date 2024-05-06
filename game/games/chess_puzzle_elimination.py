@@ -7,7 +7,7 @@ from typing import TypedDict, Optional
 
 from game.game_bases import Elimination_Base
 from game.game_interface import Game_Interface
-from game.grammer import temp_file_path
+from game.utils.grammer import temp_file_path
 
 import chessboard.board
 import pygame

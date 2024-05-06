@@ -13,7 +13,7 @@ from game.interface_operator import Interface_Operator
 from game.interaction import Interaction
 from game.game import Game
 from game.games import random_game, games
-from game.grammer import wordify_iterable
+from game.utils.grammer import wordify_iterable
 
 
 CP = config['command_prefix']

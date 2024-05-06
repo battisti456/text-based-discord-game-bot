@@ -1,6 +1,6 @@
 from game import PlayerId
 from game.message import Message
-from game.grammer import wordify_iterable
+from game.utils.grammer import wordify_iterable
 
 from typing import Iterable
 

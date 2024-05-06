@@ -25,6 +25,13 @@ pip install -r requirements.txt
     > "PuzzleId,FEN,Moves,Rating, RatingDeviation,Popularity,NbPlays,Themes,GameUrl,OpeningTags"
     - I only use FEN, Moves, Rating, and Popularity.
     - Moves are seperated by spaces, and the first move is the opponents move.
+  - Download wornet with
+
+'''python
+import nltk
+nltk.download('wordnet')
+'''
+
 - Create your "local_config.yaml" file in the base directory as shown
 
 ``` yaml

@@ -3,7 +3,7 @@ from game import PlayerId, MessageId, ChannelId, Operators
 from game.sender import Sender
 from game.message import Message, Reroute_Message
 from game.interaction import Interaction, InteractionType, INTERACTION_TYPES
-from game.grammer import wordify_iterable
+from game.utils.grammer import wordify_iterable
 
 
 type Action = Callable[[Interaction],Awaitable]

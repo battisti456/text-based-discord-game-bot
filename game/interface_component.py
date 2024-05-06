@@ -4,7 +4,7 @@ from game import PlayerId, ChannelId, PlayerDictOptional
 from game.game_interface import Game_Interface
 from game.message import Message, Bullet_Point
 from game.player_input import Player_Single_Selection_Input, Player_Text_Input
-import game.emoji_groups
+import game.utils.emoji_groups
 
 class Interface_Component():
     def __init__(self,gi:Game_Interface):
@@ -73,7 +73,7 @@ class Interface_Component():
             wc += self.all_players
         emj:list[str] = []
         if emojis is None:
-            emj += game.emoji_groups.COLORED_CIRCLE_EMOJI
+            emj += game.utils.emoji_groups.COLORED_CIRCLE_EMOJI
         else:
             emj += emojis
         bp:list[Bullet_Point] = []

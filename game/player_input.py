@@ -6,7 +6,7 @@ from game.message import Message, Alias_Message
 from game.game_interface import Game_Interface
 from game.interaction import Interaction
 from game.response_validator import ResponseValidator, Validation, not_none, default_text_validator
-from game.grammer import nice_time, ordinate
+from game.utils.grammer import nice_time, ordinate
 
 from typing import Optional, Any, Callable, Awaitable
 
