@@ -35,7 +35,7 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
         pass
     async def core_game(self):
         num_letters_in_starting_word = START_LETTERS + random.randint(1,len(self.unkicked_players))
-        starting_word = self.random_word(num_letters_in_starting_word)
+        starting_word = self.random_valid_word(num_letters_in_starting_word)
         offset = random.randint(0,num_letters_in_starting_word-START_LETTERS-1)
         letters = starting_word[offset:offset+START_LETTERS]
         first_turn = True

@@ -61,14 +61,12 @@ class Game_Word_Base(Game):
                 f"> {_def[0]}: *{_def[1]}*"
             )
         return '\n'.join(formatted_strings)
-            
     def definition_string(self,value:DefinitionList|DefinitionDict) -> str:
         if isinstance(value,list):
             return self._definintion_string(value)
         else:
             return self._definintion_string(definition_dict_to_list(value))
-        
-    def random_word(self,length:int = 5) -> str:
+    def random_valid_word(self,length:int = 5) -> str:
         letters = self.random_balanced_letters(length*2)
         words = scrabble.anagram(letters)
         valid_words:list[str] = []
@@ -80,5 +78,10 @@ class Game_Word_Base(Game):
         if valid_words:
             return random.choice(valid_words)
         else:
-            return self.random_word(length)
+            return self.random_valid_word(length)
+    def random_sentence(self) -> str:
+        return self.ww_sentence.sentence()
+
+        
+
         

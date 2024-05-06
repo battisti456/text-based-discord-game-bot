@@ -35,7 +35,7 @@ class Guess_The_Word(Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Poin
         type_set:set[SimplePartOfSpeach] = set()
         secret_word:str= ""
         while len(definition_list) < NUM_DEFINITIONS:
-            secret_word = self.random_word(random.randint(MIN_WORD_LEN,MAX_WORD_LEN))
+            secret_word = self.random_valid_word(random.randint(MIN_WORD_LEN,MAX_WORD_LEN))
             definition_dict = self.define(secret_word)
             if definition_dict is None:
                 continue

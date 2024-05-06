@@ -3,15 +3,19 @@ from game.utils.common import L
 from nltk.corpus import wordnet
 from nltk.tag.perceptron import PerceptronTagger
 from nltk.corpus.reader.wordnet import Synset, Lemma
-from word_forms.word_forms import get_word_forms
+from word_forms.word_forms import get_word_forms #type: ignore
 from dataclasses import dataclass
+from itertools import permutations
 
-from typing import Literal, overload, get_args
+from typing import Literal, overload, get_args, Any
 
 type SimplePartOfSpeach = Literal['Noun','Verb','Adjective','Adverb']
 
 type DefinitionDict = dict[SimplePartOfSpeach,list[str]]
 type DefinitionList = list[tuple[SimplePartOfSpeach,str]]
+
+type Word = str
+type Sentence = list[Word]
 
 UNDEFINED_TEXT = "UNDEFINED"
 WORDNET_POS_MAP:dict[str,SimplePartOfSpeach]  = {
@@ -27,15 +31,15 @@ class Definition():
     synset:Synset
     @property
     def definition(self) -> str:
-        definition = self.synset.definition()
-        return definition if not definition is None else UNDEFINED_TEXT
+        definition:str|None= self.synset.definition()
+        return definition if isinstance(definition,str) else UNDEFINED_TEXT
     @property
     def examples(self) -> list[str]:
-        examples = self.synset.examples()
-        return examples if not examples is None else []
+        examples:list[str]|None = self.synset.examples() 
+        return examples if isinstance(examples,list) else []
     @property
     def pos(self) -> SimplePartOfSpeach:
-        return WORDNET_POS_MAP[self.synset.pos()] #type: ignore
+        return WORDNET_POS_MAP[self.synset.pos()]#type:ignore
     def is_definition(self,word:str) -> bool:
         return word in self.synset.lemma_names()
 @dataclass(frozen=True)
@@ -72,12 +76,12 @@ WordRelationship = Literal[
 ALL_RELATIONSHIPS:tuple[WordRelationship,...] = get_args(WordRelationship)
 #region find_related
 @overload
-def find_related(word:str,*properties:WordRelationship) -> frozenset[str]:
+def find_related_words(word:str,*properties:WordRelationship) -> frozenset[str]:
     ...
 @overload
-def find_related(word:Lemma|Synset,*properties:WordRelationship) -> frozenset[Lemma]:
+def find_related_words(word:Lemma|Synset,*properties:WordRelationship) -> frozenset[Lemma]:
     ...
-def find_related(word:str|Lemma|Synset,*properties:WordRelationship) -> frozenset[str]|frozenset[Lemma]:
+def find_related_words(word:Word|Lemma|Synset,*properties:WordRelationship) -> frozenset[Word]|frozenset[Lemma]:
     if len(properties) == 0:
         properties = ALL_RELATIONSHIPS
     synsets:list[Synset]
@@ -121,12 +125,12 @@ def find_related(word:str|Lemma|Synset,*properties:WordRelationship) -> frozense
         return frozenset(lemmas)
 #endregion
 
-def find_related_in_context(
+def find_related_words_in_context(
         word_index:int,
         context:list[str],
         relationships:list[WordRelationship] = [],
         confidence_threshold:float = 0.95
-        ):
+        ) -> frozenset[Word]:
     """
     find words related through the given relationships to context[word_index]
 
@@ -146,7 +150,7 @@ def find_related_in_context(
     considered:set[str] = set()
     success:set[str] = set()
 
-    related:frozenset[str] = find_related(context[word_index],*relationships)
+    related:frozenset[str] = find_related_words(context[word_index],*relationships)
     for word in related:
         form_dict = get_word_forms(word)
         forms:set[str] = set()
@@ -173,9 +177,31 @@ def find_related_in_context(
             success.add(var)
     if context[word_index] in success:
         success.remove(context[word_index])
-    print(success)
+    return frozenset(success)
 
-def get_word_definition(word:str) -> Word_Definition:
+def find_related_scentences(
+            sentence:Sentence,
+            num_to_change:list[int],
+            relationships:list[WordRelationship] = []
+            ) -> list[list[str]]:
+        option_groups:list[list[str]] = []
+        for i in range(len(sentence)):
+            option_groups.append(
+                list(find_related_words_in_context(
+                    i,sentence,relationships
+                ))
+            )
+        combos:list[tuple[int,...]] = list(
+            combo for combo in 
+            permutations(range(max(len(option_group) for option_group in option_groups)),len(option_groups))
+            if not any(
+                combo[i] >= len(option_groups[i]) 
+                for i in range(len(option_groups)))
+                and sum(int(i==0) for i in range(len(option_groups))) in num_to_change
+            )
+        return list(list(option_groups[i][combo[i]] for i in range(len(combo))) for combo in combos)
+
+def get_word_definition(word:Word) -> Word_Definition:
     synsets:list[Synset] = L(wordnet.synsets(word))
     return Word_Definition(
         word,
