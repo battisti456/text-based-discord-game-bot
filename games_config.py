@@ -61,7 +61,9 @@ games_config:GamesConfigDict = {
         "points_for_all_guess":1,
         "bonus_num":3,
         "bonus_points_per_guesser":2,
-        "max_emoji":10
+        "max_emoji":10,
+        'swap_range':(2,3),
+        'give_avoid_options':True
     },
     "guess_the_word" : {
         'num_rounds' : 3,

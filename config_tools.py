@@ -88,6 +88,8 @@ class EmojiCommunicationConfig(TypedDict):
     bonus_num:int
     bonus_points_per_guesser:int
     max_emoji:int
+    swap_range:tuple[int,int]
+    give_avoid_options:bool
 class GuessTheWordConfig(TypedDict):
     num_rounds:int
     min_word_len:int
