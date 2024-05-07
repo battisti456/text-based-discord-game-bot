@@ -31,8 +31,10 @@ def text_validator_maker(
     def validator(player:PlayerId,value:Optional[str]) -> Validation:
         if value is None:
             return (False,None)
+        """
         if predict_prob(value)[0] >= config['profanity_threshold']:
             return (False,"given value set off the profanity filter")
+        """
         if check_lower_case:
             value = value.lower()
         if not is_substr_of is None:

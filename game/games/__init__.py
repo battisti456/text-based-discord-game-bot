@@ -15,6 +15,7 @@ from game.games.prediction_texas_holdem import Prediction_Texas_Holdem
 from game.games.chess_puzzle_elimination import Chess_Puzzle_Elimination
 from game.games.altered_image_guess import Altered_Image_Guess
 from game.games.emoji_communication import Emoji_Communication
+from game.games.basic_game import Basic_Game
 
 games:list[type[Game]] = [
     Elimination_Blackjack,
@@ -28,7 +29,8 @@ games:list[type[Game]] = [
     Prediction_Texas_Holdem,
     Chess_Puzzle_Elimination,
     Altered_Image_Guess,
-    Emoji_Communication]
+    Emoji_Communication,
+    Basic_Game]
 
 def random_game() -> type[Game]:
     return choice(games)

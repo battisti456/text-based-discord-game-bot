@@ -102,7 +102,9 @@ class Game(Interface_Component):
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
         one_response:bool = False
-        if not isinstance(who_chooses,list) or who_chooses is None:
+        if who_chooses is None:
+            who_chooses = self.unkicked_players
+        if not isinstance(who_chooses,list):
             who_chooses = [who_chooses]
             one_response = True
         responses:PlayerDictOptional = await self._basic_multiple_choice(
@@ -174,7 +176,9 @@ class Game(Interface_Component):
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
         one_response:bool = False
-        if not isinstance(who_chooses,list) or who_chooses is None:
+        if who_chooses is None:
+            who_chooses = self.unkicked_players
+        if not isinstance(who_chooses,list):
             who_chooses = [who_chooses]
             one_response = True
         responses:PlayerDictOptional = await self._basic_text_response(
