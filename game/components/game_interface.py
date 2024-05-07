@@ -1,8 +1,8 @@
 from typing import Any,Callable,Awaitable, Optional, Hashable
 from game import PlayerId, MessageId, ChannelId, Operators
-from game.sender import Sender
-from game.message import Message, Reroute_Message
-from game.interaction import Interaction, InteractionType, INTERACTION_TYPES
+from game.components.sender import Sender
+from game.components.message import Message, Reroute_Message
+from game.components.interaction import Interaction, InteractionType, INTERACTION_TYPES
 from game.utils.grammer import wordify_iterable
 
 
@@ -109,7 +109,7 @@ class Game_Interface(object):
         should be implemented in child classes
         """
         return []
-    async def new_channel(self,name:Optional[str] = None, who_can_see:Optional[list[PlayerId]] = None) -> ChannelId|None:
+    async def new_channel(self,name:Optional[str] = None, who_can_see:Optional[list[PlayerId]] = None) -> ChannelId:
         """
         returns the ChannelId of a channel;
         should be implemented in child classes
@@ -118,7 +118,7 @@ class Game_Interface(object):
         
         who_can_see: if specified, only these players have access to the channel, if not specified should assume all players
         """
-        pass
+        ...
 
 class Channel_Limited_Interface_Sender(Interface_Sender): 
     """

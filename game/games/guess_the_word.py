@@ -2,7 +2,7 @@ from game import PlayerId, PlayerDict
 
 from game.game_bases import Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Points_Base
 
-from game.game_interface import Game_Interface
+from game.components.game_interface import Game_Interface
 from game.utils.grammer import wordify_iterable
 from game.utils.word_tools import SimplePartOfSpeach, DefinitionList, definition_dict_to_list
 import random

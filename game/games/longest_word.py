@@ -1,11 +1,11 @@
-from games_config import games_config
+from config.games_config import games_config
 
 from game import PlayerId,MessageId
 from game.game_bases import Game_Word_Base,Rounds_With_Points_Base
-from game.game_interface import Game_Interface
-from game.message import Message, Alias_Message
-from game.player_input import Player_Text_Input, run_inputs
-from game.response_validator import text_validator_maker
+from game.components.game_interface import Game_Interface
+from game.components.message import Message, Alias_Message
+from game.components.player_input import Player_Text_Input, run_inputs
+from game.components.response_validator import text_validator_maker
 
 CONFIG = games_config['longest_word']
 

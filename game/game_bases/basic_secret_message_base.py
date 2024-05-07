@@ -1,9 +1,9 @@
 from game.game import Game, police_game_callable
-from game.game_interface import Game_Interface
-from game.message import Message, make_bullet_points
-from game.player_input import Player_Single_Selection_Input, Player_Text_Input, run_inputs
+from game.components.game_interface import Game_Interface
+from game.components.message import Message, make_bullet_points
+from game.components.player_input import Player_Single_Selection_Input, Player_Text_Input, run_inputs
 from game.utils.emoji_groups import COLORED_CIRCLE_EMOJI, NO_YES_EMOJI
-from game.response_validator import ResponseValidator, not_none
+from game.components.response_validator import ResponseValidator, not_none
 
 from game import PlayerId,PlayerDict, PlayerDictOptional, make_player_dict
 from typing import Optional, overload

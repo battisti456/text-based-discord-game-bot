@@ -1,6 +1,6 @@
-from games_config import games_config
+from config.games_config import games_config
 
-from game.game_interface import Game_Interface
+from game.components.game_interface import Game_Interface
 from game import PlayerId, PlayerDict
 from game.game_bases import Basic_Secret_Message_Base,Rounds_With_Points_Base,Game_Word_Base
 from game.utils.word_tools import Sentence, find_random_related_scentences

@@ -1,6 +1,6 @@
-from config import config
-from config_tools import ConfigError,ConfigAction
-from config_tools import edit as config_edit
+from config.config import config
+from config.config_tools import ConfigError,ConfigAction
+from config.config_tools import edit as config_edit
 
 from typing import Literal, Optional
 from docopt import docopt, DocoptExit
@@ -8,9 +8,9 @@ import asyncio
 import sys
 import git
 
-from game.game_interface import Game_Interface
-from game.interface_operator import Interface_Operator
-from game.interaction import Interaction
+from game.components.game_interface import Game_Interface
+from game.components.interface_operator import Interface_Operator
+from game.components.interaction import Interaction
 from game.game import Game
 from game.games import random_game, games
 from game.utils.grammer import wordify_iterable

@@ -1,5 +1,5 @@
 from game.game import Game
-from game.game_interface import Game_Interface
+from game.components.game_interface import Game_Interface
 from game.utils.word_tools import DefinitionDict, DefinitionList, definition_dict_to_list, get_word_definition
 
 import fogleman_TWL06_scrabble as scrabble

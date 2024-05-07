@@ -7,7 +7,7 @@ from math import ceil
 from typing import Optional, Callable, TypeVar, Literal, Sequence, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from game.interaction import Interaction
+    from game.components.interaction import Interaction
 
 type MessageSearchStrictness = Literal["original","aliases","children",'sub_aliases','sub_children']
 
@@ -85,6 +85,8 @@ class Message(object):
             'sub_aliases' only if this message or any of its alias decendants have that id
             'sub_children' whether this message or any of its descendants have that id
         """
+        if interaction.reply_to_message_id is None:
+            return False
         return self.is_message(interaction.reply_to_message_id,allow)
     def is_message(self,message_id:MessageId,allow:MessageSearchStrictness='sub_children') -> bool:
         """

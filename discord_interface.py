@@ -1,7 +1,7 @@
 from typing import Optional, Iterable
-from game.game_interface import Channel_Limited_Game_Interface, Channel_Limited_Interface_Sender
-from game.message import Message, Add_Bullet_Points_To_Content_Alias_Message
-from game.interaction import Interaction
+from game.components.game_interface import Channel_Limited_Game_Interface, Channel_Limited_Interface_Sender
+from game.components.message import Message, Add_Bullet_Points_To_Content_Alias_Message
+from game.components.interaction import Interaction
 from game.utils.grammer import wordify_iterable
 
 import discord
@@ -212,7 +212,7 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
         return emoji
     async def run(self):
         pass
-    async def new_channel(self, name: Optional[str] = None, who_can_see: Optional[list[PlayerId]] = None) -> ChannelId | None:
+    async def new_channel(self, name: Optional[str] = None, who_can_see: Optional[list[PlayerId]] = None) -> ChannelId:
         assert isinstance(self.channel_id,int)
         main_channel = self.client.get_channel(self.channel_id)
         assert isinstance(main_channel,discord.TextChannel)

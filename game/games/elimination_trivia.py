@@ -1,7 +1,7 @@
 #NEEDS TO BE TESTED
 from game import PlayerDict
 from game.game_bases import Elimination_Base, Trivia_Base
-from game.game_interface import Game_Interface
+from game.components.game_interface import Game_Interface
 
 class Elimination_Trivia(Elimination_Base,Trivia_Base):
     def __init__(self,gi:Game_Interface):

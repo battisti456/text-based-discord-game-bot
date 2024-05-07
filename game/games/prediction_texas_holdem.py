@@ -1,6 +1,6 @@
-from games_config import games_config
+from config.games_config import games_config
 
-from game.game_interface import Game_Interface
+from game.components.game_interface import Game_Interface
 from game.game_bases import Rounds_With_Points_Base, Card_Base
 
 from game.game_bases.card_base import Card_Holder,best_poker_hand, Poker_Hand, name_poker_hand_by_rank

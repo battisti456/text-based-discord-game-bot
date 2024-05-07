@@ -1,6 +1,6 @@
 from game.game import Game, police_game_callable
-from game.game_interface import Game_Interface
-from game.message import Message
+from game.components.game_interface import Game_Interface
+from game.components.message import Message
 from game.utils.grammer import wordify_iterable
 from game import PlayerId, PlayerDict, make_player_dict, PlayerPlacement, merge_placements, score_to_placement
 from typing import Callable, Optional

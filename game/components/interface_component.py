@@ -1,9 +1,9 @@
 from typing import Iterable, Optional
 
 from game import PlayerId, ChannelId, PlayerDictOptional
-from game.game_interface import Game_Interface
-from game.message import Message, Bullet_Point
-from game.player_input import Player_Single_Selection_Input, Player_Text_Input
+from game.components.game_interface import Game_Interface
+from game.components.message import Message, Bullet_Point
+from game.components.player_input import Player_Single_Selection_Input, Player_Text_Input
 import game.utils.emoji_groups
 
 class Interface_Component():

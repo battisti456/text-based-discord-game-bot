@@ -2,8 +2,8 @@ import game.utils.emoji_groups
 import random
 
 from game.game import Game, police_game_callable
-from game.game_interface import Game_Interface
-from game.message import Message
+from game.components.game_interface import Game_Interface
+from game.components.message import Message
 from game.utils.grammer import temp_file_path, wordify_iterable
 
 
@@ -278,7 +278,7 @@ class Card_Base(Game):
         Game.__init__(self,gi)
         if not Card_Base in self.initialized_bases:
             self.initialized_bases.append(Card_Base)
-            self.hand_threads:PlayerDict[ChannelId] = make_player_dict(self.unkicked_players,None)
+            self.hand_threads:PlayerDict[ChannelId] = {}
             self.hand_message:PlayerDict[Message] = make_player_dict(self.unkicked_players,Message)
     async def setup_cards(self,num_decks:int = 1):
         self.deck:Deck = Deck(num_decks)

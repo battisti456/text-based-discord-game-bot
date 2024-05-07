@@ -1,12 +1,12 @@
 #NEEDS TO BE TESTED
-from games_config import games_config
+from config.games_config import games_config
 
 from game.game_bases.elimination_base import Elimination_Base
 from game.game_bases.game_word_base import Game_Word_Base
-from game.game_interface import Game_Interface
-from game.message import Message, make_no_yes_bullet_points, make_bullet_points
-from game.player_input import Player_Single_Selection_Input, Player_Text_Input, run_inputs
-from game.response_validator import text_validator_maker
+from game.components.game_interface import Game_Interface
+from game.components.message import Message, make_no_yes_bullet_points, make_bullet_points
+from game.components.player_input import Player_Single_Selection_Input, Player_Text_Input, run_inputs
+from game.components.response_validator import text_validator_maker
 from game.utils.emoji_groups import LEFT_RIGHT_EMOJI
 
 from game import PlayerId, PlayerPlacement
@@ -41,13 +41,11 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
         first_turn = True
         while True:
             #determine whose turn it is
-            player = None
             main_index = self.all_players.index(self.last_player)
             for i in range(1,len(self.all_players)):
                 player = self.all_players[(main_index+i)%len(self.unkicked_players)]
                 if player in self.unkicked_players:
                     break
-            #
             await self.basic_send(f"The letters are '{letters}'.")
             will_challenge_message = Message(
                 content=f"Will you challenge {self.sender.format_players_md([self.last_player])}?",

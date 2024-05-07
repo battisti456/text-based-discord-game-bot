@@ -2,11 +2,11 @@ from game import PlayerDict
 from game.game_bases import Rounds_With_Points_Base
 from game.utils.grammer import s
 from game.utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
-from game.player_input import Player_Text_Input
-from game.response_validator import text_validator_maker
-from game.message import Message
+from game.components.player_input import Player_Text_Input
+from game.components.response_validator import text_validator_maker
+from game.components.message import Message
 
-from game.game_interface import Game_Interface
+from game.components.game_interface import Game_Interface
 
 validator = text_validator_maker(
     is_digit=True
@@ -30,6 +30,8 @@ class Basic_Game(Rounds_With_Points_Base):
             response_validator=validator,
             message=message
         )
+        a:PlayerDict[int] = await self.basic_multiple_choice()
+        a:PlayerDict[int] = await self.basic_multiple_choice()
         await inpt.run()
         await self.kick_none_response(inpt)
         responses:PlayerDict[str] = self.clean_player_dict(inpt.responses)

@@ -1,12 +1,12 @@
 #NEEDS TO BE TESTED
-from games_config import games_config
-from config import config
+from config.games_config import games_config
+from config.config import config
 
 from game import PlayerId
 from typing import TypedDict, Optional
 
 from game.game_bases import Elimination_Base
-from game.game_interface import Game_Interface
+from game.components.game_interface import Game_Interface
 from game.utils.grammer import temp_file_path
 
 import chessboard.board
