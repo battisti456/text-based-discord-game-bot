@@ -133,7 +133,8 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 interaction = Interaction('send_message')
                 discord_message_populate_interaction(
                     payload.cached_message,interaction)
-                interaction.content = payload.data['content']
+                if 'content' in payload.data: #sometimes it isn't aparently?
+                    interaction.content = payload.data['content']
                 interaction.interaction_id = payload.message_id
                 await self._trigger_action(interaction)
         @self.client.event
