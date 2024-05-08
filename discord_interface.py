@@ -5,7 +5,6 @@ from game.components.interaction import Interaction
 from game.utils.grammer import wordify_iterable
 
 import discord
-from math import ceil
 from random import shuffle
 
 from game import PlayerId, MessageId, ChannelId, InteractionId
@@ -14,13 +13,13 @@ MESSAGE_MAX_LENGTH = 1800#actually 2000, but I leave extra for split indicators
 
 def discord_message_populate_interaction(
         payload:discord.Message, interaction:Interaction):
-    interaction.player_id = payload.author.id
-    interaction.channel_id = payload.channel.id
+    interaction.player_id = payload.author.id#type: ignore
+    interaction.channel_id = payload.channel.id#type: ignore
     interaction.content = payload.content
-    interaction.interaction_id = payload.id
+    interaction.interaction_id = payload.id#type: ignore
     if (not (payload.reference is None) and 
             not (payload.reference.cached_message is None)):
-            interaction.reply_to_message_id = payload.reference.cached_message.id
+            interaction.reply_to_message_id = payload.reference.cached_message.id#type: ignore
     return interaction
 async def discord_message_emoji_order(
         payload:discord.Message, user_id:int) -> list[str]:
@@ -71,17 +70,17 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
                 content=message.content,
                 files=attachments
             )
-            message.message_id = discord_message.id
+            message.message_id = discord_message.id#type: ignore
         elif message.message_id is None:#new message
             await self.client.wait_until_ready()
             discord_message = await channel.send(content=message.content,files = attachments)
-            message.message_id = discord_message.id
+            message.message_id = discord_message.id#type:ignore
         else:#edit old message
             assert isinstance(message.message_id,int)
             await self.client.wait_until_ready()
             discord_message:discord.Message = await channel.fetch_message(message.message_id)
             await discord_message.edit(content=message.content,attachments=attachments)
-            message.message_id = discord_message.id
+            message.message_id = discord_message.id#type:ignore
         if message.bullet_points:
             for bp in message.bullet_points:
                 if not bp.emoji is None:
@@ -135,7 +134,7 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                     payload.cached_message,interaction)
                 if 'content' in payload.data: #sometimes it isn't aparently?
                     interaction.content = payload.data['content']
-                interaction.interaction_id = payload.message_id
+                interaction.interaction_id = payload.message_id#type:ignore
                 await self._trigger_action(interaction)
         @self.client.event
         async def on_raw_message_delete(payload:discord.RawMessageDeleteEvent):
@@ -145,7 +144,7 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 interaction = Interaction('delete_message')
                 discord_message_populate_interaction(
                     payload.cached_message,interaction)
-                interaction.interaction_id = payload.message_id
+                interaction.interaction_id = payload.message_id#type:ignore
                 await self._trigger_action(interaction)
         @self.client.event
         async def on_raw_reaction_add(payload:discord.RawReactionActionEvent):
@@ -153,11 +152,11 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 emoji:str = str(payload.emoji)
                 interaction = Interaction('select_option')
                 interaction.content = emoji
-                interaction.player_id = payload.user_id
-                interaction.reply_to_message_id = payload.message_id
-                interaction.interaction_id = payload.emoji.id#maybe?
+                interaction.player_id = payload.user_id#type:ignore
+                interaction.reply_to_message_id = payload.message_id#type:ignore
+                interaction.interaction_id = payload.emoji.id#type:ignore
                 
-                message = self.find_tracked_message(payload.message_id)
+                message = self.find_tracked_message(payload.message_id)#type:ignore
                 if not message is None:
                     if not message.bullet_points is None:
                         for i in range(len(message.bullet_points)):
@@ -172,11 +171,11 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 emoji:str = str(payload.emoji)
                 interaction = Interaction('deselect_option')
                 interaction.content = emoji
-                interaction.player_id = payload.user_id
-                interaction.reply_to_message_id = payload.message_id
-                interaction.interaction_id = payload.emoji.id#maybe?
+                interaction.player_id = payload.user_id#type:ignore
+                interaction.reply_to_message_id = payload.message_id#type:ignore
+                interaction.interaction_id = payload.emoji.id#type:ignore
                 
-                message = self.find_tracked_message(payload.message_id)
+                message = self.find_tracked_message(payload.message_id)#type:ignore
                 if not message is None:
                     if not message.bullet_points is None:
                         for i in range(len(message.bullet_points)):
@@ -229,7 +228,7 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 assert not user is None#user not found
                 await self.client.wait_until_ready()
                 await thread.add_user(user)
-        return thread.id
+        return thread.id#type:ignore
     def get_players(self) -> list[PlayerId]:
         players = self.players.copy()
         shuffle(players)
