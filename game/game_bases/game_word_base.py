@@ -1,11 +1,10 @@
 from game.game import Game
-from game.game_interface import Game_Interface
+from game.components.game_interface import Game_Interface
+from game.utils.word_tools import DefinitionDict, DefinitionList, definition_dict_to_list, get_word_definition
 
-import PyDictionary
 import fogleman_TWL06_scrabble as scrabble
 import wonderwords
 import random
-from typing import Literal, get_args
 
 LETTER_FREQUENCY = {
     "a" : 9,
@@ -40,52 +39,34 @@ LETTER_WEIGHTS:list[int|float] = list(LETTER_FREQUENCY[letter] for letter in LET
 
 WORD_LIST_LEN_CAP = 100
 
-
-type PartOfSpeach = Literal['Noun','Verb','Adjective','Adverb']
-
-type DefinitionDict = dict[PartOfSpeach,list[str]]
-type DefinitionList = list[tuple[PartOfSpeach,str]]
-
-def definition_dict_to_list(value:DefinitionDict) -> DefinitionList:
-    to_return:DefinitionList = []
-    for pos in value:
-        for _def in value[pos]:
-            to_return.append((pos,_def))
-    return to_return
         
-class Dictionary_Base(Game):
+class Game_Word_Base(Game):
     def __init__(self,gh:Game_Interface):
         Game.__init__(self,gh)
-        if not Dictionary_Base in self.initialized_bases:
-            self.initialized_bases.append(Dictionary_Base)
-            self.dictionary = PyDictionary.PyDictionary()
+        if not Game_Word_Base in self.initialized_bases:
+            self.initialized_bases.append(Game_Word_Base)
             self.ww_word = wonderwords.RandomWord()
             self.ww_sentence = wonderwords.RandomSentence()
-    def is_word(self,word:str) -> bool:
+    def is_valid_word(self,word:str) -> bool:
         return scrabble.check(word)
-    def define(self,word:str) -> DefinitionDict | None:
-        return self.dictionary.meaning(word,True)
+    def define(self,word:str) -> DefinitionDict:
+        return get_word_definition(word).to_dict()
     def random_balanced_letters(self,num:int = 5) -> str:
         letter_list = random.choices(LETTERS,LETTER_WEIGHTS,k = num)
         return "".join(letter_list)
     def _definintion_string(self,defs_list:DefinitionList) -> str:
         formatted_strings:list[str] = []
         for _def in defs_list:
-            close_paranthesis = ""
-            if "(" in _def[1]:
-                close_paranthesis = ")"
             formatted_strings.append(
-                f"> {_def[0]}: *{_def[1]}{close_paranthesis}*"
+                f"> {_def[0]}: *{_def[1]}*"
             )
         return '\n'.join(formatted_strings)
-            
     def definition_string(self,value:DefinitionList|DefinitionDict) -> str:
         if isinstance(value,list):
             return self._definintion_string(value)
         else:
             return self._definintion_string(definition_dict_to_list(value))
-        
-    def random_word(self,length:int = 5) -> str:
+    def random_valid_word(self,length:int = 5) -> str:
         letters = self.random_balanced_letters(length*2)
         words = scrabble.anagram(letters)
         valid_words:list[str] = []
@@ -97,5 +78,10 @@ class Dictionary_Base(Game):
         if valid_words:
             return random.choice(valid_words)
         else:
-            return self.random_word(length)
+            return self.random_valid_word(length)
+    def random_sentence(self) -> str:
+        return self.ww_sentence.sentence()
+
+        
+
         

@@ -1,0 +1,1 @@
+chess_merida_unicode.tff is a version of Chess Merida Unicode by Armando Hernandez Marroquin. It was modified by Michaël Peeters, and shared in their gihub repository https://github.com/xeyownt/chess_merida_unicode. It is included here to provide unicode characters for chess pieces, and is freeware.

@@ -1,11 +1,11 @@
-from games_config import games_config
+from config.games_config import games_config
 
 from game import PlayerId,MessageId
-from game.game_bases import Dictionary_Base,Rounds_With_Points_Base
-from game.game_interface import Game_Interface
-from game.message import Message, Alias_Message
-from game.player_input import Player_Text_Input, run_inputs
-from game.response_validator import text_validator_maker
+from game.game_bases import Game_Word_Base,Rounds_With_Points_Base
+from game.components.game_interface import Game_Interface
+from game.components.message import Message, Alias_Message
+from game.components.player_input import Player_Text_Input, run_inputs
+from game.components.response_validator import text_validator_maker
 
 CONFIG = games_config['longest_word']
 
@@ -14,9 +14,9 @@ POINT_FUNCTION = lambda word: len(word)**2
 NUMBER_OF_ROUNDS = CONFIG['number_of_rounds']
 NUM_LETTERS_CAN_REFRESH:int = CONFIG['num_letters_can_refresh']
 
-class Longest_Word(Dictionary_Base,Rounds_With_Points_Base):
+class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
     def __init__(self,gi:Game_Interface):
-        Dictionary_Base.__init__(self,gi)
+        Game_Word_Base.__init__(self,gi)
         Rounds_With_Points_Base.__init__(self,gi)
 
         self.num_rounds = NUMBER_OF_ROUNDS
@@ -87,7 +87,7 @@ class Longest_Word(Dictionary_Base,Rounds_With_Points_Base):
             word = await self.longest_word_question(player)
             if player in self.kicked_players:
                 continue
-            if self.is_word(word):
+            if self.is_valid_word(word):
                 p= POINT_FUNCTION(word)
                 await self.score([player],p)
                 self.words_used.append(word)

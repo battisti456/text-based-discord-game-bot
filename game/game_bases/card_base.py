@@ -1,10 +1,10 @@
-import game.emoji_groups
+import game.utils.emoji_groups
 import random
 
 from game.game import Game, police_game_callable
-from game.game_interface import Game_Interface
-from game.message import Message
-from game.grammer import temp_file_path, wordify_iterable
+from game.components.game_interface import Game_Interface
+from game.components.message import Message
+from game.utils.grammer import temp_file_path, wordify_iterable
 
 
 import PIL.Image
@@ -49,7 +49,7 @@ class Card(object):
     def string(self)->str:
         return f"{CARD_NAMES[self.value].capitalize()} of {SUIT_NAMES[self.suit].capitalize()}"
     def emoji(self)->str:
-        return game.emoji_groups.PLAYING_CARD_EMOJI[self.suit*len(CARD_NAMES)+self.value]
+        return game.utils.emoji_groups.PLAYING_CARD_EMOJI[self.suit*len(CARD_NAMES)+self.value]
     def image(self,card_width:int = CARD_WIDTH)->PIL.Image.Image:#doen't keep transparent corners....?
         image = PIL.Image.open(f"{CARD_PATH}\\{card_file_name(self.suit,self.value)}")
         image = image.convert('RGBA')
@@ -278,7 +278,7 @@ class Card_Base(Game):
         Game.__init__(self,gi)
         if not Card_Base in self.initialized_bases:
             self.initialized_bases.append(Card_Base)
-            self.hand_threads:PlayerDict[ChannelId] = make_player_dict(self.unkicked_players,None)
+            self.hand_threads:PlayerDict[ChannelId] = {}
             self.hand_message:PlayerDict[Message] = make_player_dict(self.unkicked_players,Message)
     async def setup_cards(self,num_decks:int = 1):
         self.deck:Deck = Deck(num_decks)

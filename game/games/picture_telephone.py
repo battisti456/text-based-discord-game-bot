@@ -1,10 +1,10 @@
 from game import PlayerDict, make_player_dict, PlayerDictOptional, PlayerId
 from game.game_bases import Rounds_With_Points_Base, Random_Image_Base
-from game.game_interface import Game_Interface
+from game.components.game_interface import Game_Interface
 
-from game.message import Message
-from game.player_input import Player_Text_Input, run_inputs
-from game.response_validator import text_validator_maker
+from game.components.message import Message
+from game.components.player_input import Player_Text_Input, run_inputs
+from game.components.response_validator import text_validator_maker
 
 NUM_ROUNDS = 1
 MIN_NUM_WORDS = 1

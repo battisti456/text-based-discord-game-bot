@@ -11,7 +11,7 @@ So be warned.
 
 Here are the steps to set the code up.
 
-- Install all nessasary python libraries using the following command from the inside the top directory of the project:
+- Install all nessasary python libraries and files using the following commands from the inside the top directory of the project:
 
 ```console
 pip install -r requirements.txt

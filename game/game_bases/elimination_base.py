@@ -1,5 +1,5 @@
 from game import PlayerId, PlayerDict, PlayerPlacement
-from game.game_interface import Game_Interface
+from game.components.game_interface import Game_Interface
 from game.game import Game, police_game_callable
 
 class Elimination_Base(Game):

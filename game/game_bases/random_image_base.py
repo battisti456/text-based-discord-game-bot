@@ -1,6 +1,6 @@
 from game.game import Game
-from game.game_interface import Game_Interface
-from game.grammer import temp_file_path
+from game.components.game_interface import Game_Interface
+from game.utils.grammer import temp_file_path
 from typing import TypedDict, Optional
 
 import PIL.Image

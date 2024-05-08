@@ -1,15 +1,15 @@
-from games_config import games_config
-from config import config
+from config.games_config import games_config
+from config.config import config
 
 from game import PlayerId, PlayerDict, make_player_dict, PlayerPlacement, correct_int, merge_placements, score_to_placement
 
 from game.game import Game
-from game.game_interface import Game_Interface
-from game.player_input import Player_Input, Player_Single_Selection_Input, Player_Text_Input, run_inputs
-from game.message import Message, make_bullet_points
-from game.emoji_groups import NUMBERED_KEYCAP_EMOJI
-from game.grammer import wordify_iterable, ordinate
-from game.response_validator import Validation
+from game.components.game_interface import Game_Interface
+from game.components.player_input import Player_Input, Player_Single_Selection_Input, Player_Text_Input, run_inputs
+from game.components.message import Message, make_bullet_points
+from game.utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
+from game.utils.grammer import wordify_iterable, ordinate
+from game.components.response_validator import Validation
 
 import random
 

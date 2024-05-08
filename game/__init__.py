@@ -1,16 +1,16 @@
 from typing import TypeVar
-from typing import Hashable, Iterable, Optional, Callable, Mapping, Dict, Awaitable, Literal
-from numbers import Real
+from typing import Iterable, Optional, Callable, Literal, Hashable, NewType
 
 
 DataType = TypeVar('DataType')
 R = TypeVar('R')
 
-type PlayerId = Hashable
-type MessageId = Hashable
-type ChannelId = Hashable
-type InteractionId = Hashable
+PlayerId = NewType('PlayerId',Hashable)#type: ignore
+MessageId = NewType('MessageId',Hashable)#type: ignore
+ChannelId = NewType('ChannelId',Hashable)#type: ignore
+InteractionId = NewType('InteractionId',Hashable)#type: ignore
 type PlayerPlacement = list[list[PlayerId]]
+
 
 type PlayerDictOptional[DataType] = dict[PlayerId,Optional[DataType]]
 type PlayerDict[DataType] = dict[PlayerId,DataType]

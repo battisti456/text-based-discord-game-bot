@@ -1,20 +1,16 @@
-from game.interface_component import Interface_Component
+from game.components.interface_component import Interface_Component
 
 from game import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional, KickReason, GameEndException, GameEndInsufficientPlayers, kick_text, score_to_placement
-import game.emoji_groups
-from game.game_interface import Game_Interface
-from game.message import Message
-from game.player_input import Player_Input
-from game.grammer import ordinate, wordify_iterable
+import game.utils.emoji_groups
+from game.components.game_interface import Game_Interface
+from game.components.message import Message
+from game.components.player_input import Player_Input
+from game.utils.grammer import ordinate, wordify_iterable
 import functools
-import sys
-import os
-import importlib
 from inspect import isclass
 
 
 from typing import Optional, TypeVar, Callable, Awaitable, ParamSpec, overload
-from types import ModuleType
 
 MULTIPLE_CHOICE_LINE_THRESHOLD = 30
 
@@ -70,18 +66,21 @@ class Game(Interface_Component):
         return []
     def generate_kicked_placements(self) -> PlayerPlacement:
         return [self.unkicked_players] + score_to_placement({player:self.kicked[player][0] for player in self.kicked},reverse=True)
-    @overload
-    async def basic_multiple_choice(
-            self,content:Optional[str]=...,options:list[str]=...,who_chooses:PlayerId=...,
-            emojis:Optional[list[str]]=..., channel_id:Optional[ChannelId]=..., 
-            allow_answer_change:bool=...) -> int:
-        ...
+    #region basic_inputs
+    #region basic_multiple_choice overloads
     @overload
     async def basic_multiple_choice(
             self,content:Optional[str]=...,options:list[str]=...,who_chooses:Optional[list[PlayerId]]=...,
             emojis:Optional[list[str]]=..., channel_id:Optional[ChannelId]=..., 
             allow_answer_change:bool=...) -> PlayerDict[int]:
         ...
+    @overload
+    async def basic_multiple_choice(
+            self,content:Optional[str]=...,options:list[str]=...,who_chooses:PlayerId=...,
+            emojis:Optional[list[str]]=..., channel_id:Optional[ChannelId]=..., 
+            allow_answer_change:bool=...) -> int:
+        ...
+    #endregion
     async def basic_multiple_choice(
             self,content:Optional[str] = None,options:list[str] = [],who_chooses:Optional[list[PlayerId]|PlayerId] = None,
             emojis:Optional[list[str]] = None, channel_id:Optional[ChannelId] = None, 
@@ -102,7 +101,9 @@ class Game(Interface_Component):
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
         one_response:bool = False
-        if not isinstance(who_chooses,list) or who_chooses is None:
+        if who_chooses is None:
+            who_chooses = self.unkicked_players
+        if not isinstance(who_chooses,list):
             who_chooses = [who_chooses]
             one_response = True
         responses:PlayerDictOptional = await self._basic_multiple_choice(
@@ -123,16 +124,18 @@ class Game(Interface_Component):
                 return clean_responses[who_chooses[0]]
             else:
                 return -1#The player did not respond and got kicked, function must still return though
-    @overload
-    async def basic_no_yes(
-            self,content:Optional[str]=...,who_chooses:PlayerId=...,
-            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...) -> int:
-        ...
+    #region basic_no_yes overloads
     @overload
     async def basic_no_yes(
             self,content:Optional[str]=...,who_chooses:Optional[list[PlayerId]]=...,
             channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...) -> PlayerDict[int]:
         ...
+    @overload
+    async def basic_no_yes(
+            self,content:Optional[str]=...,who_chooses:PlayerId=...,
+            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...) -> int:
+        ...
+    #endregion
     async def basic_no_yes(
             self,content:Optional[str] = None,who_chooses:Optional[PlayerId|list[PlayerId]] = None,
             channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True) -> int | PlayerDict[int]:
@@ -148,17 +151,19 @@ class Game(Interface_Component):
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
         #returns 0 for no and 1 for yes to a yes or no question, waits for user to respond
-        return await self.basic_multiple_choice(content,["no","yes"],who_chooses,list(game.emoji_groups.NO_YES_EMOJI),channel_id,allow_answer_change)
-    @overload
-    async def basic_text_response(
-            self,content:str,who_chooses:PlayerId=...,
-            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...) -> str:
-        ...
+        return await self.basic_multiple_choice(content,["no","yes"],who_chooses,list(game.utils.emoji_groups.NO_YES_EMOJI),channel_id,allow_answer_change)
+    #region text_response overloads
     @overload
     async def basic_text_response(
             self,content:str,who_chooses:list[PlayerId]|None=...,
             channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...) -> PlayerDict[str]:
         ...
+    @overload
+    async def basic_text_response(
+            self,content:str,who_chooses:PlayerId=...,
+            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...) -> str:
+        ...
+    #endregion
     async def basic_text_response(
             self,content:str,who_chooses:PlayerId|list[PlayerId]|None = None,
             channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True) -> str|PlayerDict[str]:
@@ -174,7 +179,9 @@ class Game(Interface_Component):
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
         one_response:bool = False
-        if not isinstance(who_chooses,list) or who_chooses is None:
+        if who_chooses is None:
+            who_chooses = self.unkicked_players
+        if not isinstance(who_chooses,list):
             who_chooses = [who_chooses]
             one_response = True
         responses:PlayerDictOptional = await self._basic_text_response(
@@ -193,6 +200,7 @@ class Game(Interface_Component):
                 return clean_responses[who_chooses[0]]
             else:
                 return ""#The player did not respond and got kicked, function must still return though
+    #endregion
     def allowed_to_speak(self)->bool:
         """
         returns whether the current member function is restricted by being policed

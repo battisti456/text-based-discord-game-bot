@@ -1,7 +1,7 @@
 from game import PlayerId,MessageId,ChannelId,InteractionId
 from typing import Optional, Literal, get_args
 
-from game.message import Message
+from game.components.message import Message
 
 InteractionType = Literal[
     'send_message',

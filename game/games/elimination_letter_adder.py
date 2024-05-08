@@ -1,13 +1,13 @@
 #NEEDS TO BE TESTED
-from games_config import games_config
+from config.games_config import games_config
 
 from game.game_bases.elimination_base import Elimination_Base
-from game.game_bases.dictionary_base import Dictionary_Base
-from game.game_interface import Game_Interface
-from game.message import Message, make_no_yes_bullet_points, make_bullet_points
-from game.player_input import Player_Single_Selection_Input, Player_Text_Input, run_inputs
-from game.response_validator import text_validator_maker
-from game.emoji_groups import LEFT_RIGHT_EMOJI
+from game.game_bases.game_word_base import Game_Word_Base
+from game.components.game_interface import Game_Interface
+from game.components.message import Message, make_no_yes_bullet_points, make_bullet_points
+from game.components.player_input import Player_Single_Selection_Input, Player_Text_Input, run_inputs
+from game.components.response_validator import text_validator_maker
+from game.utils.emoji_groups import LEFT_RIGHT_EMOJI
 
 from game import PlayerId, PlayerPlacement
 
@@ -16,10 +16,10 @@ import random
 NUM_LETTERS = games_config['elimination_letter_adder']['num_letters']
 START_LETTERS = games_config['elimination_letter_adder']['start_letters']
 
-class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
+class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
     def __init__(self,gi:Game_Interface):
         Elimination_Base.__init__(self,gi)
-        Dictionary_Base.__init__(self,gi)
+        Game_Word_Base.__init__(self,gi)
         self.last_player:PlayerId = self.unkicked_players[0]
     async def game_intro(self):
         await self.basic_send(
@@ -35,19 +35,17 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
         pass
     async def core_game(self):
         num_letters_in_starting_word = START_LETTERS + random.randint(1,len(self.unkicked_players))
-        starting_word = self.random_word(num_letters_in_starting_word)
+        starting_word = self.random_valid_word(num_letters_in_starting_word)
         offset = random.randint(0,num_letters_in_starting_word-START_LETTERS-1)
         letters = starting_word[offset:offset+START_LETTERS]
         first_turn = True
         while True:
             #determine whose turn it is
-            player = None
             main_index = self.all_players.index(self.last_player)
             for i in range(1,len(self.all_players)):
                 player = self.all_players[(main_index+i)%len(self.unkicked_players)]
                 if player in self.unkicked_players:
                     break
-            #
             await self.basic_send(f"The letters are '{letters}'.")
             will_challenge_message = Message(
                 content=f"Will you challenge {self.sender.format_players_md([self.last_player])}?",
@@ -110,7 +108,7 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                     letters = letters + letter
                 else:
                     letters = letter + letters
-                if len(letters) > NUM_LETTERS and self.is_word(letters):
+                if len(letters) > NUM_LETTERS and self.is_valid_word(letters):
                     definition = self.define(letters)
                     def_text = ""
                     if not definition is None:
@@ -144,7 +142,7 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                 assert not word is None
                 word = word.lower()
                 word = "".join(word.split())#remove whitespace
-                if self.is_word(word) and letters in word and len(word) > NUM_LETTERS:
+                if self.is_valid_word(word) and letters in word and len(word) > NUM_LETTERS:
                     definition = self.define(word)
                     definition_text = ""
                     if not definition is None:
@@ -153,7 +151,7 @@ class Elimination_Letter_Adder(Elimination_Base,Dictionary_Base):
                     self.last_player = player
                     self.eliminate_players([player])
                     return
-                elif not self.is_word(word):
+                elif not self.is_valid_word(word):
                     await self.basic_send(f"I'm sorry, {self.format_players_md([self.last_player])}, '{word}' is not a valid word.")
                     self.eliminate_players([self.last_player])
                     self.last_player = player

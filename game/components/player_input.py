@@ -1,12 +1,12 @@
-from config import config
+from config.config import config
 
 from game import PlayerId,PlayerDict,PlayerDictOptional, make_player_dict, correct_str
-from game.sender import Sender
-from game.message import Message, Alias_Message
-from game.game_interface import Game_Interface
-from game.interaction import Interaction
-from game.response_validator import ResponseValidator, Validation, not_none, default_text_validator
-from game.grammer import nice_time, ordinate
+from game.components.sender import Sender
+from game.components.message import Message, Alias_Message
+from game.components.game_interface import Game_Interface
+from game.components.interaction import Interaction
+from game.components.response_validator import ResponseValidator, Validation, not_none, default_text_validator
+from game.utils.grammer import nice_time, ordinate
 
 from typing import Optional, Any, Callable, Awaitable
 
@@ -352,7 +352,6 @@ async def run_inputs(
     """timeout_mins = list(min(
         (pinput.timeout if not pinput.timeout is None else float('inf'))
         for pinput in group) for group in completion_sets)"""
-    print("goo")
     await asyncio.wait(all_tasks)
     """for task in all_tasks:
         task.cancel()"""

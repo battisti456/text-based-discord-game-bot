@@ -1,11 +1,11 @@
 #NEEDS TO BE TESTED
-from games_config import games_config
+from config.games_config import games_config
 
 from game.game_bases import Card_Base
 from game.game_bases import Elimination_Base
 
-from game.game_interface import Game_Interface
-from game.message import Message
+from game.components.game_interface import Game_Interface
+from game.components.message import Message
 
 from math import ceil
 

@@ -1,8 +1,8 @@
 #NEEDS TO BE TESTED
 from game import PlayerId, PlayerDict, make_player_dict
 from game.game_bases import Elimination_Base
-from game.game_interface import Game_Interface
-from game.emoji_groups import ROCK_PAPER_SCISSORS_EMOJI
+from game.components.game_interface import Game_Interface
+from game.utils.emoji_groups import ROCK_PAPER_SCISSORS_EMOJI
 import random
 
 class Elimination_Rock_Paper_Scissors(Elimination_Base):

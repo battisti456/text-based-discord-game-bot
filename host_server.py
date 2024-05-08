@@ -1,4 +1,4 @@
-from config import config
+from config.config import config
 import subprocess
 import sys
 

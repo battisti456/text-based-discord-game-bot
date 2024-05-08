@@ -1,6 +1,9 @@
 from typing import Iterable, Any
 import uuid
+from game.utils.word_tools import Sentence
 
+def nice_sentence(sentence:Sentence) -> str:
+    return (" ".join(sentence)).replace('_',' ').capitalize()
 def wordify_iterable(values:Iterable[str|Any],operator:str = 'and',comma:str = ",") -> str:
     """
     takes an iterable of values, turns it into a list ad formats it into a ___, ___, and __ string;

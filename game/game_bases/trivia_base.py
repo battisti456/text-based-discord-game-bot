@@ -1,9 +1,9 @@
 from game import PlayerId, PlayerDict
 from game.game import Game
-from game.game_interface import Game_Interface
+from game.components.game_interface import Game_Interface
 import pytrivia
 
-from typing import Iterable, TypedDict, Optional
+from typing import TypedDict, Optional
 
 import random
 

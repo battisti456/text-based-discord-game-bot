@@ -1,10 +1,10 @@
 import sys
 
 from discord_interface import Discord_Game_Interface
-from game.game_operator import Game_Operator
+from game.components.game_operator import Game_Operator
 
-from config import config
-from discord_config import discord_config
+from config.config import config
+from config.discord_config import discord_config
 
 
 if __name__ == "__main__":
