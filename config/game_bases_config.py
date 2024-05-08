@@ -13,7 +13,7 @@ game_bases_config:GameBasesConfigDict = {
         'back_grnd_color': '#4a3728',
         'text_color': 'lightgrey',
         'p_size': 1,
-        'p_font': None,
+        'p_font': "data/fonts/chess_merida_unicode.ttf",
         't_size': 0.75,
         't_font': None,
         'white_perspective': True,
