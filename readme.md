@@ -15,16 +15,9 @@ Here are the steps to set the code up.
 
 ```console
 pip install -r requirements.txt
+python setup.py
 ```
 
-- Download missing data resources.
-  - I have excluded 'data/lichess_db_puzzle.csv' from this repository as it is rather large.
-    - I found this chess puzzle .csv at "https://database.lichess.org/#puzzles".
-    - It could, in theory, be replaced by any csv with chess puzzles in the correct format.
-    - The format is:
-    > "PuzzleId,FEN,Moves,Rating, RatingDeviation,Popularity,NbPlays,Themes,GameUrl,OpeningTags"
-    - I only use FEN, Moves, Rating, and Popularity.
-    - Moves are seperated by spaces, and the first move is the opponents move.
 - Create your "local_config.yaml" file in the base directory as shown
 
 ``` yaml
