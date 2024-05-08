@@ -30,8 +30,6 @@ class Basic_Game(Rounds_With_Points_Base):
             response_validator=validator,
             message=message
         )
-        a:PlayerDict[int] = await self.basic_multiple_choice()
-        a:PlayerDict[int] = await self.basic_multiple_choice()
         await inpt.run()
         await self.kick_none_response(inpt)
         responses:PlayerDict[str] = self.clean_player_dict(inpt.responses)

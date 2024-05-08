@@ -73,7 +73,10 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
             message.message_id = discord_message.id#type: ignore
         elif message.message_id is None:#new message
             await self.client.wait_until_ready()
-            discord_message = await channel.send(content=message.content,files = attachments)
+            discord_message = await channel.send(
+                content=message.content 
+                if not message.content is None else "--empty--",
+                files = attachments)
             message.message_id = discord_message.id#type:ignore
         else:#edit old message
             assert isinstance(message.message_id,int)
