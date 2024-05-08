@@ -1,9 +1,9 @@
-from config_tools import ConfigDict, merge_local
+from config.config_tools import ConfigDict, merge_local
 
 config:ConfigDict = {
     'command_prefix' : ">> ",
     "command_users" : [], # users permitted to use the game_operator commands over message when using the command_prefix symbol
-    "main_channel_id" : 0,
+    "main_channel_id" : 0,#type: ignore
     "players" : [],
     "temp_path":"temp",
     "data_path":"data",

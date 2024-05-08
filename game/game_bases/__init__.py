@@ -5,3 +5,4 @@ from game.game_bases.trivia_base import Trivia_Base
 from game.game_bases.rounds_with_points_base import Rounds_With_Points_Base
 from game.game_bases.random_image_base import Random_Image_Base
 from game.game_bases.basic_secret_message_base import Basic_Secret_Message_Base
+from game.game_bases.chess_base import Chess_Base

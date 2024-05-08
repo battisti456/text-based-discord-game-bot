@@ -1,5 +1,5 @@
 from game import PlayerId, ChannelId
-
+from game.utils.pillow_tools import Color
 from typing import Literal, TypedDict, Optional, Any
 from typing import _TypedDictMeta # type: ignore
 import ruamel.yaml.comments
@@ -12,7 +12,7 @@ yaml = ruamel.yaml.YAML()
 
 LOCAL_CONFIG_FILE = "local_config.yaml"
 type ConfigAction = Literal["add","set","remove"]
-type ConfigName = Literal['config','games_config','discord_config']
+type ConfigName = Literal['config','games_config','discord_config','game_bases_config']
 LIST_ACTIONS:list[ConfigAction] = ['add','remove']
 
 class DiscordConfigDict(TypedDict):
@@ -56,13 +56,6 @@ class ChessPuzzleEliminationConfig(TypedDict):
     num_to_sample:int
     num_move_options:int
     puzzle_rating_cap_escalation:int
-    set_image_size:tuple[int,int]
-    text_color:tuple[int,int,int]
-    new_border_width:int
-    new_border_color:tuple[int,int,int]
-    label_font_size:int
-    last_move_highlight:tuple[int,int,int,int]
-    check_highlight:tuple[int,int,int,int]
 class ContainerBiddingConfig(TypedDict):
     num_containers:int
     data_path:str
@@ -127,7 +120,32 @@ class GamesConfigDict(TypedDict):
     prediction_texas_holdem:PredictionTexasHoldemConfig
     the_great_kitten_race:TheGreatKittenRaceConfig
     tricky_trivia:TrickyTriviaConfig
-
+#region game base specific settings
+class ChessBaseConfig(TypedDict):
+    p_white_color:Color
+    p_black_color:Color
+    p_white_hollow:bool
+    p_black_hollow:bool
+    b_white_color:Color
+    b_black_color:Color
+    image_size:int
+    border_width:int
+    back_grnd_color:Color
+    text_color:Color
+    p_size:float
+    p_font:Optional[str]
+    t_size:float
+    t_font:Optional[str]
+    white_perspective:bool
+    p_white_outline:int
+    p_black_outline:int
+    p_white_outline_color:Color
+    p_black_outline_color:Color
+    last_move_color:Optional[Color]
+    check_color:Optional[Color]
+#endregion
+class GameBasesConfigDict(TypedDict):
+    chess_base:ChessBaseConfig
 CONFIG_TYPES:dict[ConfigName,_TypedDictMeta] = {
     'config' : ConfigDict,
     'games_config' : GamesConfigDict,

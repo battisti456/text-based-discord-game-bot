@@ -1,4 +1,4 @@
-from config_tools import GamesConfigDict, merge_local
+from config.config_tools import GamesConfigDict, merge_local
 
 games_config:GamesConfigDict = {
     "chess_puzzle_elimination": {
@@ -7,14 +7,7 @@ games_config:GamesConfigDict = {
         'popularity_range':None,
         'num_to_sample':500,
         'num_move_options':5,
-        'puzzle_rating_cap_escalation':200,
-        'set_image_size':(1500,1500),
-        'text_color':(255,255,255),
-        'new_border_width':100,
-        'new_border_color':(0,0,0),
-        'label_font_size':65,
-        'last_move_highlight':(255,255,204,100),
-        'check_highlight':(255,0,0,100)
+        'puzzle_rating_cap_escalation':200
     },
     "altered_image_guess" : {
         "num_rounds" : 5,
