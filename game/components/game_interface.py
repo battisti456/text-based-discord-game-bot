@@ -1,13 +1,12 @@
 from typing import Any,Callable,Awaitable, Optional, Hashable
-from game import PlayerId, MessageId, ChannelId, Operators
+from game import PlayerId, MessageId, ChannelId, get_logger
 from game.components.sender import Sender
 from game.components.message import Message, Reroute_Message
 from game.components.interaction import Interaction, InteractionType, INTERACTION_TYPES
-from game.utils.grammer import wordify_iterable
 
+logger = get_logger(__name__)
 
 type Action = Callable[[Interaction],Awaitable]
-
 
 class Interface_Sender(Sender):
     """
@@ -37,17 +36,20 @@ class Game_Interface(object):
         """
         clears all stored on_actions and messages
         """
+        logger.warning(f"resetting game interface")
         self.purge_tracked_messages()
         self.clear_actions()
     def track_message(self,message:Message):
         """
         adds a message to the interfaces tracked messages list
         """
+        logger.info(f"tracking object with message_id = {message.message_id}")
         self.tracked_messages.append(message)
     def purge_tracked_messages(self):
         """
         empties the interfaces tracked messages list
         """
+        logger.info(f"untracking all messages; message_id's in {list(message.message_id for message in self.tracked_messages)}")
         self.tracked_messages.clear()
     def find_tracked_message(self,message_id:MessageId) -> Message | None:
         """
@@ -63,6 +65,7 @@ class Game_Interface(object):
         """
         clears all on_actions
         """
+        logger.info(f"clearing all on_action events totalling {len(self.actions)}")
         for interaction_type in INTERACTION_TYPES:
             self.actions[interaction_type] = []
         self.action_owners = {}
@@ -73,6 +76,7 @@ class Game_Interface(object):
         owner: can be of any type that is hashable, and is merely used for locating the action for purgeing
         """
         actions_to_purge:set[Action] = set(action for action in self.action_owners if self.action_owners[action] == owner)
+        logger.info(f"clearing all on_action events owned by {owner} totalling {len(actions_to_purge)}")
         for action in actions_to_purge:
             for interaction_type in self.actions:
                 while action in self.actions[interaction_type]:
@@ -89,6 +93,7 @@ class Game_Interface(object):
         called when the game interface notices a player input and decides it is an interaction;
         should be used in child classes
         """
+        logger.info(f"interaction of type = {interaction.interaction_type} with interaction_id = {interaction.interaction_id} calling {len(list(self.actions[interaction.interaction_type]))} actions")
         for action in self.actions[interaction.interaction_type]:
             await action(interaction)
     def on_action(self,action_type:InteractionType,owner:Hashable = None) -> Callable[[Action],Action]:
@@ -99,6 +104,7 @@ class Game_Interface(object):
         owner: can be of any type that is hashable, and is merely used for locating the action for purgeing
         """
         def wrapper(func:Action) -> Action:
+            logger.info(f"adding new action seeking interactions of type = {action_type}; owned by {owner}")
             self.actions[action_type].append(func)
             self.action_owners[func] = owner
             return func
@@ -109,16 +115,19 @@ class Game_Interface(object):
         should be implemented in child classes
         """
         return []
+    async def _new_channel(self,name:Optional[str],who_can_see:Optional[list[PlayerId]]) -> ChannelId:
+        ...
     async def new_channel(self,name:Optional[str] = None, who_can_see:Optional[list[PlayerId]] = None) -> ChannelId:
         """
-        returns the ChannelId of a channel;
-        should be implemented in child classes
+        returns the ChannelId of a channel
         
         name: if specified, titles the channel with it
         
         who_can_see: if specified, only these players have access to the channel, if not specified should assume all players
         """
-        ...
+        channel_id:ChannelId = await self._new_channel(name,who_can_see)
+        logger.info(f"created new channel with name = {name}, player_ids = {who_can_see}, channel_id = {channel_id}")
+        return channel_id
 
 class Channel_Limited_Interface_Sender(Interface_Sender): 
     """
@@ -149,15 +158,16 @@ class Channel_Limited_Game_Interface(Game_Interface):
         creates a ChannelId that only players can see, or returns one that it already made
         """
         fr_players = frozenset(players)
+        channel_id:ChannelId
         if fr_players in self.who_can_see_dict:
-            return self.who_can_see_dict[fr_players]
+            channel_id = self.who_can_see_dict[fr_players]
         else:
-            channel = await self.new_channel(
+            channel_id = await self.new_channel(
                 f"{self.default_sender.format_players(players)}'s Private Channel",
                 players
             )
-            assert not channel is None
-            self.who_can_see_dict[fr_players] = channel
-            return channel
+            self.who_can_see_dict[fr_players] = channel_id
+        logger.info(f"channel limited game interface changing channel t o id = {channel_id} so player_ids = {players} can see")
+        return channel_id
 
 

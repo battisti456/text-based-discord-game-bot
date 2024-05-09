@@ -1,7 +1,8 @@
-from game import PlayerId, ChannelId
-from game.utils.pillow_tools import Color
-from typing import Literal, TypedDict, Optional, Any
+from typing import Literal, TypedDict, Optional, Any, TYPE_CHECKING
 from typing import _TypedDictMeta # type: ignore
+if TYPE_CHECKING:
+    from game import PlayerId, ChannelId
+    from game.utils.pillow_tools import Color
 import ruamel.yaml.comments
 from typeguard import check_type, TypeCheckError
 
@@ -19,9 +20,9 @@ class DiscordConfigDict(TypedDict):
     token:str
 class ConfigDict(TypedDict):
     command_prefix:str
-    command_users:list[PlayerId]
-    main_channel_id:ChannelId
-    players:list[PlayerId]
+    command_users:list['PlayerId']
+    main_channel_id:'ChannelId'
+    players:list['PlayerId']
     temp_path:str
     data_path:str
     default_timeout:int
@@ -29,6 +30,7 @@ class ConfigDict(TypedDict):
     profanity_threshold:float
     python_cmd:str
     main:str
+    logging_level:str|int
 #region game specific configs
 class AlteredImageGuessConfig(TypedDict):
     num_rounds:int
@@ -122,16 +124,16 @@ class GamesConfigDict(TypedDict):
     tricky_trivia:TrickyTriviaConfig
 #region game base specific settings
 class ChessBaseConfig(TypedDict):
-    p_white_color:Color
-    p_black_color:Color
+    p_white_color:'Color'
+    p_black_color:'Color'
     p_white_hollow:bool
     p_black_hollow:bool
-    b_white_color:Color
-    b_black_color:Color
+    b_white_color:'Color'
+    b_black_color:'Color'
     image_size:int
     border_width:int
-    back_grnd_color:Color
-    text_color:Color
+    back_grnd_color:'Color'
+    text_color:'Color'
     p_size:float
     p_font:Optional[str]
     t_size:float
@@ -139,10 +141,10 @@ class ChessBaseConfig(TypedDict):
     white_perspective:bool
     p_white_outline:int
     p_black_outline:int
-    p_white_outline_color:Color
-    p_black_outline_color:Color
-    last_move_color:Optional[Color]
-    check_color:Optional[Color]
+    p_white_outline_color:'Color'
+    p_black_outline_color:'Color'
+    last_move_color:Optional['Color']
+    check_color:Optional['Color']
 #endregion
 class GameBasesConfigDict(TypedDict):
     chess_base:ChessBaseConfig

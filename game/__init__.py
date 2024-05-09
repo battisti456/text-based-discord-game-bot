@@ -1,6 +1,17 @@
 from typing import TypeVar
 from typing import Iterable, Optional, Callable, Literal, Hashable, NewType
+from config.config import config
 
+import logging
+fmt = logging.Formatter('%(asctime)s::%(levelname)s::%(name)s::%(message)s')
+h1 = logging.StreamHandler()
+h1.setLevel(config['logging_level'])
+h1.setFormatter(fmt)
+def get_logger(name:str) -> logging.Logger:
+    logger = logging.getLogger(name)
+    logger.addHandler(h1)
+    logger.setLevel(config['logging_level'])
+    return logger
 
 DataType = TypeVar('DataType')
 R = TypeVar('R')

@@ -214,7 +214,7 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
         return emoji
     async def run(self):
         pass
-    async def new_channel(self, name: Optional[str] = None, who_can_see: Optional[list[PlayerId]] = None) -> ChannelId:
+    async def _new_channel(self, name: Optional[str], who_can_see: Optional[list[PlayerId]]) -> ChannelId:
         assert isinstance(self.channel_id,int)
         main_channel = self.client.get_channel(self.channel_id)
         assert isinstance(main_channel,discord.TextChannel)

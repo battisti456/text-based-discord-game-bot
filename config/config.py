@@ -11,7 +11,8 @@ config:ConfigDict = {
     "default_warnings": [43200,72000,82800],#12 h, 20 h, 23 h
     "profanity_threshold" : 0.5,#to disable set >1
     "python_cmd" : 'python',
-    "main" : "main.py"
+    "main" : "main.py",
+    "logging_level" : "WARNING"
 }
 
 merge_local('config',config) #type: ignore
