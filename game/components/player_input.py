@@ -1,6 +1,6 @@
 from config.config import config
 
-from game import PlayerId,PlayerDict,PlayerDictOptional, make_player_dict, correct_str
+from game import PlayerId,PlayerDict,PlayerDictOptional, make_player_dict, correct_str, get_logger
 from game.components.sender import Sender
 from game.components.message import Message, Alias_Message
 from game.components.game_interface import Game_Interface
@@ -14,6 +14,7 @@ import asyncio
 from time import time
 type Condition = dict[Player_Input,bool]
 
+logger = get_logger(__name__)
 SLEEP_TIME = 10
 
 class Player_Input[T]():
@@ -45,9 +46,12 @@ class Player_Input[T]():
         self.funcs_to_call_on_update:list[Callable[[],Awaitable]] = []
         self._last_response_status:str = ""
         self.timeout_time:int = 0
+    def __repr__(self) -> str:
+        return f"{type(self)}({self.name})"
     def on_update(self,func:Callable[[],Awaitable]) -> Callable[[],Awaitable]:
         """binds a callable to be run whenever the input changes"""
         if not func in self.funcs_to_call_on_update:
+            logger.info(f"bound new on_update to {self}")
             self.funcs_to_call_on_update.append(func)
         return func
     def response_status(self, basic:bool = False) -> str:
@@ -76,6 +80,7 @@ class Player_Input[T]():
         """
         prepares the input to be run again by clearing responses
         """
+        logger.warning(f"resetting {self}")
         self.responses = make_player_dict(self.players,None)
     async def _setup(self):
         """run once and awaited in _run at the beggining"""
@@ -92,6 +97,7 @@ class Player_Input[T]():
         pass
     async def _update(self):
         """called during running only when an input is changed"""
+        logger.info(f"{self} has updated, calling {len(self.funcs_to_call_on_update)} on_updates")
         await self.update_response_status()
         for func in self.funcs_to_call_on_update:
             await func()
@@ -102,6 +108,8 @@ class Player_Input[T]():
             await self.sender(self.status_message)
     def has_recieved_all_responses(self) -> bool:
         """returns whether all responses meet the validator's requirements"""
+        to_return:bool = all(self._response_validator(player,self.responses[player])[0] for player in self.players)
+        logger.info(f"{self} has evaluated that is has" + ("'nt" if not to_return else "") + " received all responses")
         return all(self._response_validator(player,self.responses[player])[0] for player in self.players)
     async def _handle_warnings(self):
         if self.timeout is None:
@@ -158,6 +166,7 @@ class Player_Input[T]():
 
         calls _run with wait_until_received_all as the wait task
         """
+        logger.info(f"{self} is starting to run independantly")
         await_task = asyncio.create_task(self.wait_until_received_all())
         await self._run(await_task)
         return self.responses
@@ -319,6 +328,7 @@ async def run_inputs(
 
     basic_feedback: sets whether the feedback, if it exists, should be limited to only whether an input is complete or not; True for limited, False for unlimited
     """
+    logger.info(f"run_inputs starting with inputs = f{inputs}")
     if completion_sets is None:
         completion_sets = [set(inputs)]
     def check_is_completion() -> bool:
@@ -340,6 +350,8 @@ async def run_inputs(
             await sender(feedback_message)
         for input in inputs:
             input.on_update(on_update)
+    else:
+        logger.info("run_inputs supressing feedback")
     if codependant:
         for input1 in inputs:
             for input2 in inputs:
