@@ -8,7 +8,8 @@ LICHESS_URL = "https://database.lichess.org/lichess_db_puzzle.csv.zst"
 LICHESS_PATH = "data/lichess_db_puzzle.csv"
 NLTK_MODULES = [
     'wordnet',
-    'brown'
+    'brown',
+    'averaged_perceptron_tagger'
 ]
 
 def pip_install(package:str):
