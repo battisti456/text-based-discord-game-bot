@@ -5,7 +5,7 @@ from game.game_bases.elimination_base import Elimination_Base
 from game.game_bases.game_word_base import Game_Word_Base
 from game.components.game_interface import Game_Interface
 from game.components.message import Message, make_no_yes_bullet_points, make_bullet_points
-from game.components.player_input import Player_Single_Selection_Input, Player_Text_Input, run_inputs
+from game.components.player_input import Player_Single_Selection_Input, Player_Text_Input, run_inputs, multi_bind_message
 from game.components.response_validator import text_validator_maker
 from game.utils.emoji_groups import LEFT_RIGHT_EMOJI
 
@@ -67,18 +67,16 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
                 "choice of left or right",
                 self.gi,
                 self.sender,
-                [player],
-                message = left_right_message
+                [player]
             )
             letter_input = Player_Text_Input(
                 "choice of letter",
                 self.gi,
                 self.sender,
                 [player],
-                text_validator_maker(max_length=1,min_length=1,is_alpha=True),
-                message=left_right_input.message
+                text_validator_maker(max_length=1,min_length=1,is_alpha=True)
             )
-            left_right_input.message = letter_input.message# a bit hacky, but it works for now
+            multi_bind_message(left_right_message,left_right_input,letter_input)
             if first_turn:
                 first_turn = False
                 await self.sender(left_right_message)

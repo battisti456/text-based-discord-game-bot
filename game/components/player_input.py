@@ -181,14 +181,21 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
             players:Optional[list[PlayerId]] = None, response_validator:ResponseValidator[T] = not_none,
             who_can_see:Optional[list[PlayerId]] = None, 
             timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings'],
-            message:Optional[Message] = None, allow_edits:bool = True):
+            message:Optional[Message|str] = None, allow_edits:bool = True):
         Player_Input.__init__(self,name,gi,sender,players,response_validator,who_can_see,timeout,warnings)
+        self.message:Message
+        _message:Message
         if message is None:
-            self.message:Message = Message("Respond here.",players_who_can_see=players)
+            _message = Message("Respond here.",players_who_can_see=players)
+        elif isinstance(message,str):
+            _message = Message(message,players_who_can_see=players)
         else:
-            self.message:Message = message
-        self.message = Alias_Message(self.message,lambda content: self.add_response_status(content))
+            _message:Message = message
+        self.bind_message(_message)
         self.allow_edits:bool = allow_edits
+    def bind_message(self,message:Message) -> Message:
+        self.message = Alias_Message(message,lambda content: self.add_response_status(content))
+        return self.message
     def response_status(self, basic: bool = False) -> str:
         return super().response_status(basic) + f" *(Edits are {'not ' if not self.allow_edits else ''}allowed.)*"
     async def update_response_status(self):
@@ -231,7 +238,7 @@ class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
             response_validator:ResponseValidator[str] = default_text_validator,
             who_can_see:Optional[list[PlayerId]] = None, 
             timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings'],
-            message:Optional[Message] = None,
+            message:Optional[Message|str] = None,
             allow_edits:bool = True):
         Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,timeout,warnings,message,allow_edits)
     async def _setup(self):
@@ -260,7 +267,7 @@ class Player_Single_Selection_Input(Player_Input_In_Response_To_Message[int]):
             response_validator:ResponseValidator[int] = not_none, 
             who_can_see:Optional[list[PlayerId]] = None, 
             timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings'],
-            message:Optional[Message] = None,
+            message:Optional[Message|str] = None,
             allow_edits:bool = True):
         Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,timeout,warnings,message,allow_edits)
     async def _setup(self):
@@ -288,7 +295,7 @@ class Player_Multiple_Selection_Input(Player_Input_In_Response_To_Message[set[in
             self, name:str, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
             response_validator:ResponseValidator[set[int]] = not_none,
             who_can_see:Optional[list[PlayerId]] = None, 
-            timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings'], message:Optional[Message] = None):
+            timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings'], message:Optional[Message|str] = None):
         Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,timeout,warnings,message,True)
     async def _setup(self):
         await Player_Input_In_Response_To_Message._setup(self)
@@ -315,7 +322,19 @@ class Player_Multiple_Selection_Input(Player_Input_In_Response_To_Message[set[in
                         await self._update()
     async def _unsetup(self):
         self.gi.purge_actions(self)
-
+def multi_bind_message(message:Message,*player_inputs:Player_Input_In_Response_To_Message):
+    """
+    binds a single message to multiple inputs correctly
+    
+    message: the message to be bound to all of the inputs
+    
+    player_inputs: all the player inputs the message should be bound to
+    """
+    _message:Message = message
+    for player_input in player_inputs:
+        _message = player_input.bind_message(_message)
+    for player_input in player_inputs:
+        player_input.message = _message
 async def run_inputs(
         inputs:list[Player_Input],completion_sets:Optional[list[set[Player_Input]]] = None,
         sender:Optional[Sender] = None,who_can_see:Optional[list[PlayerId]] = None,
