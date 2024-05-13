@@ -2,6 +2,7 @@
 from game import PlayerId, PlayerDict, make_player_dict
 from game.game_bases import Elimination_Base
 from game.components.game_interface import Game_Interface
+from game.components.response_validator import single_choice_validator_maker
 from game.utils.emoji_groups import ROCK_PAPER_SCISSORS_EMOJI
 import random
 
@@ -37,12 +38,15 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
                 elif gun_owners[num_guns]:
                     gun_text_list.append(f"{self.format_players_md(gun_owners[num_guns])} have {num_guns + 1} gun{s} each.")
             gun_text= '\n'.join(gun_text_list)
-            gun_text = f"\n{gun_text}\nRemember that if you choose gun without having one, you lose!\n"
+            #gun_text = f"\n{gun_text}\nRemember that if you choose gun without having one, you lose!\n"
         responses:PlayerDict[int] = await self.basic_multiple_choice(
             content = f"What move will you choose?{gun_text}",
             options = options,
             who_chooses=self.unkicked_players,
-            emojis=list(ROCK_PAPER_SCISSORS_EMOJI))
+            emojis=list(ROCK_PAPER_SCISSORS_EMOJI),
+            response_validator=single_choice_validator_maker(
+                {player:set(range(3)) for player in self.unkicked_players if not player in players_with_guns},
+                list(ROCK_PAPER_SCISSORS_EMOJI)))
         my_pick = random.randint(0,2)
         players_eliminated:list[PlayerId] = []
         players_who_won_guns:list[PlayerId] = []

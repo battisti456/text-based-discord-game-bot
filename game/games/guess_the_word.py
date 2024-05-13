@@ -1,5 +1,5 @@
 from game import PlayerId, PlayerDict
-
+from config.games_config import games_config
 from game.game_bases import Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Points_Base
 
 from game.components.game_interface import Game_Interface
@@ -7,13 +7,15 @@ from game.utils.grammer import wordify_iterable
 from game.utils.word_tools import SimplePartOfSpeach, DefinitionList, definition_dict_to_list
 import random
 
-NUM_ROUNDS = 3
-MIN_WORD_LEN = 6
-MAX_WORD_LEN = 12
-NUM_DEFINITIONS = 3
+CONFIG = games_config['guess_the_word']
 
-GUESS_FEEDBACK = True
-LENGTH_HINT = True
+NUM_ROUNDS = CONFIG['num_rounds']
+MIN_WORD_LEN = CONFIG['min_word_len']
+MAX_WORD_LEN = CONFIG['max_word_len']
+NUM_DEFINITIONS = CONFIG['num_definitions']
+
+GUESS_FEEDBACK = CONFIG['guess_feedback']
+LENGTH_HINT = CONFIG['length_hint']
 
 class Guess_The_Word(Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Points_Base):
     def __init__(self,gi:Game_Interface):

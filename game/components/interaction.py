@@ -26,6 +26,8 @@ class Interaction(object):
         self.interaction_type:InteractionType = interaction_type
 
         self.choice_index:Optional[int] = None
+    def __repr__(self) -> str:
+        return f"Interaction[{self.interaction_type}]]({self.content})"
     def reply(self,content:str) -> Message:
         return Message(
             content = content,

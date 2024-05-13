@@ -4,6 +4,7 @@ from game import PlayerId, ChannelId, PlayerDictOptional
 from game.components.game_interface import Game_Interface
 from game.components.message import Message, Bullet_Point
 from game.components.player_input import Player_Single_Selection_Input, Player_Text_Input
+from game.components.response_validator import ResponseValidator, default_text_validator, not_none
 import game.utils.emoji_groups
 
 class Interface_Component():
@@ -13,7 +14,8 @@ class Interface_Component():
         self.all_players:list[PlayerId] = self.gi.get_players()
     async def _basic_text_response(
             self,content:str,who_chooses:PlayerId|list[PlayerId]|None = None,
-            channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True) -> PlayerDictOptional[str]:
+            channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True,
+            response_validator:ResponseValidator[str] = default_text_validator) -> PlayerDictOptional[str]:
         """
         sets up and runs a text input, returning its responses
         
@@ -42,7 +44,8 @@ class Interface_Component():
             sender = self.sender,
             players=wc,
             message = question,
-            allow_edits=allow_answer_change
+            allow_edits=allow_answer_change,
+            response_validator=response_validator
         )
         await player_input.run()
 
@@ -50,7 +53,7 @@ class Interface_Component():
     async def _basic_multiple_choice(
             self,content:Optional[str] = None,options:list[str] = [],who_chooses:Optional[list[PlayerId]] = None,
             emojis:Optional[list[str]] = None, channel_id:Optional[ChannelId] = None, 
-            allow_answer_change:bool = True) -> PlayerDictOptional[int]:
+            allow_answer_change:bool = True, response_validator:ResponseValidator[int] = not_none) -> PlayerDictOptional[int]:
         """
         sets up and runs a multiple choice input, returning its responses
         
@@ -96,7 +99,8 @@ class Interface_Component():
             sender = self.sender,
             players=wc,
             message = question,
-            allow_edits=allow_answer_change
+            allow_edits=allow_answer_change,
+            response_validator=response_validator
         )
         await player_input.run()
 

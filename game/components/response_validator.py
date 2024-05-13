@@ -1,10 +1,18 @@
-from game import PlayerId
+from game import PlayerId, PlayerDict
+from game.utils.grammer import wordify_iterable
 from typing import Callable, Any, Optional
 
 from config.config import config
 from profanity_check import predict_prob
 
 type Validation = tuple[bool,str|None]
+"""
+a tuple with values bool, and str or None
+
+the bool determines whether a given response was valid, true for allowed, false for not allowed
+
+the str|None determines the feedback given; None results in no feedback, otherwise the str is returned as feedback to the player
+"""
 type ResponseValidator[DataType] = Callable[[PlayerId,DataType|None],Validation]
 
 not_none:ResponseValidator[Any] = lambda player, data: (not data is None,None)
@@ -31,10 +39,16 @@ def text_validator_maker(
     def validator(player:PlayerId,value:Optional[str]) -> Validation:
         if value is None:
             return (False,None)
-        if predict_prob([value])[0] >= config['profanity_threshold']:
-            return (False,"given value set off the profanity filter")
         if check_lower_case:
             value = value.lower()
+        if predict_prob([value])[0] >= config['profanity_threshold']:
+            return (False,"given value set off the profanity filter")
+        if not is_in is None:
+            if not value in is_in:
+                return (False,f"given value '{value}' not in acceptable values")
+        if not not_is_in is None:
+            if value in not_is_in:
+                return (False,f"given value '{value}' is a banned value")
         if not is_substr_of is None:
             if not value in is_substr_of:
                 return (False,f"given value '{value}' not in '{is_substr_of}'")
@@ -59,12 +73,6 @@ def text_validator_maker(
         if not is_digit is None:
             if not value.isdigit():
                 return (False,f"given value '{value}' is not a digit")
-        if not is_in is None:
-            if not value in is_in:
-                return (False,f"given value '{value}' not in acceptable values")
-        if not not_is_in is None:
-            if value in not_is_in:
-                return (False,f"given value '{value}' is a banned value")
         if not is_composed_of is None:
             if not all(letter in is_composed_of for letter in value):
                 return (False,f"given value '{value}' contains characters not found in '{is_composed_of}'")
@@ -82,6 +90,24 @@ def text_validator_maker(
         if not max_num_words is None:
             if num_words > max_num_words:
                 return (False,f"given value '{value}' contains {num_words} word(s) which is more than the maximum of {min_num_words} words")
+        return (True,None)
+    return validator
+
+def single_choice_validator_maker(
+        player_limits:PlayerDict[set[int]],
+        option_repr:Optional[list[str]] = None
+) -> ResponseValidator[int]:
+    def str_opt(opt:int) -> str:
+        if not option_repr is None:
+            return option_repr[opt]
+        else:
+            return "Option : " + str(opt + 1)
+    def validator(player:PlayerId,data:int|None) -> Validation:
+        if data is None:
+            return (False,None)
+        if player in player_limits:
+            if not data in player_limits[player]:
+                return (False,f"your choice of {str_opt(data)} is not allowed, you are only permitted to choose amongst {wordify_iterable(str_opt(val) for val in player_limits[player])}")
         return (True,None)
     return validator
 default_text_validator:ResponseValidator = text_validator_maker()

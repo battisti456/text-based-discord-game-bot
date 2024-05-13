@@ -10,18 +10,22 @@ class Elimination_Base(Game):
             self.players_eliminated:PlayerPlacement = []
 
     @police_game_callable
-    async def eliminate_players(self,players:PlayerId|list[PlayerId]):
+    async def eliminate_players(self,players:PlayerId|list[PlayerId]) -> bool:
         """
         eliminates players unless this would eliminate all remaining players, then it does not eliminate the players
+
+        returns whether or not all players would have been eliminated
         """
         if isinstance(players,int):
-            players = [players]
+            players = [players] #type: ignore
         if players:
             assert isinstance(players,list)
             if len(players) == len(self.unkicked_players):
                 await self.basic_policed_send(f"{self.format_players_md(players)} despite otherwise being eliminated will continue to another round.")
+                return True
             else:
                 await self.kick_players(players,'eliminated')
+        return False
     @police_game_callable
     async def _run(self):
         while len(self.unkicked_players) >= 2:

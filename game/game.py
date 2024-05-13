@@ -5,6 +5,7 @@ import game.utils.emoji_groups
 from game.components.game_interface import Game_Interface
 from game.components.message import Message
 from game.components.player_input import Player_Input
+from game.components.response_validator import ResponseValidator, not_none, default_text_validator
 from game.utils.grammer import ordinate, wordify_iterable
 import functools
 from inspect import isclass
@@ -72,19 +73,19 @@ class Game(Interface_Component):
     async def basic_multiple_choice(
             self,content:Optional[str]=...,options:list[str]=...,who_chooses:Optional[list[PlayerId]]=...,
             emojis:Optional[list[str]]=..., channel_id:Optional[ChannelId]=..., 
-            allow_answer_change:bool=...) -> PlayerDict[int]:
+            allow_answer_change:bool=..., response_validator:ResponseValidator[int] = ...) -> PlayerDict[int]:
         ...
     @overload
     async def basic_multiple_choice(
             self,content:Optional[str]=...,options:list[str]=...,who_chooses:PlayerId=...,
             emojis:Optional[list[str]]=..., channel_id:Optional[ChannelId]=..., 
-            allow_answer_change:bool=...) -> int:
+            allow_answer_change:bool=...,response_validator:ResponseValidator[int] = ...) -> int:
         ...
     #endregion
     async def basic_multiple_choice(
             self,content:Optional[str] = None,options:list[str] = [],who_chooses:Optional[list[PlayerId]|PlayerId] = None,
             emojis:Optional[list[str]] = None, channel_id:Optional[ChannelId] = None, 
-            allow_answer_change:bool = True) -> PlayerDict[int]|int:
+            allow_answer_change:bool = True, response_validator:ResponseValidator[int] = not_none) -> PlayerDict[int]|int:
         """
         sets up and runs a multiple choice input, returning its responses
         
@@ -112,7 +113,8 @@ class Game(Interface_Component):
             who_chooses=who_chooses,
             emojis=emojis,
             channel_id=channel_id,
-            allow_answer_change=allow_answer_change
+            allow_answer_change=allow_answer_change,
+            response_validator=response_validator
 
         )
         await self.kick_none_response(responses)
@@ -128,17 +130,20 @@ class Game(Interface_Component):
     @overload
     async def basic_no_yes(
             self,content:Optional[str]=...,who_chooses:Optional[list[PlayerId]]=...,
-            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...) -> PlayerDict[int]:
+            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...,
+            response_validator:ResponseValidator[int] = ...) -> PlayerDict[int]:
         ...
     @overload
     async def basic_no_yes(
             self,content:Optional[str]=...,who_chooses:PlayerId=...,
-            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...) -> int:
+            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...,
+            response_validator:ResponseValidator[int] = ...) -> int:
         ...
     #endregion
     async def basic_no_yes(
             self,content:Optional[str] = None,who_chooses:Optional[PlayerId|list[PlayerId]] = None,
-            channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True) -> int | PlayerDict[int]:
+            channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True,
+            response_validator:ResponseValidator[int] = not_none) -> int | PlayerDict[int]:
         """
         runs self.basic_multiple_choice with ('no','yes') as the options
         
@@ -151,22 +156,25 @@ class Game(Interface_Component):
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
         #returns 0 for no and 1 for yes to a yes or no question, waits for user to respond
-        return await self.basic_multiple_choice(content,["no","yes"],who_chooses,list(game.utils.emoji_groups.NO_YES_EMOJI),channel_id,allow_answer_change)
+        return await self.basic_multiple_choice(content,["no","yes"],who_chooses,list(game.utils.emoji_groups.NO_YES_EMOJI),channel_id,allow_answer_change,response_validator)
     #region text_response overloads
     @overload
     async def basic_text_response(
             self,content:str,who_chooses:list[PlayerId]|None=...,
-            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...) -> PlayerDict[str]:
+            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...,
+            response_validator:ResponseValidator[str] = ...) -> PlayerDict[str]:
         ...
     @overload
     async def basic_text_response(
             self,content:str,who_chooses:PlayerId=...,
-            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...) -> str:
+            channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...,
+            response_validator:ResponseValidator[str] = ...) -> str:
         ...
     #endregion
     async def basic_text_response(
             self,content:str,who_chooses:PlayerId|list[PlayerId]|None = None,
-            channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True) -> str|PlayerDict[str]:
+            channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True,
+            response_validator:ResponseValidator[str] = default_text_validator) -> str|PlayerDict[str]:
         """
         sets up and runs a text input, returning its responses
         
@@ -188,7 +196,8 @@ class Game(Interface_Component):
             content=content,
             who_chooses=who_chooses,
             channel_id=channel_id,
-            allow_answer_change=allow_answer_change
+            allow_answer_change=allow_answer_change,
+            response_validator=response_validator
 
         )
         await self.kick_none_response(responses)

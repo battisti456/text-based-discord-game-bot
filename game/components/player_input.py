@@ -47,7 +47,7 @@ class Player_Input[T]():
         self._last_response_status:str = ""
         self.timeout_time:int = 0
     def __repr__(self) -> str:
-        return f"{type(self)}({self.name})"
+        return f"{self.__class__.__name__}({self.name})"
     def on_update(self,func:Callable[[],Awaitable]) -> Callable[[],Awaitable]:
         """binds a callable to be run whenever the input changes"""
         if not func in self.funcs_to_call_on_update:
@@ -109,7 +109,7 @@ class Player_Input[T]():
     def has_recieved_all_responses(self) -> bool:
         """returns whether all responses meet the validator's requirements"""
         to_return:bool = all(self._response_validator(player,self.responses[player])[0] for player in self.players)
-        logger.info(f"{self} has evaluated that is has" + ("'nt" if not to_return else "") + " received all responses")
+        logger.info(f"{self} has evaluated that is has" + ("n't" if not to_return else "") + " received all responses")
         return all(self._response_validator(player,self.responses[player])[0] for player in self.players)
     async def _handle_warnings(self):
         if self.timeout is None:
@@ -189,6 +189,8 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
             self.message:Message = message
         self.message = Alias_Message(self.message,lambda content: self.add_response_status(content))
         self.allow_edits:bool = allow_edits
+    def response_status(self, basic: bool = False) -> str:
+        return super().response_status(basic) + f" *(Edits are {'not ' if not self.allow_edits else ''}allowed.)*"
     async def update_response_status(self):
         await self.sender(self.message)
     def add_response_status(self,content:str|None):
@@ -203,14 +205,19 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
         it does not check if the interaction is valid according to the validifier
         """
         if interaction.player_id is None:
+            logger.info(f"{interaction} ignored by {self} because it had no player_id")
             return False
         if not interaction.player_id in self.players:
+            logger.info(f"{interaction} ignored by {self} because its player_id was not listed for the input")
             return False
         if not self.message.is_response(interaction):
+            logger.info(f"{interaction} ignored by {self} because it was not a response to the message")
             return False
-        return (
-            self.allow_edits or 
-            self.responses[interaction.player_id] is None)
+        val = self.allow_edits or not self._response_validator(interaction.player_id,self.responses[interaction.player_id])[0]
+        if not val:
+            logger.info(f"{interaction} ignored by {self} because edits are not allowed and they already have a valid response of '{self.responses[interaction.player_id]}'")
+            return False
+        return True
     async def _setup(self):
         if not self.message.is_sent():
             await self.sender(self.message)

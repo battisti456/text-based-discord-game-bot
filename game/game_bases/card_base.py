@@ -312,6 +312,7 @@ class Card_Base(Game):
         assert not message is None
         message.players_who_can_see = [player]
         message.content = contents
+        message.channel_id = self.hand_threads[player]
         ch_to_attachment = self.ch_to_attachment(hand)
         message.attach_paths = [ch_to_attachment]
         await self.sender(message)

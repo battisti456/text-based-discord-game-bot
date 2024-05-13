@@ -14,7 +14,7 @@ from game.components.interaction import Interaction
 from game.game import Game
 from game.games import random_game, games
 from game.utils.grammer import wordify_iterable
-
+import game.games
 
 CP = config['command_prefix']
 COMMAND_DOCSTRING= f"""
@@ -81,11 +81,18 @@ class Game_Operator(Interface_Operator):
                             if args['<name>'] is None:
                                 game_type = random_game()
                             else:
-                                options = list(game_type for game_type in games if game_type.__name__ == args['<name>'])
-                                if len(options) == 0:
+                                #options = list(game_type for game_type in games if game_type.__name__ == args['<name>'])
+                                #if len(options) == 0:
+                                #    await send(f"'{args['<name>']}' is not the name of a valid game.")
+                                #    return
+                                #game_type = options[0]
+                                try:
+                                    game_type = getattr(game.games,args['<name>'])
+                                    assert issubclass(game_type,Game)
+                                except:
                                     await send(f"'{args['<name>']}' is not the name of a valid game.")
                                     return
-                                game_type = options[0]
+                                
                             self.game = game_type(self.gi)
                             self.state = 'run_individual_game'
                             self.run_task = asyncio.create_task(self.game.run())

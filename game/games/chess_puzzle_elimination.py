@@ -171,7 +171,6 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
             best_move_text = f"The best move in this position for {player_color} is {get_move_text(self.board,moves[move_index])}."
 
             if correct_players:
-                await self.eliminate_players(incorrect_players)
                 move_right_text = f"{self.format_players_md(correct_players)} got the move correct!"
             
             self.board.push_uci(moves[move_index])
@@ -183,6 +182,9 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
                 f"{move_right_text} {best_move_text}{end_text}",
                 attatchements_data=[self.make_board_image()]
             )
+
+            await self.eliminate_players(incorrect_players)
+            
             move_index += 1
 
             if move_index == len(moves):
