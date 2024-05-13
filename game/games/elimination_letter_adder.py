@@ -76,8 +76,9 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
                 self.sender,
                 [player],
                 text_validator_maker(max_length=1,min_length=1,is_alpha=True),
-                message=left_right_message
+                message=left_right_input.message
             )
+            left_right_input.message = letter_input.message# a bit hacky, but it works for now
             if first_turn:
                 first_turn = False
                 await self.sender(left_right_message)
@@ -116,11 +117,11 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
                     await self.basic_send(
                         f"{self.format_players_md([player])} has spelled the word {letters}.{def_text}")
                     self.last_player = player
-                    self.eliminate_players([player])
+                    await self.eliminate_players([player])
                     return
                 else:
                     self.last_player = player
-                    return 
+                    continue 
             else:#challenge
                 message = Message(
                     f"{self.format_players_md([player])} has chosen to challenge {self.format_players_md([self.last_player])} on the letters '{letters}'. \n" +
