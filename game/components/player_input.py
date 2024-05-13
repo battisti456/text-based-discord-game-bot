@@ -117,6 +117,8 @@ class Player_Input[T]():
         for i in range(len(self.warnings)):
             await asyncio.sleep(self.timeout_time-self.timeout+self.warnings[i]-int(time()))
             players_not_responded = list(player for player in self.players if not self._response_validator(player,self.responses[player])[0])
+            if len(players_not_responded) == 0:
+                continue
             warning_text:str
             if i + 1 == len(self.warnings):
                 warning_text = "This is your final warning."
