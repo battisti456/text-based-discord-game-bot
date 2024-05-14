@@ -3,6 +3,7 @@ from game.utils.common import L
 from nltk.corpus import wordnet
 from nltk.tag.perceptron import PerceptronTagger
 from nltk.corpus.reader.wordnet import Synset, Lemma
+import wonderwords
 from word_forms.word_forms import get_word_forms #type: ignore
 from dataclasses import dataclass
 import random
@@ -26,6 +27,9 @@ WORDNET_POS_MAP:dict[str,SimplePartOfSpeach]  = {
     'v' : 'Verb'
 }
 MAX_RANDOM_SCENTENCE_LOOPS = 1000
+
+word_generator = wonderwords.RandomWord()
+sentence_generator = wonderwords.RandomSentence()
 
 @dataclass(frozen=True)
 class Definition():

@@ -29,8 +29,7 @@ games:list[type[Game]] = [
     Prediction_Texas_Holdem,
     Chess_Puzzle_Elimination,
     Altered_Image_Guess,
-    Emoji_Communication,
-    Basic_Game]
+    Emoji_Communication]
 
 def random_game() -> type[Game]:
     return choice(games)

@@ -1,8 +1,10 @@
-from typing import TypeVar
-from typing import Iterable, Optional, Callable, Literal, Hashable, NewType
+from typing_extensions import TypeVar
+from typing import Iterable, Optional, Callable, Literal, Hashable, NewType, Mapping
 from config.config import config
+from game.utils.common import Grouping, Number
 
 import logging
+
 fmt = logging.Formatter('%(asctime)s::%(levelname)s::%(name)s::%(message)s')
 h1 = logging.StreamHandler()
 h1.setLevel(config['logging_level'])
@@ -20,15 +22,23 @@ PlayerId = NewType('PlayerId',Hashable)#type: ignore
 MessageId = NewType('MessageId',Hashable)#type: ignore
 ChannelId = NewType('ChannelId',Hashable)#type: ignore
 InteractionId = NewType('InteractionId',Hashable)#type: ignore
-type PlayerPlacement = list[list[PlayerId]]
 
+type PlayersIds = Grouping[PlayerId]
+
+type Placement[T] = tuple[tuple[T,...],...]
+
+type PlayerPlacement = Placement[PlayerId]
 
 type PlayerDictOptional[DataType] = dict[PlayerId,Optional[DataType]]
 type PlayerDict[DataType] = dict[PlayerId,DataType]
+type PlayerMapOptional[DataType] = Mapping[PlayerId,Optional[DataType]]
+type PlayerMap[DataType] = Mapping[PlayerId,DataType]
 
 type KickReason = Literal['timeout','eliminated','unspecified']
 
 type Operators = Literal['command','run_game']
+
+Participant = TypeVar('Participant',bound=Hashable|PlayerId,default=PlayerId)
 
 #player/players being _______
 kick_text:dict[KickReason,str] = {
@@ -69,7 +79,7 @@ class GameEndInsufficientPlayers(GameEndException):
         GameEndException.__init__(self,message)
         self._explanation:str = "a lack of sufficient remaining players" 
 
-def treat_responses(self,responses:PlayerDictOptional[R],players:Optional[None]=None) -> PlayerDict[R]:
+def treat_responses(responses:PlayerMapOptional[R],players:Optional[None]=None) -> PlayerDict[R]:
         new_responses:PlayerDict[R] = {}
         for player in responses:
             if not players is None:
@@ -105,35 +115,45 @@ def correct_str(value:str|None) -> str:
         return ""
     else:
         return value
-    
-def score_to_placement(score:PlayerDict[float]|PlayerDict[int], all_players:Optional[list[PlayerId]] = None,reverse:bool = False) -> PlayerPlacement:
+
+def score_to_placement[Participant](
+        score:Mapping[Participant,Number], 
+        all_participants:Optional[Grouping[Participant]] = None,
+        reverse:bool = False
+        ) -> Placement[Participant]:
     """
     creates a player placement with lowest scores placing higher
     
     reverse reverses this order
     """
-    players = list(score)
-    players.sort(key=lambda player: score[player],reverse=reverse)
-    to_return:PlayerPlacement = []
-    for i in range(len(players)):
+    participants = list(score)
+    participants.sort(key=lambda player: score[player],reverse=reverse)
+    to_return:list[tuple[Participant,...]] = []
+    for i in range(len(participants)):
         if i:
-            if score[players[i]] == score[to_return[i-1][0]]:
-                to_return[i-1].append(players[i])
+            if score[participants[i]] == score[to_return[i-1][0]]:
+                to_return[i-1] += (participants[i],)
                 continue
-        to_return.append([players[i]])
-    if not all_players is None and set(all_players) != set(players):
-        to_return.append(list(set(all_players)-set(players)))
-    return to_return
+        to_return.append((participants[i],))
+    if not all_participants is None and set(all_participants) != set(participants):
+        to_return.append(tuple(set(all_participants)-set(participants)))
+    return tuple(to_return)
 def _merge_placements(pl1:PlayerPlacement,pl2:PlayerPlacement):
     i:int = 0
     while i < len(pl1):
         if len(pl1[i]) > 1:
-            seperated:PlayerPlacement = []
+            seperated:list[list[PlayerId]] = []
             for group in pl2:
                 new = list(player for player in pl1[i] if player in group)
                 if new:#if there were any relevant players in that group
                     seperated.append(new)
-            pl1 = pl1[0:i] + seperated + pl1[i+1:-1]
+            pl1 = (
+                pl1[0:i] + 
+                tuple(
+                    tuple(player for player in pl1[i] if player in group) 
+                    for group in pl2 
+                    if any(player in group for player in pl1[i])) + 
+                pl1[i+1:-1])
             i += len(seperated)
         else:
             i += 1

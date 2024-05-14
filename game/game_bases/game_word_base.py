@@ -1,9 +1,8 @@
 from game.game import Game
 from game.components.game_interface import Game_Interface
-from game.utils.word_tools import DefinitionDict, DefinitionList, definition_dict_to_list, get_word_definition
+from game.utils.word_tools import DefinitionDict, DefinitionList, definition_dict_to_list, get_word_definition, word_generator, sentence_generator
 
 import fogleman_TWL06_scrabble as scrabble
-import wonderwords
 import random
 
 LETTER_FREQUENCY = {
@@ -45,8 +44,8 @@ class Game_Word_Base(Game):
         Game.__init__(self,gh)
         if not Game_Word_Base in self.initialized_bases:
             self.initialized_bases.append(Game_Word_Base)
-            self.ww_word = wonderwords.RandomWord()
-            self.ww_sentence = wonderwords.RandomSentence()
+            self.ww_word = word_generator
+            self.ww_sentence = sentence_generator
     def is_valid_word(self,word:str) -> bool:
         return scrabble.check(word)
     def define(self,word:str) -> DefinitionDict:
