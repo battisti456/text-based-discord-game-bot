@@ -366,7 +366,7 @@ async def run_inputs(
     if not sender is None:
         def feedback_text() -> str:
             feedback_list = []
-            for input in inputs:
+            for input in (input for input in inputs if not input.has_recieved_all_responses()):
                 feedback_list.append("Monitoring: " + input.response_status(basic_feedback))
             return "\n".join(feedback_list)
         feedback_message:Message = Alias_Message(

@@ -2,7 +2,7 @@ from game.game import Game
 from game.components.game_interface import Game_Interface
 from game.utils.grammer import s
 from game import PlayerId, PlayerPlacement, score_to_placement, Participant, Placement
-from typing import Optional, Generic, Mapping
+from typing import Optional, Generic, Mapping, Callable
 from typing_extensions import TypeVar
 from game.utils.common import arg_fix_map, Number, Grouping, arg_fix_grouping
 
@@ -18,6 +18,7 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Game):
             self.point_word:str = "point"
             self.round_word:str = "round"
             self.reverse_points:bool = False
+            self.part_str:Callable[[Participant],str] = lambda part: str(part)
     def configure(self,participants:Grouping[Participant]):
         self.participants:tuple[Participant,...] = tuple(participants)
         self.point_totals:dict[Participant,PointType] = {
@@ -33,12 +34,12 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Game):
         participant_lines:list[str]
         if amount is None:
             participant_lines = list(
-                f"{participant} has {self.point_totals[participant]} {self.point_word}{s(self.point_totals[participant])}" 
+                f"{self.part_str(participant)} has {self.point_totals[participant]} {self.point_word}{s(self.point_totals[participant])}" 
                 for participant in w
             )
         else:
             participant_lines = list(
-                f"{participant} received {a[participant]} {self.point_word}{s(a[participant])} bringing them to " + 
+                f"{self.part_str(participant)} received {a[participant]} {self.point_word}{s(a[participant])} bringing them to " + 
                 f"{self.point_totals[participant] + a[participant]} {self.point_word}{s(self.point_totals[participant] + a[participant])}" 
                 for participant in w
         )
@@ -68,14 +69,15 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Game):
             await self.core_game()
             await self.announce_score()
     def generate_participant_placements(self) -> Placement[Participant]:
-        return score_to_placement(self.point_totals,self.participants,self.reverse_points)
+        return score_to_placement(self.point_totals,self.participants,not self.reverse_points)
 
 
 class Rounds_With_Points_Base(Rounds_With_Points_Framework[PlayerId,int]):
     def __init__(self,gi:Game_Interface):
-        Rounds_With_Points_Framework[PlayerId,int].__init__(self,gi)
+        Rounds_With_Points_Framework.__init__(self,gi)
         if not Rounds_With_Points_Base in self.initialized_bases:
             self.initialized_bases.append(Rounds_With_Points_Base)
             self.configure(self.unkicked_players)
+            self.part_str = lambda player: self.format_players([player])
     def generate_placements(self) -> PlayerPlacement:
         return self.generate_participant_placements()

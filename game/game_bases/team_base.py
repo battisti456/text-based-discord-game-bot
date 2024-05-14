@@ -58,7 +58,7 @@ class Team_Base(Game):
 
 class Rounds_With_Points_Team_Base(Rounds_With_Points_Framework[Team,int],Team_Base):
     def __init__(self,gi:Game_Interface):
-        Rounds_With_Points_Framework[Team,int].__init__(self,gi)
+        Rounds_With_Points_Framework.__init__(self,gi)#type:ignore
         Team_Base.__init__(self,gi)
         if Rounds_With_Points_Team_Base not in self.initialized_bases:
             self.initialized_bases.append(Rounds_With_Points_Team_Base)
