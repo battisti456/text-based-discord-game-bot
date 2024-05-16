@@ -55,7 +55,7 @@ class Guess_The_Word(Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Poin
         await self.basic_send(f"The secret word{len_text} has been chosen!")
         for sub_round in range(NUM_DEFINITIONS):
             def_str = self.definition_string([definition_list[sub_round]])
-            await self.basic_send(f"Here is definition #{sub_round + 1} of the word{len_text}:\n{def_str}")
+            await self.basic_send(f"### Here is definition #{sub_round + 1} of the word{len_text}:\n{def_str}")
             if GUESS_FEEDBACK:
                 for player in self.unkicked_players:
                     if player in players_not_guessed and (any(player_hint_letter[player]) or any(global_hint_letter)):

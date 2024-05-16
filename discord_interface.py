@@ -7,7 +7,9 @@ from game.utils.grammer import wordify_iterable
 import discord
 from random import shuffle
 
-from game import PlayerId, MessageId, ChannelId, InteractionId
+from game import PlayerId, MessageId, ChannelId, InteractionId, get_logger
+
+logger = get_logger(__name__)
 
 MESSAGE_MAX_LENGTH = 1800#actually 2000, but I leave extra for split indicators
 
@@ -17,9 +19,15 @@ def discord_message_populate_interaction(
     interaction.channel_id = payload.channel.id#type: ignore
     interaction.content = payload.content
     interaction.interaction_id = payload.id#type: ignore
-    if (not (payload.reference is None) and 
-            not (payload.reference.cached_message is None)):
-            interaction.reply_to_message_id = payload.reference.cached_message.id#type: ignore
+    if (
+        not (payload.reference is None) and 
+        not (payload.reference.cached_message is None)
+        ):
+        reply_id:MessageId|None = payload.reference.message_id#type:ignore
+        if reply_id is None:
+            logger.warning(f"received a message with a reference but no reference.message_id")
+        else:
+            interaction.reply_to_message_id = reply_id
     return interaction
 async def discord_message_emoji_order(
         payload:discord.Message, user_id:int) -> list[str]:

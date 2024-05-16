@@ -73,5 +73,5 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
                 self.announced_guns = True
                 await self.basic_send(
                     "Woah, plot twist!. If you beat me you get a gun you can pick instead in the next round. It will gurantee you a pass for the round!")
-        await self.eliminate_players(players_eliminated)
+        await self.eliminate(players_eliminated)
         

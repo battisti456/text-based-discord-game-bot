@@ -62,7 +62,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
                 if len(players_eliminated_this_draw) == 1:
                     have_text = "has"
                 await self.basic_send(f"{self.format_players_md(players_eliminated_this_draw)} {have_text} overdrawn.")
-                exit_core = await self.eliminate_players(players_eliminated_this_draw)
+                exit_core = await self.eliminate(players_eliminated_this_draw)
                 if exit_core:
                     return
             players_still_drawing = list(player for player in self.unkicked_players if not player in players_passed)
@@ -80,7 +80,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
         score_list:list[int] = list(set(scores[player] for player in scores))
         score_list.sort()
         low_score:int = score_list[0]
-        await self.eliminate_players(list(player for player in self.unkicked_players if scores[player] == low_score))
+        await self.eliminate(list(player for player in self.unkicked_players if scores[player] == low_score))
         
 
 

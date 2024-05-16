@@ -27,7 +27,7 @@ class Player_Input[T]():
     def __init__(
             self,name:str, gi:Game_Interface,sender:Sender,players:PlayersIds,
             response_validator:ResponseValidator[T] = not_none, 
-            who_can_see:Optional[list[PlayerId]] = None, 
+            who_can_see:Optional[Grouping[PlayerId]] = None, 
             timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings']):
         self.timeout = timeout
         self.warnings = warnings
