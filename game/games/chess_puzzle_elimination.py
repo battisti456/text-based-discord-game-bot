@@ -183,7 +183,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
                 attatchements_data=[self.make_board_image()]
             )
 
-            await self.eliminate_players(incorrect_players)
+            await self.eliminate(incorrect_players)
             
             move_index += 1
 

@@ -17,4 +17,4 @@ class Elimination_Trivia(Elimination_Base,Trivia_Base):
         )
     async def core_game(self):
         player_correct:PlayerDict[bool] = await self.basic_ask_trivia(self.unkicked_players)
-        self.eliminate_players(list(player for player in self.unkicked_players if not player_correct[player]))
+        await self.eliminate(player for player in self.unkicked_players if not player_correct[player])

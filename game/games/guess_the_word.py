@@ -55,7 +55,7 @@ class Guess_The_Word(Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Poin
         await self.basic_send(f"The secret word{len_text} has been chosen!")
         for sub_round in range(NUM_DEFINITIONS):
             def_str = self.definition_string([definition_list[sub_round]])
-            await self.basic_send(f"Here is definition #{sub_round + 1} of the word{len_text}:\n{def_str}")
+            await self.basic_send(f"### Here is definition #{sub_round + 1} of the word{len_text}:\n{def_str}")
             if GUESS_FEEDBACK:
                 for player in self.unkicked_players:
                     if player in players_not_guessed and (any(player_hint_letter[player]) or any(global_hint_letter)):
@@ -67,7 +67,7 @@ class Guess_The_Word(Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Poin
                                 feedback += "\\_"
                         await self.basic_secret_send(player,f"Your current feedback is '{feedback}'.")
             responses:PlayerDict[str] = await self.basic_secret_text_response(players_not_guessed,f"**What word{len_text} is this definition for?**\n{def_str}")
-            correct_players:list[PlayerId] = list(player for player in players_not_guessed if responses[player].lower() == secret_word)
+            correct_players:list[PlayerId] = list(player for player in responses if responses[player].lower() == secret_word)
             if GUESS_FEEDBACK:
                 no_success = (len(correct_players) == 0)
                 for player in players_not_guessed:
@@ -94,7 +94,7 @@ class Guess_The_Word(Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Poin
                 await self.basic_send(f"{self.format_players_md(correct_players)} got it correct!")
                 for player in correct_players:
                     players_not_guessed.remove(player)
-                await self.score(correct_players,NUM_DEFINITIONS-sub_round)
+                await self.announce_and_receive_score(correct_players,NUM_DEFINITIONS-sub_round)
             else:
                 await self.basic_send("No one got it correct.")
             if len(players_not_guessed) == 0:

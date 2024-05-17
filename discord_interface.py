@@ -1,4 +1,4 @@
-from typing import Optional, Iterable
+from typing import Optional, Iterable, override
 from game.components.game_interface import Channel_Limited_Game_Interface, Channel_Limited_Interface_Sender
 from game.components.message import Message, Add_Bullet_Points_To_Content_Alias_Message
 from game.components.interaction import Interaction
@@ -7,7 +7,9 @@ from game.utils.grammer import wordify_iterable
 import discord
 from random import shuffle
 
-from game import PlayerId, MessageId, ChannelId, InteractionId
+from game import PlayerId, MessageId, ChannelId, InteractionId, get_logger
+
+logger = get_logger(__name__)
 
 MESSAGE_MAX_LENGTH = 1800#actually 2000, but I leave extra for split indicators
 
@@ -17,9 +19,15 @@ def discord_message_populate_interaction(
     interaction.channel_id = payload.channel.id#type: ignore
     interaction.content = payload.content
     interaction.interaction_id = payload.id#type: ignore
-    if (not (payload.reference is None) and 
-            not (payload.reference.cached_message is None)):
-            interaction.reply_to_message_id = payload.reference.cached_message.id#type: ignore
+    if (
+        not (payload.reference is None) and 
+        not (payload.reference.cached_message is None)
+        ):
+        reply_id:MessageId|None = payload.reference.message_id#type:ignore
+        if reply_id is None:
+            logger.warning(f"received a message with a reference but no reference.message_id")
+        else:
+            interaction.reply_to_message_id = reply_id
     return interaction
 async def discord_message_emoji_order(
         payload:discord.Message, user_id:int) -> list[str]:
@@ -37,6 +45,7 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
         Channel_Limited_Interface_Sender.__init__(self,gi)
         self.client = gi.client
         self.default_channel = gi.channel_id
+    @override
     async def _send(self, message: Message):
         if not message.content is None:
             if len(message.content) > MESSAGE_MAX_LENGTH:
@@ -75,7 +84,7 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
             await self.client.wait_until_ready()
             discord_message = await channel.send(
                 content=message.content 
-                if not message.content is None else "--empty--",
+                if not message.content in (None,'') else "--empty--",
                 files = attachments)
             message.message_id = discord_message.id#type:ignore
         else:#edit old message
@@ -90,8 +99,10 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
                     emoji = discord.PartialEmoji(name = bp.emoji)
                     await self.client.wait_until_ready()
                     await discord_message.add_reaction(emoji)
+    @override
     def format_players_md(self, players: Iterable[PlayerId]) -> str:
         return wordify_iterable(f"<@{player}>" for player in players)
+    @override
     def format_players(self,players:Iterable[PlayerId]) -> str:
         player_names:list[str] = []
         for player in players:
@@ -187,6 +198,7 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                                 break
                         if not interaction.choice_index is None:
                             await self._trigger_action(interaction)
+    @override
     async def reset(self):
         await super().reset()
         await self.client.wait_until_ready()
@@ -212,9 +224,8 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                     emoji.append(str(reaction.emoji))
                     break
         return emoji
-    async def run(self):
-        pass
-    async def _new_channel(self, name: Optional[str], who_can_see: Optional[list[PlayerId]]) -> ChannelId:
+    @override
+    async def _new_channel(self, name: Optional[str], who_can_see: Optional[Iterable[PlayerId]]) -> ChannelId:
         assert isinstance(self.channel_id,int)
         main_channel = self.client.get_channel(self.channel_id)
         assert isinstance(main_channel,discord.TextChannel)
@@ -232,10 +243,11 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 await self.client.wait_until_ready()
                 await thread.add_user(user)
         return thread.id#type:ignore
-    def get_players(self) -> list[PlayerId]:
+    @override
+    def get_players(self) -> frozenset[PlayerId]:
         players = self.players.copy()
         shuffle(players)
-        return players
+        return frozenset(players)
 
         
         

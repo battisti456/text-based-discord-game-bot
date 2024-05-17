@@ -1,4 +1,4 @@
-from game import PlayerId, MessageId, ChannelId, InteractionId
+from game import PlayerId, MessageId, ChannelId, InteractionId, PlayersIds
 from game.utils.grammer import wordify_iterable
 from game.utils.emoji_groups import NO_YES_EMOJI
 
@@ -60,7 +60,7 @@ class Message(object):
     def __init__(
             self,content:Optional[str] = None,attach_paths:Optional[list[str]] = None,
             channel_id:Optional[ChannelId] = None,message_id:Optional[MessageId] = None, 
-            players_who_can_see:Optional[list[PlayerId]] = None,
+            players_who_can_see:Optional[PlayersIds] = None,
             bullet_points:Optional[list[Bullet_Point]] = None,
             reply_to_id:Optional[MessageId|InteractionId] = None):
         self.content = content
@@ -206,7 +206,7 @@ class Alias_Message(Child_Message):
             attach_paths_modifier:OptionalModifier[list[str]] = do_not_modify,
             channel_id_modifier:OptionalModifier[ChannelId] = do_not_modify,
             message_id_modifier:OptionalModifier[MessageId] = do_not_modify,
-            players_who_can_see_modifier:OptionalModifier[list[PlayerId]] = do_not_modify,
+            players_who_can_see_modifier:OptionalModifier[PlayersIds] = do_not_modify,
             bullet_points_modifier:OptionalModifier[list[Bullet_Point]] = do_not_modify,
             reply_to_id_modifier:OptionalModifier[MessageId|InteractionId] = do_not_modify):
         Child_Message.__init__(self,parent_message)
@@ -233,7 +233,7 @@ class Alias_Message(Child_Message):
     def message_id(self,message_id:MessageId):
         self.parent_message.message_id = message_id
     @property
-    def players_who_can_see(self) -> list[PlayerId] | None:
+    def players_who_can_see(self) -> PlayersIds | None:
         return self.players_who_can_see_modifier(self.parent_message.players_who_can_see)
     @property
     def bullet_points(self) -> list[Bullet_Point] | None:
@@ -247,7 +247,7 @@ class Unique_Id_Alias_Message(Alias_Message):
             content_modifier:OptionalModifier[str] = do_not_modify,
             attach_paths_modifier:OptionalModifier[list[str]] = do_not_modify,
             channel_id_modifier:OptionalModifier[ChannelId] = do_not_modify,
-            players_who_can_see_modifier:OptionalModifier[list[PlayerId]] = do_not_modify,
+            players_who_can_see_modifier:OptionalModifier[PlayersIds] = do_not_modify,
             bullet_points_modifier:OptionalModifier[list[Bullet_Point]] = do_not_modify):
         self.sub_message_id= None
         Alias_Message.__init__(

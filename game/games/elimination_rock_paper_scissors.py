@@ -34,9 +34,9 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
                 if num_guns == 0:
                     s = ""
                 if len(gun_owners[num_guns]) == 1:
-                    gun_text_list.append(f"{self.format_players_md(gun_owners[num_guns])} has {num_guns + 1} gun{s}.")
+                    gun_text_list.append(f"{self.format_players(gun_owners[num_guns])} has {num_guns + 1} gun{s}.")
                 elif gun_owners[num_guns]:
-                    gun_text_list.append(f"{self.format_players_md(gun_owners[num_guns])} have {num_guns + 1} gun{s} each.")
+                    gun_text_list.append(f"{self.format_players(gun_owners[num_guns])} have {num_guns + 1} gun{s} each.")
             gun_text= '\n'.join(gun_text_list)
             #gun_text = f"\n{gun_text}\nRemember that if you choose gun without having one, you lose!\n"
         responses:PlayerDict[int] = await self.basic_multiple_choice(
@@ -73,5 +73,5 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
                 self.announced_guns = True
                 await self.basic_send(
                     "Woah, plot twist!. If you beat me you get a gun you can pick instead in the next round. It will gurantee you a pass for the round!")
-        await self.eliminate_players(players_eliminated)
+        await self.eliminate(players_eliminated)
         

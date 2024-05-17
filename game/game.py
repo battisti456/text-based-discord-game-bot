@@ -1,17 +1,17 @@
 from game.components.interface_component import Interface_Component
 
-from game import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional, KickReason, GameEndException, GameEndInsufficientPlayers, kick_text, score_to_placement
+from game import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional, KickReason, GameEndException, GameEndInsufficientPlayers, kick_text, score_to_placement, PlayersIds, PlayerMap, PlayerMapOptional
 import game.utils.emoji_groups
 from game.components.game_interface import Game_Interface
 from game.components.message import Message
 from game.components.player_input import Player_Input
 from game.components.response_validator import ResponseValidator, not_none, default_text_validator
 from game.utils.grammer import ordinate, wordify_iterable
+from game.utils.common import arg_fix_tuple, arg_fix_frozenset, arg_fix_iterable
 import functools
-from inspect import isclass
 
 
-from typing import Optional, TypeVar, Callable, Awaitable, ParamSpec, overload
+from typing import Optional, TypeVar, Callable, Awaitable, ParamSpec, overload, Iterable
 
 MULTIPLE_CHOICE_LINE_THRESHOLD = 30
 
@@ -32,11 +32,11 @@ class Game(Interface_Component):
             self.kicked:PlayerDict[tuple[int,KickReason]] = {}
             self.game_end_exception:Optional[GameEndException] = None
     @property
-    def kicked_players(self) -> list[PlayerId]:
-        return list(player for player in self.all_players if player in self.kicked)#maintian order
+    def kicked_players(self) -> tuple[PlayerId,...]:
+        return tuple(player for player in self.all_players if player in self.kicked)#maintian order
     @property 
-    def unkicked_players(self) -> list[PlayerId]:
-        return list(player for player in self.all_players if not player in self.kicked)
+    def unkicked_players(self) -> tuple[PlayerId,...]:
+        return tuple(player for player in self.all_players if not player in self.kicked)
     async def game_intro(self):
         ...
     async def game_setup(self):
@@ -64,14 +64,14 @@ class Game(Interface_Component):
         await self.game_unsetup()
         await self.game_outro()
     def generate_placements(self) -> PlayerPlacement:
-        return []
+        return tuple()
     def generate_kicked_placements(self) -> PlayerPlacement:
-        return [self.unkicked_players] + score_to_placement({player:self.kicked[player][0] for player in self.kicked},reverse=True)
+        return (self.unkicked_players,) + score_to_placement({player:self.kicked[player][0] for player in self.kicked},reverse=True)
     #region basic_inputs
     #region basic_multiple_choice overloads
     @overload
     async def basic_multiple_choice(
-            self,content:Optional[str]=...,options:list[str]=...,who_chooses:Optional[list[PlayerId]]=...,
+            self,content:Optional[str]=...,options:list[str]=...,who_chooses:Optional[PlayersIds]=...,
             emojis:Optional[list[str]]=..., channel_id:Optional[ChannelId]=..., 
             allow_answer_change:bool=..., response_validator:ResponseValidator[int] = ...) -> PlayerDict[int]:
         ...
@@ -83,7 +83,7 @@ class Game(Interface_Component):
         ...
     #endregion
     async def basic_multiple_choice(
-            self,content:Optional[str] = None,options:list[str] = [],who_chooses:Optional[list[PlayerId]|PlayerId] = None,
+            self,content:Optional[str] = None,options:list[str] = [],who_chooses:Optional[PlayersIds|PlayerId] = None,
             emojis:Optional[list[str]] = None, channel_id:Optional[ChannelId] = None, 
             allow_answer_change:bool = True, response_validator:ResponseValidator[int] = not_none) -> PlayerDict[int]|int:
         """
@@ -101,16 +101,11 @@ class Game(Interface_Component):
 
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
-        one_response:bool = False
-        if who_chooses is None:
-            who_chooses = self.unkicked_players
-        if not isinstance(who_chooses,list):
-            who_chooses = [who_chooses]
-            one_response = True
+        w = arg_fix_iterable(self.unkicked_players,who_chooses)
         responses:PlayerDictOptional = await self._basic_multiple_choice(
             content=content,
             options=options,
-            who_chooses=who_chooses,
+            who_chooses=w,
             emojis=emojis,
             channel_id=channel_id,
             allow_answer_change=allow_answer_change,
@@ -118,18 +113,18 @@ class Game(Interface_Component):
 
         )
         await self.kick_none_response(responses)
-        clean_responses = self.clean_player_dict(responses,who_chooses,self.unkicked_players)
-        if not one_response:
+        clean_responses = self.clean_player_dict(responses,w,frozenset(self.unkicked_players))
+        if isinstance(who_chooses,Iterable) or who_chooses is None:
             return clean_responses
         else:
-            if who_chooses[0] in clean_responses:
-                return clean_responses[who_chooses[0]]
+            if tuple(w)[0] in clean_responses:
+                return clean_responses[tuple(w)[0]]
             else:
                 return -1#The player did not respond and got kicked, function must still return though
     #region basic_no_yes overloads
     @overload
     async def basic_no_yes(
-            self,content:Optional[str]=...,who_chooses:Optional[list[PlayerId]]=...,
+            self,content:Optional[str]=...,who_chooses:Optional[Iterable[PlayerId]]=...,
             channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...,
             response_validator:ResponseValidator[int] = ...) -> PlayerDict[int]:
         ...
@@ -141,7 +136,7 @@ class Game(Interface_Component):
         ...
     #endregion
     async def basic_no_yes(
-            self,content:Optional[str] = None,who_chooses:Optional[PlayerId|list[PlayerId]] = None,
+            self,content:Optional[str] = None,who_chooses:Optional[PlayerId|Iterable[PlayerId]] = None,
             channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True,
             response_validator:ResponseValidator[int] = not_none) -> int | PlayerDict[int]:
         """
@@ -160,7 +155,7 @@ class Game(Interface_Component):
     #region text_response overloads
     @overload
     async def basic_text_response(
-            self,content:str,who_chooses:list[PlayerId]|None=...,
+            self,content:str,who_chooses:Iterable[PlayerId]|None=...,
             channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...,
             response_validator:ResponseValidator[str] = ...) -> PlayerDict[str]:
         ...
@@ -172,7 +167,7 @@ class Game(Interface_Component):
         ...
     #endregion
     async def basic_text_response(
-            self,content:str,who_chooses:PlayerId|list[PlayerId]|None = None,
+            self,content:str,who_chooses:PlayerId|PlayersIds|None = None,
             channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True,
             response_validator:ResponseValidator[str] = default_text_validator) -> str|PlayerDict[str]:
         """
@@ -186,27 +181,22 @@ class Game(Interface_Component):
 
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
-        one_response:bool = False
-        if who_chooses is None:
-            who_chooses = self.unkicked_players
-        if not isinstance(who_chooses,list):
-            who_chooses = [who_chooses]
-            one_response = True
+        w = arg_fix_iterable(self.unkicked_players,who_chooses)
         responses:PlayerDictOptional = await self._basic_text_response(
             content=content,
-            who_chooses=who_chooses,
+            who_chooses=w,
             channel_id=channel_id,
             allow_answer_change=allow_answer_change,
             response_validator=response_validator
 
         )
         await self.kick_none_response(responses)
-        clean_responses = self.clean_player_dict(responses,who_chooses,self.unkicked_players)
-        if not one_response:
+        clean_responses = self.clean_player_dict(responses,w,self.unkicked_players)
+        if isinstance(who_chooses,Iterable) or who_chooses is None:
             return clean_responses
         else:
-            if who_chooses[0] in clean_responses:
-                return clean_responses[who_chooses[0]]
+            if who_chooses in clean_responses:
+                return clean_responses[who_chooses]
             else:
                 return ""#The player did not respond and got kicked, function must still return though
     #endregion
@@ -250,10 +240,10 @@ class Game(Interface_Component):
         """
         if self.allowed_to_speak():
             await self.sender(message)
-    async def kick_none_response(self,*args:PlayerDictOptional[R]|Player_Input[R],reason:KickReason='timeout'):
+    async def kick_none_response(self,*args:PlayerMapOptional[R]|Player_Input[R],reason:KickReason='timeout'):
         none_responders = set()
         for arg in args:
-            responses:PlayerDictOptional[R]
+            responses:PlayerMapOptional[R]
             if isinstance(arg,Player_Input):
                 responses = arg.responses
             else:
@@ -268,7 +258,7 @@ class Game(Interface_Component):
             return 0
     async def kick_players(
             self,
-            players:list[PlayerId],
+            players:PlayersIds,
             reason:KickReason = 'unspecified',
             priority:Optional[int] = None) :
         """
@@ -284,7 +274,7 @@ class Game(Interface_Component):
             self.kicked[player] = (priority,reason)
         if len(self.unkicked_players) <= 1:
             raise GameEndInsufficientPlayers(f"{self.sender.format_players_md(players)} being {kick_text[reason]}")
-    def clean_player_dict(self,responses:Player_Input[R]|PlayerDictOptional[R],*args:list[PlayerId]) -> PlayerDict[R]:
+    def clean_player_dict(self,responses:Player_Input[R]|PlayerMapOptional[R],*args:PlayersIds) -> PlayerDict[R]:
         clean_responses:PlayerDict = {}
         if isinstance(responses,Player_Input):
             responses = responses.responses

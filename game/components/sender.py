@@ -12,7 +12,7 @@ class Sender(object):
         """display Message object for the players according to it's parameters"""
         return await self._send(message)
     async def _send(self,message:Message):
-        """highest level definition of Sender's sending capabilities"""
+        """lowest level definition of the default Sender's sending capabilities"""
         pass
     def format_players_md(self,players:Iterable[PlayerId]) -> str:
         """format a list of PlayerIds with markdown; --migtht replace with formatter object"""

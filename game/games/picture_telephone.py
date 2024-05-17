@@ -43,6 +43,9 @@ class Picture_Telephone(Rounds_With_Points_Base, Random_Image_Base):
         while self.current_offset < len(self.unkicked_players):
             await self.prompt_telephone()
             self.current_offset += 1
+        for i in range(len(self.all_players)):
+            if i not in self.failed_paths:
+                ...#wait does this game even make sense?
     def i(self,player:PlayerId,add:int = 0) -> int:
         return (self.unkicked_players.index(player)+self.current_offset+add)%len(self.images)
     async def prompt_telephone(self):

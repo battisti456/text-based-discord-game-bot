@@ -1,6 +1,7 @@
 from typing import Iterable, Any
 import uuid
 from game.utils.word_tools import Sentence
+from game.utils.common import Number
 
 def nice_sentence(sentence:Sentence) -> str:
     return (" ".join(sentence)).replace('_',' ').capitalize()
@@ -76,7 +77,7 @@ def nice_time(time:int) -> str:
     if num_seconds:
         strings.append(f"{num_seconds} second{s(num_seconds)}")
     return wordify_iterable(strings)
-def s(num:int) -> str:
+def s(num:Any) -> str:
     return '' if num == 1 else 's'
 def temp_file_path(file_type:str) -> str:
     """

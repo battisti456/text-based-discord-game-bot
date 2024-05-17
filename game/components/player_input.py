@@ -1,6 +1,6 @@
 from config.config import config
 
-from game import PlayerId,PlayerDict,PlayerDictOptional, make_player_dict, correct_str, get_logger
+from game import PlayerId,PlayerDict,PlayerDictOptional, make_player_dict, correct_str, get_logger, PlayersIds
 from game.components.sender import Sender
 from game.components.message import Message, Alias_Message
 from game.components.game_interface import Game_Interface
@@ -8,7 +8,7 @@ from game.components.interaction import Interaction
 from game.components.response_validator import ResponseValidator, Validation, not_none, default_text_validator
 from game.utils.grammer import nice_time, ordinate
 
-from typing import Optional, Any, Callable, Awaitable
+from typing import Optional, Any, Callable, Awaitable, Iterable
 
 import asyncio
 from time import time
@@ -24,9 +24,9 @@ class Player_Input[T]():
     meant only to be overwritten
     """
     def __init__(
-            self,name:str, gi:Game_Interface,sender:Sender,players:Optional[list[PlayerId]] = None,
+            self,name:str, gi:Game_Interface,sender:Sender,players:PlayersIds,
             response_validator:ResponseValidator[T] = not_none, 
-            who_can_see:Optional[list[PlayerId]] = None, 
+            who_can_see:Optional[Iterable[PlayerId]] = None, 
             timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings']):
         self.timeout = timeout
         self.warnings = warnings
@@ -34,10 +34,7 @@ class Player_Input[T]():
         self.gi = gi
         self.sender = sender
         self.who_can_see = who_can_see
-        if players is None:
-            self.players = self.gi.get_players()
-        else:
-            self.players = players
+        self.players:PlayersIds = players
         self.responses:PlayerDictOptional[T] = make_player_dict(self.players,None)
         self._receive_inputs = False
         self._response_validator:ResponseValidator[T] = response_validator
@@ -109,7 +106,7 @@ class Player_Input[T]():
     def has_recieved_all_responses(self) -> bool:
         """returns whether all responses meet the validator's requirements"""
         to_return:bool = all(self._response_validator(player,self.responses[player])[0] for player in self.players)
-        logger.info(f"{self} has evaluated that is has" + ("n't" if not to_return else "") + " received all responses")
+        logger.debug(f"{self} has evaluated that is has" + ("n't" if not to_return else "") + " received all responses")
         return all(self._response_validator(player,self.responses[player])[0] for player in self.players)
     async def _handle_warnings(self):
         if self.timeout is None:
@@ -180,7 +177,7 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
     """
     def __init__(
             self, name:str, gi:Game_Interface, sender :Sender, 
-            players:Optional[list[PlayerId]] = None, response_validator:ResponseValidator[T] = not_none,
+            players:PlayersIds, response_validator:ResponseValidator[T] = not_none,
             who_can_see:Optional[list[PlayerId]] = None, 
             timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings'],
             message:Optional[Message|str] = None, allow_edits:bool = True):
@@ -236,7 +233,7 @@ class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
     player input class for collecting text interactions to a message
     """
     def __init__(
-            self, name:str, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
+            self, name:str, gi:Game_Interface, sender :Sender, players:PlayersIds, 
             response_validator:ResponseValidator[str] = default_text_validator,
             who_can_see:Optional[list[PlayerId]] = None, 
             timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings'],
@@ -265,7 +262,7 @@ class Player_Single_Selection_Input(Player_Input_In_Response_To_Message[int]):
     player input class for collecting single choice selection interactions to a message
     """
     def __init__(
-            self, name:str, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
+            self, name:str, gi:Game_Interface, sender :Sender, players:PlayersIds, 
             response_validator:ResponseValidator[int] = not_none, 
             who_can_see:Optional[list[PlayerId]] = None, 
             timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings'],
@@ -294,7 +291,7 @@ class Player_Multiple_Selection_Input(Player_Input_In_Response_To_Message[set[in
     player input class for collecting multiple choice selection interactions to a message
     """
     def __init__(
-            self, name:str, gi:Game_Interface, sender :Sender, players:Optional[list[PlayerId]] = None, 
+            self, name:str, gi:Game_Interface, sender :Sender, players:PlayersIds, 
             response_validator:ResponseValidator[set[int]] = not_none,
             who_can_see:Optional[list[PlayerId]] = None, 
             timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings'], message:Optional[Message|str] = None):
@@ -338,8 +335,8 @@ def multi_bind_message(message:Message,*player_inputs:Player_Input_In_Response_T
     for player_input in player_inputs:
         player_input.message = _message
 async def run_inputs(
-        inputs:list[Player_Input],completion_sets:Optional[list[set[Player_Input]]] = None,
-        sender:Optional[Sender] = None,who_can_see:Optional[list[PlayerId]] = None,
+        inputs:Iterable[Player_Input],completion_sets:Optional[Iterable[set[Player_Input]]] = None,
+        sender:Optional[Sender] = None,who_can_see:Optional[PlayersIds] = None,
         codependant:bool = False, basic_feedback:bool = False):
     """
     runs inputs simultaniously until completion criteria are met
@@ -352,7 +349,7 @@ async def run_inputs(
 
     who_can_see: the list of people who are allowed to see the feedback, set as the feedback message's who_can_see variable
 
-    codependant: sets wher a change in one input should update all the other inputs
+    codependant: sets where a change in one input should update all the other inputs
 
     basic_feedback: sets whether the feedback, if it exists, should be limited to only whether an input is complete or not; True for limited, False for unlimited
     """
@@ -368,7 +365,7 @@ async def run_inputs(
     if not sender is None:
         def feedback_text() -> str:
             feedback_list = []
-            for input in inputs:
+            for input in (input for input in inputs if not input.has_recieved_all_responses()):
                 feedback_list.append("Monitoring: " + input.response_status(basic_feedback))
             return "\n".join(feedback_list)
         feedback_message:Message = Alias_Message(

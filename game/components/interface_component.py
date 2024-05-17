@@ -1,19 +1,19 @@
 from typing import Iterable, Optional
 
-from game import PlayerId, ChannelId, PlayerDictOptional
+from game import PlayerId, ChannelId, PlayerDictOptional, PlayersIds
 from game.components.game_interface import Game_Interface
 from game.components.message import Message, Bullet_Point
 from game.components.player_input import Player_Single_Selection_Input, Player_Text_Input
 from game.components.response_validator import ResponseValidator, default_text_validator, not_none
 import game.utils.emoji_groups
-
+from game.utils.common import arg_fix_iterable
 class Interface_Component():
     def __init__(self,gi:Game_Interface):
         self.gi = gi
         self.sender = self.gi.get_sender()
-        self.all_players:list[PlayerId] = self.gi.get_players()
+        self.all_players:tuple[PlayerId,...] = tuple(self.gi.get_players())
     async def _basic_text_response(
-            self,content:str,who_chooses:PlayerId|list[PlayerId]|None = None,
+            self,content:str,who_chooses:Optional[PlayerId|PlayersIds] = None,
             channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True,
             response_validator:ResponseValidator[str] = default_text_validator) -> PlayerDictOptional[str]:
         """
@@ -27,12 +27,7 @@ class Interface_Component():
 
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
-        wc:list[PlayerId] = []
-        if isinstance(who_chooses,list):
-            wc += who_chooses
-        elif who_chooses is None:
-            wc += self.all_players
-        emj:list[str] = []
+        wc:PlayersIds= arg_fix_iterable(self.all_players,who_chooses)
         question = Message(
             content = content,
             channel_id=channel_id
@@ -51,7 +46,7 @@ class Interface_Component():
 
         return player_input.responses
     async def _basic_multiple_choice(
-            self,content:Optional[str] = None,options:list[str] = [],who_chooses:Optional[list[PlayerId]] = None,
+            self,content:Optional[str] = None,options:list[str] = [],who_chooses:Optional[PlayersIds|PlayerId] = None,
             emojis:Optional[list[str]] = None, channel_id:Optional[ChannelId] = None, 
             allow_answer_change:bool = True, response_validator:ResponseValidator[int] = not_none) -> PlayerDictOptional[int]:
         """
@@ -69,11 +64,7 @@ class Interface_Component():
 
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
-        wc:list[PlayerId] = []
-        if isinstance(who_chooses,list):
-            wc += who_chooses
-        elif who_chooses is None:
-            wc += self.all_players
+        wc:PlayersIds = arg_fix_iterable(self.all_players,who_chooses)
         emj:list[str] = []
         if emojis is None:
             emj += game.utils.emoji_groups.COLORED_CIRCLE_EMOJI
@@ -110,7 +101,7 @@ class Interface_Component():
             returns the senders fomatting of a list of players with markdown
             """
             return self.sender.format_players_md(players)
-    def format_players(self,user_id:list[PlayerId]) -> str:
+    def format_players(self,user_id:PlayersIds) -> str:
         """
         returns the senders formatting of a list of players without markdown
         """

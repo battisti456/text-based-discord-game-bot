@@ -1,4 +1,4 @@
-from typing import Any,Callable,Awaitable, Optional, Hashable
+from typing import Any,Callable,Awaitable, Optional, Hashable, Iterable
 from game import PlayerId, MessageId, ChannelId, get_logger
 from game.components.sender import Sender
 from game.components.message import Message, Reroute_Message
@@ -109,15 +109,15 @@ class Game_Interface(object):
             self.action_owners[func] = owner
             return func
         return wrapper
-    def get_players(self) -> list[PlayerId]:
+    def get_players(self) -> frozenset[PlayerId]:
         """
         gets relavant players for Game object, should be randomized in order;
         should be implemented in child classes
         """
-        return []
-    async def _new_channel(self,name:Optional[str],who_can_see:Optional[list[PlayerId]]) -> ChannelId:
+        return frozenset()
+    async def _new_channel(self,name:Optional[str],who_can_see:Optional[Iterable[PlayerId]]) -> ChannelId:
         ...
-    async def new_channel(self,name:Optional[str] = None, who_can_see:Optional[list[PlayerId]] = None) -> ChannelId:
+    async def new_channel(self,name:Optional[str] = None, who_can_see:Optional[Iterable[PlayerId]] = None) -> ChannelId:
         """
         returns the ChannelId of a channel
         
@@ -153,7 +153,7 @@ class Channel_Limited_Game_Interface(Game_Interface):
         Game_Interface.__init__(self)
         self.who_can_see_dict:dict[frozenset[PlayerId],ChannelId] = {}
         self.default_sender = Channel_Limited_Interface_Sender(self)
-    async def who_can_see_channel(self,players:list[PlayerId]) -> ChannelId:
+    async def who_can_see_channel(self,players:Iterable[PlayerId]) -> ChannelId:
         """
         creates a ChannelId that only players can see, or returns one that it already made
         """
