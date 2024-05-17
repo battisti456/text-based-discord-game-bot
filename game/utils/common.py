@@ -2,22 +2,16 @@
 
 #R = TypeVar('R')
 
-from typing import Protocol, Iterator, runtime_checkable, Mapping
+from typing import Mapping, Iterable
 
-
-@runtime_checkable
-class Grouping[T](Protocol):
-    """any object that can use the 'in'  keyword and can generate an iterator"""
-    def __iter__(self) -> Iterator[T]:
-        ...
 
 type Number = int|float
 
 from typing import Optional
-def arg_fix_grouping[R](default:Grouping[R],inpt:Optional[R|Grouping[R]]) -> Grouping[R]:
+def arg_fix_iterable[R](default:Iterable[R],inpt:Optional[R|Iterable[R]]) -> Iterable[R]:
     if inpt is None:
         return default
-    elif isinstance(inpt,Grouping):
+    elif isinstance(inpt,Iterable):
         return inpt
     else:
         return (inpt,)
@@ -42,14 +36,14 @@ def arg_fix_list[R](default:list[R],inpt:Optional[R|list[R]]) -> list[R]:
         return inpt
     else:
         return [inpt]
-def arg_fix_dict[K,R](relevant_keys:Grouping[K],default_amount:R,inpt:Optional[R|dict[K,R]]) -> dict[K,R]:
+def arg_fix_dict[K,R](relevant_keys:Iterable[K],default_amount:R,inpt:Optional[R|dict[K,R]]) -> dict[K,R]:
     if inpt is None:
         return {key:default_amount for key in relevant_keys}
     elif isinstance(inpt,dict):
         return inpt
     else:
         return {key:inpt for key in relevant_keys}
-def arg_fix_map[K,R](relevant_keys:Grouping[K],default_amount:R,inpt:Optional[R|Mapping[K,R]]) -> Mapping[K,R]:
+def arg_fix_map[K,R](relevant_keys:Iterable[K],default_amount:R,inpt:Optional[R|Mapping[K,R]]) -> Mapping[K,R]:
     if inpt is None:
         return {key:default_amount for key in relevant_keys}
     elif isinstance(inpt,Mapping):

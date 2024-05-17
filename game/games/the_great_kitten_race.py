@@ -83,6 +83,7 @@ class The_Great_Kitten_Race(Game):
             )
             input = Player_Single_Selection_Input(
                 name = f"choice of {stat} stat",
+                players=self.unkicked_players,
                 gi = self.gi,
                 sender = self.sender,
                 message=message
@@ -101,6 +102,7 @@ class The_Great_Kitten_Race(Game):
             stat_input_dict[stat]._response_validator = verify_points
         name_input = Player_Text_Input(
             name = "kitten name",
+            players=self.unkicked_players,
             gi = self.gi,
             sender = self.sender,
             message = Message(

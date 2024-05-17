@@ -6,7 +6,7 @@ from game.components.message import Message, Bullet_Point
 from game.components.player_input import Player_Single_Selection_Input, Player_Text_Input
 from game.components.response_validator import ResponseValidator, default_text_validator, not_none
 import game.utils.emoji_groups
-from game.utils.common import arg_fix_grouping
+from game.utils.common import arg_fix_iterable
 class Interface_Component():
     def __init__(self,gi:Game_Interface):
         self.gi = gi
@@ -27,7 +27,7 @@ class Interface_Component():
 
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
-        wc:PlayersIds= arg_fix_grouping(self.all_players,who_chooses)
+        wc:PlayersIds= arg_fix_iterable(self.all_players,who_chooses)
         question = Message(
             content = content,
             channel_id=channel_id
@@ -64,7 +64,7 @@ class Interface_Component():
 
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
-        wc:PlayersIds = arg_fix_grouping(self.all_players,who_chooses)
+        wc:PlayersIds = arg_fix_iterable(self.all_players,who_chooses)
         emj:list[str] = []
         if emojis is None:
             emj += game.utils.emoji_groups.COLORED_CIRCLE_EMOJI

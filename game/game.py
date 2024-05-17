@@ -7,11 +7,11 @@ from game.components.message import Message
 from game.components.player_input import Player_Input
 from game.components.response_validator import ResponseValidator, not_none, default_text_validator
 from game.utils.grammer import ordinate, wordify_iterable
-from game.utils.common import arg_fix_tuple, arg_fix_frozenset, arg_fix_grouping ,Grouping
+from game.utils.common import arg_fix_tuple, arg_fix_frozenset, arg_fix_iterable
 import functools
 
 
-from typing import Optional, TypeVar, Callable, Awaitable, ParamSpec, overload
+from typing import Optional, TypeVar, Callable, Awaitable, ParamSpec, overload, Iterable
 
 MULTIPLE_CHOICE_LINE_THRESHOLD = 30
 
@@ -101,7 +101,7 @@ class Game(Interface_Component):
 
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
-        w = arg_fix_grouping(self.unkicked_players,who_chooses)
+        w = arg_fix_iterable(self.unkicked_players,who_chooses)
         responses:PlayerDictOptional = await self._basic_multiple_choice(
             content=content,
             options=options,
@@ -114,7 +114,7 @@ class Game(Interface_Component):
         )
         await self.kick_none_response(responses)
         clean_responses = self.clean_player_dict(responses,w,frozenset(self.unkicked_players))
-        if isinstance(who_chooses,Grouping) or who_chooses is None:
+        if isinstance(who_chooses,Iterable) or who_chooses is None:
             return clean_responses
         else:
             if tuple(w)[0] in clean_responses:
@@ -124,7 +124,7 @@ class Game(Interface_Component):
     #region basic_no_yes overloads
     @overload
     async def basic_no_yes(
-            self,content:Optional[str]=...,who_chooses:Optional[list[PlayerId]]=...,
+            self,content:Optional[str]=...,who_chooses:Optional[Iterable[PlayerId]]=...,
             channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...,
             response_validator:ResponseValidator[int] = ...) -> PlayerDict[int]:
         ...
@@ -136,7 +136,7 @@ class Game(Interface_Component):
         ...
     #endregion
     async def basic_no_yes(
-            self,content:Optional[str] = None,who_chooses:Optional[PlayerId|list[PlayerId]] = None,
+            self,content:Optional[str] = None,who_chooses:Optional[PlayerId|Iterable[PlayerId]] = None,
             channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True,
             response_validator:ResponseValidator[int] = not_none) -> int | PlayerDict[int]:
         """
@@ -155,7 +155,7 @@ class Game(Interface_Component):
     #region text_response overloads
     @overload
     async def basic_text_response(
-            self,content:str,who_chooses:list[PlayerId]|None=...,
+            self,content:str,who_chooses:Iterable[PlayerId]|None=...,
             channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...,
             response_validator:ResponseValidator[str] = ...) -> PlayerDict[str]:
         ...
@@ -181,7 +181,7 @@ class Game(Interface_Component):
 
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
-        w = arg_fix_grouping(self.unkicked_players,who_chooses)
+        w = arg_fix_iterable(self.unkicked_players,who_chooses)
         responses:PlayerDictOptional = await self._basic_text_response(
             content=content,
             who_chooses=w,
@@ -192,7 +192,7 @@ class Game(Interface_Component):
         )
         await self.kick_none_response(responses)
         clean_responses = self.clean_player_dict(responses,w,self.unkicked_players)
-        if isinstance(who_chooses,Grouping) or who_chooses is None:
+        if isinstance(who_chooses,Iterable) or who_chooses is None:
             return clean_responses
         else:
             if who_chooses in clean_responses:

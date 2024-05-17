@@ -1,6 +1,6 @@
 from config.games_config import games_config
 
-from game import PlayerId,MessageId
+from game import PlayerId
 from game.game_bases import Game_Word_Base,Rounds_With_Points_Base
 from game.components.game_interface import Game_Interface
 from game.components.message import Message, Alias_Message
@@ -34,10 +34,10 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
         num_letters_can_refresh = NUM_LETTERS_CAN_REFRESH
         change_letter_message = Alias_Message(
             Message(),
-            lambda content: f"**Which letters in '{self.current_letters}' would you like to swap, if any? You can swap {num_letters_can_refresh} letters.**")
+            lambda _: f"**Which letters in '{self.current_letters}' would you like to swap, if any? You can swap {num_letters_can_refresh} letters.**")
         choose_word_message = Alias_Message(
             Message(),
-            lambda content: f"**What word will you spell with '{self.current_letters}'?**")
+            lambda _: f"**What word will you spell with '{self.current_letters}'?**")
         change_letter_input = Player_Text_Input(
             "change letter",
             self.gi,

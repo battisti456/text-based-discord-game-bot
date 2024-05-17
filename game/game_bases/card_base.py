@@ -5,6 +5,7 @@ from game.game import Game, police_game_callable
 from game.components.game_interface import Game_Interface
 from game.components.message import Message
 from game.utils.grammer import temp_file_path, wordify_iterable
+from game.utils.common import arg_fix_iterable
 
 
 import PIL.Image
@@ -317,12 +318,8 @@ class Card_Base(Game):
         message.attach_paths = [ch_to_attachment]
         await self.sender(message)
     @police_game_callable
-    async def player_draw(self,player:PlayerId|list[PlayerId],num:int = 1):
-        players:list[PlayerId] = []
-        if not isinstance(player,list):
-            players = [player]
-        else:
-            players=list(player)
+    async def player_draw(self,player:PlayerId|Iterable[PlayerId],num:int = 1):
+        players:Iterable[PlayerId] = arg_fix_iterable(self.unkicked_players,player)
         if players:
             await self.basic_policed_send(f"{self.format_players_md(players)} drew {num} card(s).")
         for player in players:

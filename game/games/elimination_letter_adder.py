@@ -148,11 +148,11 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
                         definition_text = f"\n{self.definition_string(definition)}"
                     await self.basic_send(f"The word {word} is valid!{definition_text}")
                     self.last_player = player
-                    self.eliminate([player])
+                    await self.eliminate([player])
                     return
                 elif not self.is_valid_word(word):
                     await self.basic_send(f"I'm sorry, {self.format_players_md([self.last_player])}, '{word}' is not a valid word.")
-                    self.eliminate([self.last_player])
+                    await self.eliminate([self.last_player])
                     self.last_player = player
                     return
                 

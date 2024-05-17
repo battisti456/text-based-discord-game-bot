@@ -1,7 +1,7 @@
 from typing_extensions import TypeVar
-from typing import Iterable, Optional, Callable, Literal, Hashable, NewType, Mapping
+from typing import Iterable, Optional, Callable, Literal, Hashable, NewType, Mapping, Iterator
 from config.config import config
-from game.utils.common import Grouping, Number
+from game.utils.common import Number
 
 import logging
 
@@ -23,7 +23,7 @@ MessageId = NewType('MessageId',Hashable)#type: ignore
 ChannelId = NewType('ChannelId',Hashable)#type: ignore
 InteractionId = NewType('InteractionId',Hashable)#type: ignore
 
-type PlayersIds = Grouping[PlayerId]
+type PlayersIds = Iterable[PlayerId]
 
 type Placement[T] = tuple[tuple[T,...],...]
 
@@ -118,7 +118,7 @@ def correct_str(value:str|None) -> str:
 
 def score_to_placement[Participant](
         score:Mapping[Participant,Number], 
-        all_participants:Optional[Grouping[Participant]] = None,
+        all_participants:Optional[Iterable[Participant]] = None,
         reverse:bool = False
         ) -> Placement[Participant]:
     """

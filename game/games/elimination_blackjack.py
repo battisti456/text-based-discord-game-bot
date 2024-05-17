@@ -49,7 +49,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
         await self.setup_cards(ceil(len(self.unkicked_players)/NUM_PLAYERS_PER_DECK))
         await self.player_draw(self.unkicked_players,2)
         players_passed:list[PlayerId] = []
-        players_still_drawing = self.unkicked_players.copy()
+        players_still_drawing = list(self.unkicked_players)
         while players_still_drawing:
             will_draw:PlayerDict[int] = await self.basic_no_yes(f"Will you draw another card?",players_still_drawing)
             players_who_drew:list[PlayerId] = list(player for player in will_draw if will_draw[player])

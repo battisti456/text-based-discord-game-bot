@@ -6,7 +6,7 @@ from game import PlayerId, PlayerDict, make_player_dict
 from game.game_bases import Rounds_With_Points_Base, Basic_Secret_Message_Base
 
 from game.components.game_interface import Game_Interface
-from game.utils.grammer import wordify_iterable
+from game.utils.grammer import wordify_iterable, Number
 
 
 import json
@@ -29,7 +29,7 @@ class DataDict(TypedDict):
     container_types:dict[str,dict[str,int]]
     items:dict[str,int]
 
-def moneyfy(value:int):
+def moneyfy(value:Number):
     to_return = ""
     if value < 0:
         to_return += "-"
@@ -60,7 +60,7 @@ class Container_Bidding(Rounds_With_Points_Base,Basic_Secret_Message_Base):
         Basic_Secret_Message_Base.__init__(self,gi)
         self.num_rounds = NUM_CONTAINERS
         self.round_name = "bidding on container"
-        self.points_format = lambda x: f"{moneyfy(x)} of valuables"
+        self.point_frmt = lambda num: f"{moneyfy(num)} of valuables"
         with open(f"{DATA_PATH}",'r') as file:
             self.data:DataDict = json.load(file)
         validate_data(self.data)
@@ -133,7 +133,7 @@ class Container_Bidding(Rounds_With_Points_Base,Basic_Secret_Message_Base):
                 await self.basic_secret_send(player,
                                        f"Your portion of the bid was {percentify(player_portion)} making your return {moneyfy(player_return)}.\n" +
                                        f"This means you had a net {net_text} of {moneyfy(abs(player_bids[player] - player_return))}.\n" +
-                                       f"You now have {moneyfy(self.money[player])} remaining to bid with and {moneyfy(self.points[player])} in valuables.")
+                                       f"You now have {moneyfy(self.money[player])} remaining to bid with and {moneyfy(self.point_totals[player])} in valuables.")
         else:
             await self.basic_send(
                 f"Your total bid of {moneyfy(total_bid)} didn't exceed our bid threshold of {moneyfy(total_bid_threshold)}.\n" +

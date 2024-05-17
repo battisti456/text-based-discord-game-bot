@@ -2,9 +2,9 @@ from game.game import Game
 from game.components.game_interface import Game_Interface
 from game.utils.grammer import s
 from game import PlayerId, PlayerPlacement, score_to_placement, Participant, Placement
-from typing import Optional, Generic, Mapping, Callable
+from typing import Optional, Generic, Mapping, Callable, Iterable
 from typing_extensions import TypeVar
-from game.utils.common import arg_fix_map, Number, Grouping, arg_fix_grouping
+from game.utils.common import arg_fix_map, Number, arg_fix_iterable
 
 PointType = TypeVar('PointType',bound = Number, default=int)
 
@@ -19,44 +19,46 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Game):
             self.round_word:str = "round"
             self.reverse_points:bool = False
             self.part_str:Callable[[Participant],str] = lambda part: str(part)
-    def configure(self,participants:Grouping[Participant]):
+    def configure(self,participants:Iterable[Participant]):
         self.participants:tuple[Participant,...] = tuple(participants)
         self.point_totals:dict[Participant,PointType] = {
             participant:self.zero_score for participant in self.participants
         }
     async def announce_score(
             self,
-            who:Optional[Participant|Grouping[Participant]] = None,
+            who:Optional[Participant|Iterable[Participant]] = None,
             amount:Optional[PointType|Mapping[Participant,PointType]] = None
             ):
-        w = arg_fix_grouping(self.participants,who)
+        w = arg_fix_iterable(self.participants,who)
         a:Mapping[Participant,PointType] = arg_fix_map(w,self.zero_score,amount)
         participant_lines:list[str]
         if amount is None:
             participant_lines = list(
-                f"{self.part_str(participant)} has {self.point_totals[participant]} {self.point_word}{s(self.point_totals[participant])}" 
+                f"{self.part_str(participant)} has {self.point_frmt(self.point_totals[participant])}" 
                 for participant in w
             )
         else:
             participant_lines = list(
-                f"{self.part_str(participant)} received {a[participant]} {self.point_word}{s(a[participant])} bringing them to " + 
-                f"{self.point_totals[participant] + a[participant]} {self.point_word}{s(self.point_totals[participant] + a[participant])}" 
+                f"{self.part_str(participant)} received {self.point_frmt(a[participant])} bringing them to " + 
+                self.point_frmt(self.point_totals[participant] + a[participant])
                 for participant in w
         )
         await self.basic_send('\n'.join(participant_lines))
+    def point_frmt(self,num:Number) -> str:
+        return f"{num} {self.point_word}{s(num)}"
     def receive_score(
             self,
-            who:Optional[Participant|Grouping[Participant]] = None,
+            who:Optional[Participant|Iterable[Participant]] = None,
             amount:Optional[PointType|Mapping[Participant,PointType]] = None
             ):
-        w = arg_fix_grouping(self.participants,who)
+        w = arg_fix_iterable(self.participants,who)
         a:Mapping[Participant,PointType] = arg_fix_map(w,self.zero_score,amount)
         for participant in w:
             self.point_totals[participant] += a[participant]#type: ignore
     async def announce_and_receive_score(
         self,
-        who:Optional[Participant|list[Participant]] = None,
-        amount:Optional[PointType|dict[Participant,PointType]] = None
+        who:Optional[Participant|Iterable[Participant]] = None,
+        amount:Optional[PointType|Mapping[Participant,PointType]] = None
         ):
         await self.announce_score(who,amount)
         self.receive_score(who,amount)
@@ -81,3 +83,9 @@ class Rounds_With_Points_Base(Rounds_With_Points_Framework[PlayerId,int]):
             self.part_str = lambda player: self.format_players([player])
     def generate_placements(self) -> PlayerPlacement:
         return self.generate_participant_placements()
+    async def score(self,who:Optional[PlayerId|Iterable[PlayerId]] = None,
+            amount:Optional[int|Mapping[PlayerId,int]] = None,
+            mute:bool = False):
+        if not mute:
+            await self.announce_score(who,amount)
+        self.receive_score(who,amount)

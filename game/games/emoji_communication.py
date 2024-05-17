@@ -3,7 +3,7 @@ from config.games_config import games_config
 from game.components.game_interface import Game_Interface
 from game import PlayerId, PlayerDict
 from game.game_bases import Basic_Secret_Message_Base,Rounds_With_Points_Base,Game_Word_Base
-from game.utils.word_tools import Sentence, find_random_related_scentences
+from game.utils.word_tools import find_random_related_scentences
 from game.utils.grammer import nice_sentence
 import emoji
 import random
