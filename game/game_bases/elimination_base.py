@@ -1,4 +1,4 @@
-from game import PlayerId, Participant, GameEndException, Placement, KickReason
+from game import PlayerId, Participant, GameEndException, Placement, KickReason, PlayerPlacement
 from game.components.game_interface import Game_Interface
 from game.game import Game
 from game.utils.common import arg_fix_iterable
@@ -23,20 +23,25 @@ class Elimination_Framework(Generic[Participant],Game):
         return frozenset(set().union(*(set(rank) for rank in self.elimination_order)))
     @property
     def not_eliminated(self) -> frozenset[Participant]:
-        return frozenset(set(self.participants) - self.eliminated)
+        return frozenset(self.participants) - self.eliminated
     async def announce_eliminate(self,participants:Iterable[Participant]|Participant):
         participants = arg_fix_iterable(self.participants,participants)
         to_eliminate:frozenset[Participant] = frozenset(participants) - frozenset(self.eliminated)
         num_left:int = len(self.not_eliminated)
         message_text:str = f"{wordify_iterable(map(self.part_str,to_eliminate))} "
+        if len(to_eliminate) == 0:
+            return
         if len(to_eliminate) == num_left:
-            message_text += "should have been eliminated, but as this would have taken out all of the remaining players, we will forgive them instead."
-        elif len(to_eliminate) == num_left - 1:
-            message_text += f"have been eliminated, leaving {self.part_str(tuple(set(self.not_eliminated) - to_eliminate)[0])} as the winner!"
+            message_text += "should have been eliminated, but as this would have taken out all of the remaining players, we will forgive them instead"
+            to_eliminate = frozenset()
         elif len(to_eliminate) == 1:
-            message_text += "has been eliminated."
+            message_text += "has been eliminated"
         else:
-            message_text += "have been eliminated."
+            message_text += "have been eliminated"
+        if len(to_eliminate) == num_left -1:
+            message_text += f", leaving {self.part_str(tuple(set(self.not_eliminated) - to_eliminate)[0])} as the winner!"
+        else:
+            message_text += '.'
         await self.basic_send(message_text)
     def eliminate_participant(self,participants:Iterable[Participant]|Participant):
         """
@@ -44,8 +49,9 @@ class Elimination_Framework(Generic[Participant],Game):
         """
         participants = arg_fix_iterable(self.participants,participants)
         to_eliminate:frozenset[Participant] = frozenset(participants) - frozenset(self.eliminated)
-        self.elimination_order += (tuple(to_eliminate),)
-        if to_eliminate == set(self.not_eliminated):
+        if not to_eliminate == set(self.not_eliminated) and len(to_eliminate) > 0:
+            self.elimination_order += (tuple(to_eliminate),)
+        if len(self.not_eliminated) == 1:
             raise EliminationGameEnd()
     async def core_game(self):
         ...
@@ -55,7 +61,7 @@ class Elimination_Framework(Generic[Participant],Game):
                 await self.core_game()
         except EliminationGameEnd:
             ...
-    async def generate_participant_placements(self) -> Placement[Participant]:
+    def generate_participant_placements(self) -> Placement[Participant]:
         return self.elimination_order
         
 class Elimination_Base(Elimination_Framework[PlayerId]):
@@ -64,12 +70,18 @@ class Elimination_Base(Elimination_Framework[PlayerId]):
         if not Elimination_Base in self.initialized_bases:
             self.initialized_bases.append(Elimination_Base)
             self.configure(self.all_players)
+            self.part_str = lambda player: self.sender.format_players((player,))
     async def eliminate(self,players:PlayerId|Iterable[PlayerId]):
+        players = tuple(arg_fix_iterable(self.unkicked_players,players))
         await self.announce_eliminate(players)
         self.eliminate_participant(players)
     async def kick_players(self, players: Iterable[PlayerId], reason: KickReason = 'unspecified', priority:Optional[int] = None):
+        players = tuple(players)
         await super().kick_players(players, reason, priority)
         await self.announce_eliminate(players)
         self.eliminate_participant(players)
+    def generate_placements(self) -> PlayerPlacement:
+        print(self.generate_participant_placements())
+        return (tuple(self.not_eliminated),) + self.generate_participant_placements()
             
             

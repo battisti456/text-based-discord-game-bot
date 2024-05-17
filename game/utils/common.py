@@ -8,11 +8,11 @@ from typing import Mapping, Iterable
 type Number = int|float
 
 from typing import Optional
-def arg_fix_iterable[R](default:Iterable[R],inpt:Optional[R|Iterable[R]]) -> Iterable[R]:
+def arg_fix_iterable[R](default:Iterable[R],inpt:Optional[R|Iterable[R]]) -> tuple[R,...]:
     if inpt is None:
-        return default
+        return tuple(default)
     elif isinstance(inpt,Iterable):
-        return inpt
+        return tuple(inpt)
     else:
         return (inpt,)
 def arg_fix_frozenset[R](default:frozenset[R],inpt:Optional[R|frozenset[R]]) -> frozenset[R]:

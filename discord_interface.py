@@ -84,7 +84,7 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
             await self.client.wait_until_ready()
             discord_message = await channel.send(
                 content=message.content 
-                if not message.content is None else "--empty--",
+                if not message.content in (None,'') else "--empty--",
                 files = attachments)
             message.message_id = discord_message.id#type:ignore
         else:#edit old message
@@ -99,8 +99,10 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
                     emoji = discord.PartialEmoji(name = bp.emoji)
                     await self.client.wait_until_ready()
                     await discord_message.add_reaction(emoji)
+    @override
     def format_players_md(self, players: Iterable[PlayerId]) -> str:
         return wordify_iterable(f"<@{player}>" for player in players)
+    @override
     def format_players(self,players:Iterable[PlayerId]) -> str:
         player_names:list[str] = []
         for player in players:

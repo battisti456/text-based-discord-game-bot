@@ -34,9 +34,9 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
                 if num_guns == 0:
                     s = ""
                 if len(gun_owners[num_guns]) == 1:
-                    gun_text_list.append(f"{self.format_players_md(gun_owners[num_guns])} has {num_guns + 1} gun{s}.")
+                    gun_text_list.append(f"{self.format_players(gun_owners[num_guns])} has {num_guns + 1} gun{s}.")
                 elif gun_owners[num_guns]:
-                    gun_text_list.append(f"{self.format_players_md(gun_owners[num_guns])} have {num_guns + 1} gun{s} each.")
+                    gun_text_list.append(f"{self.format_players(gun_owners[num_guns])} have {num_guns + 1} gun{s} each.")
             gun_text= '\n'.join(gun_text_list)
             #gun_text = f"\n{gun_text}\nRemember that if you choose gun without having one, you lose!\n"
         responses:PlayerDict[int] = await self.basic_multiple_choice(
