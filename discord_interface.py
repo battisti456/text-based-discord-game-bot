@@ -20,8 +20,7 @@ def discord_message_populate_interaction(
     interaction.content = payload.content
     interaction.interaction_id = payload.id#type: ignore
     if (
-        not (payload.reference is None) and 
-        not (payload.reference.cached_message is None)
+        not (payload.reference is None)
         ):
         reply_id:MessageId|None = payload.reference.message_id#type:ignore
         if reply_id is None:
