@@ -1,11 +1,12 @@
-from game.utils.types import PlayerId, PlayerDict, Grouping
-from game.game import Game
-from game.components.game_interface import Game_Interface
+import random
+from typing import Optional, TypedDict
+
 import pytrivia
 
-from typing import TypedDict, Optional
+from game.components.game_interface import Game_Interface
+from game.game import Game
+from game.utils.types import Grouping, PlayerDict, PlayerId
 
-import random
 
 class TriviaDict(TypedDict):
     question: str
@@ -18,7 +19,7 @@ class TriviaDict(TypedDict):
 class Trivia_Base(Game):
     def __init__(self,gi:Game_Interface):
         Game.__init__(self,gi)
-        if not Trivia_Base in self.initialized_bases:
+        if Trivia_Base not in self.initialized_bases:
             self.initialized_bases.append(Trivia_Base)
             self.trivia_client = pytrivia.Trivia(True)
             self.difficulty = pytrivia.Diffculty
@@ -53,14 +54,14 @@ class Trivia_Base(Game):
         if isinstance(type_,str):
             type_= self.get_type(type_)
         kwargs = {}
-        if not category is None:
+        if category is not None:
             kwargs['category'] = category
-        if not difficulty is None:
+        if difficulty is not None:
             kwargs['diffculty'] = difficulty
-        if not type_ is None:
+        if type_ is not None:
             kwargs['type_'] = type_
         raw = self.trivia_client.request(1,**kwargs)
-        while not 'results' in raw:#might time out if wait long enough?
+        while 'results' not in raw:#might time out if wait long enough?
             self.trivia_client = pytrivia.Trivia(True)
             raw = self.trivia_client.request(1,**kwargs)
         return raw['results'][0]

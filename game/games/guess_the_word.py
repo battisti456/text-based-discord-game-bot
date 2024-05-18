@@ -1,11 +1,19 @@
-from game.utils.types import PlayerId, PlayerDict
-from config.games_config import games_config
-from game.game_bases import Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Points_Base
-
-from game.components.game_interface import Game_Interface
-from game.utils.grammer import wordify_iterable
-from game.utils.word_tools import SimplePartOfSpeach, DefinitionList, definition_dict_to_list
 import random
+
+from config.games_config import games_config
+from game.components.game_interface import Game_Interface
+from game.game_bases import (
+    Basic_Secret_Message_Base,
+    Game_Word_Base,
+    Rounds_With_Points_Base,
+)
+from game.utils.grammer import wordify_iterable
+from game.utils.types import PlayerDict, PlayerId
+from game.utils.word_tools import (
+    DefinitionList,
+    SimplePartOfSpeach,
+    definition_dict_to_list,
+)
 
 CONFIG = games_config['guess_the_word']
 
@@ -71,7 +79,7 @@ class Guess_The_Word(Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Poin
             if GUESS_FEEDBACK:
                 no_success = (len(correct_players) == 0)
                 for player in players_not_guessed:
-                    if not player in correct_players:
+                    if player not in correct_players:
                         response = responses[player]
                         for j in range(min(len(response),len(secret_word))):
                             if response[j] == secret_word[j] and not (player_hint_letter[player][j] or global_hint_letter[j]):#doesn't seem to work right
@@ -88,7 +96,7 @@ class Guess_The_Word(Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Poin
                             slot_text += secret_word[j]
                         else:
                             slot_text += "\\_"
-                    await self.basic_send(f"Not a single person got new feedback this round, so I will be providing everyone some.\n" + 
+                    await self.basic_send("Not a single person got new feedback this round, so I will be providing everyone some.\n" + 
                                     f"Our current public feedback is '{slot_text}'.")
             if any(correct_players):
                 await self.basic_send(f"{self.format_players_md(correct_players)} got it correct!")
@@ -102,7 +110,7 @@ class Guess_The_Word(Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Poin
                 break
         await self.basic_send(f"The word was '{secret_word}'.")
         if(len(definition_list) > NUM_DEFINITIONS):
-            await self.basic_send(f"Some unused definitions included:\n" +
+            await self.basic_send("Some unused definitions included:\n" +
                             self.definition_string(definition_list[NUM_DEFINITIONS:]))
                 
         

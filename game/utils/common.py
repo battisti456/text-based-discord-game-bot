@@ -1,6 +1,7 @@
+from typing import Iterable, Mapping, Optional
+
 from game.utils.types import Grouping, GroupingSafeVar
 
-from typing import Mapping, Iterable, Optional
 
 def arg_fix_grouping(default:Grouping[GroupingSafeVar],inpt:Optional[GroupingSafeVar|Grouping[GroupingSafeVar]]) -> tuple[GroupingSafeVar,...]:
     if inpt is None:
@@ -25,7 +26,7 @@ def L[R](lst:list[R|None]|list[None]|list[R]|None) -> list[R]:
     if lst is None:
         return []
     else:
-        return list(item for item in lst if not item is None)
+        return list(item for item in lst if item is not None)
 
 """
 def _list_combine(current:list[R],future_options:list[Sequence[R]]) -> list[list[R]]:

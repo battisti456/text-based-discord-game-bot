@@ -1,16 +1,24 @@
+import asyncio
 from typing import Optional
-from game.utils.exceptions import GameEndInsufficientTeams
-from game.utils.types import PlayerId, PlayerPlacement, Placement, KickReason, Grouping, Team, TeamDict
-from game import kick_text
 
+from game import kick_text
+from game.components.game_interface import Game_Interface
 from game.game import Game
 from game.game_bases.rounds_with_points_base import Rounds_With_Points_Framework
-from game.components.game_interface import Game_Interface
-from game.utils.word_tools import word_generator
-from game.utils.grammer import wordify_iterable
 from game.utils.common import arg_fix_grouping
+from game.utils.exceptions import GameEndInsufficientTeams
+from game.utils.grammer import wordify_iterable
+from game.utils.types import (
+    Grouping,
+    KickReason,
+    Placement,
+    PlayerId,
+    PlayerPlacement,
+    Team,
+    TeamDict,
+)
+from game.utils.word_tools import word_generator
 
-import asyncio
 
 def random_team_name() -> Team:
     adj:str = word_generator.word(include_categories=['adjective'])
@@ -36,7 +44,7 @@ class Team_Base(Game):
     """
     def __init__(self,gi:Game_Interface):
         Game.__init__(self,gi)
-        if not Team_Base in self.initialized_bases:
+        if Team_Base not in self.initialized_bases:
             self.initialized_bases.append(Team_Base)
             self.num_teams:int = 2
             self.concurrent:bool = True

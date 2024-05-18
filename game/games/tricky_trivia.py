@@ -1,13 +1,16 @@
-from config.games_config import games_config
-
-from game.utils.types import PlayerId, PlayerDict
-from game import make_player_dict
-from game.game_bases import Trivia_Base, Basic_Secret_Message_Base, Rounds_With_Points_Base
-from game.game_bases.trivia_base import TriviaDict
-from game.components.response_validator import text_validator_maker
-
-from game.components.game_interface import Game_Interface
 import random
+
+from config.games_config import games_config
+from game import make_player_dict
+from game.components.game_interface import Game_Interface
+from game.components.response_validator import text_validator_maker
+from game.game_bases import (
+    Basic_Secret_Message_Base,
+    Rounds_With_Points_Base,
+    Trivia_Base,
+)
+from game.game_bases.trivia_base import TriviaDict
+from game.utils.types import PlayerDict
 
 CONFIG = games_config['tricky_trivia']
 
@@ -23,7 +26,7 @@ class Tricky_Trivia(Basic_Secret_Message_Base,Trivia_Base,Rounds_With_Points_Bas
         self.num_rounds = NUM_QUESTIONS
     async def game_intro(self):
         await self.basic_send(
-            f"# Today we are playing a game of tricky trivia!\n" +
+            "# Today we are playing a game of tricky trivia!\n" +
             "In this game you will be presented with trivia questions and each player will secretly craft their own possiple answer.\n" +
             "Then, the trivia question will be asked at large.\n" +
             f"You get {POINTS_FOOL} point for every person you fool, and {POINTS_GUESS} for getting it right yourself.\n" +
@@ -50,9 +53,9 @@ class Tricky_Trivia(Basic_Secret_Message_Base,Trivia_Base,Rounds_With_Points_Bas
         random.shuffle(options)
 
         choices:PlayerDict[int] = await self.basic_multiple_choice(question_text,options,self.unkicked_players)
-        for option in (option for option in options if not option is trivia_dict['correct_answer']):
+        for option in (option for option in options if option is not trivia_dict['correct_answer']):
             players_who_gave = list(player for player in self.unkicked_players if responses[player] == option)
-            players_who_chose = list(player for player in self.unkicked_players if options[choices[player]] == option and not player in players_who_gave)
+            players_who_chose = list(player for player in self.unkicked_players if options[choices[player]] == option and player not in players_who_gave)
             if not players_who_chose == []:
                 await self.basic_send(f"{self.format_players_md(players_who_gave)} provided the answer:\n'{option}'\n and fooled {self.format_players_md(players_who_chose)}.")
                 await self.score(players_who_gave,len(players_who_chose)*POINTS_FOOL)

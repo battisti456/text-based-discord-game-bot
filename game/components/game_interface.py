@@ -1,11 +1,10 @@
-from typing import Any,Callable,Awaitable, Optional, Hashable
-from game.utils.types import MessageId, PlayerId, ChannelId, Grouping
+from typing import Any, Awaitable, Callable, Hashable, Optional
 
 from game import get_logger
-from game.components.sender import Sender
+from game.components.interaction import INTERACTION_TYPES, Interaction, InteractionType
 from game.components.message import Message, Reroute_Message
-from game.components.interaction import Interaction, InteractionType, INTERACTION_TYPES
-
+from game.components.sender import Sender
+from game.utils.types import ChannelId, Grouping, MessageId, PlayerId
 
 logger = get_logger(__name__)
 
@@ -39,7 +38,7 @@ class Game_Interface(object):
         """
         clears all stored on_actions and messages
         """
-        logger.warning(f"resetting game interface")
+        logger.warning("resetting game interface")
         self.purge_tracked_messages()
         self.clear_actions()
     def track_message(self,message:Message):
@@ -140,7 +139,7 @@ class Channel_Limited_Interface_Sender(Interface_Sender):
     def __init__(self,gi:'Channel_Limited_Game_Interface'):
         Interface_Sender.__init__(self,gi)
     async def __call__(self,message:Message):
-        if not (message.players_who_can_see is None) and message.channel_id is None:
+        if (message.players_who_can_see is not None) and message.channel_id is None:
             assert isinstance(self.gi,Channel_Limited_Game_Interface)
             message= Reroute_Message(
                 message,

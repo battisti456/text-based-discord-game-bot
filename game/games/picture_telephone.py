@@ -1,10 +1,9 @@
-from game.utils.types import PlayerDict, PlayerDictOptional, PlayerId
-from game.game_bases import Rounds_With_Points_Base, Random_Image_Base
 from game.components.game_interface import Game_Interface
-
 from game.components.message import Message
 from game.components.player_input import Player_Text_Input, run_inputs
 from game.components.response_validator import text_validator_maker
+from game.game_bases import Random_Image_Base, Rounds_With_Points_Base
+from game.utils.types import PlayerDict, PlayerDictOptional, PlayerId
 
 NUM_ROUNDS = 1
 MIN_NUM_WORDS = 1
@@ -27,10 +26,10 @@ class Picture_Telephone(Rounds_With_Points_Base, Random_Image_Base):
         self.current_offset = 0
     @property
     def texts(self) -> list[PlayerDict[str]]:
-        return list(self._texts[i] for i in range(len(self._texts)) if not i in self.failed_paths)
+        return list(self._texts[i] for i in range(len(self._texts)) if i not in self.failed_paths)
     @property
     def images(self) -> list[PlayerDict[str]]:
-        return list(self._texts[i] for i in range(len(self._images)) if not i in self.failed_paths)
+        return list(self._texts[i] for i in range(len(self._images)) if i not in self.failed_paths)
     def reset(self):
         self._texts = []
         self._images = []

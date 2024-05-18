@@ -1,10 +1,19 @@
-from game.utils.types import PlayerId, Participant, Placement, KickReason, PlayerPlacement, Grouping
+from typing import Callable, Generic, Optional
+
 from game.components.game_interface import Game_Interface
 from game.game import Game
 from game.utils.common import arg_fix_grouping
-from game.utils.grammer import wordify_iterable
 from game.utils.exceptions import GameEndException
-from typing import Generic, Callable, Optional
+from game.utils.grammer import wordify_iterable
+from game.utils.types import (
+    Grouping,
+    KickReason,
+    Participant,
+    Placement,
+    PlayerId,
+    PlayerPlacement,
+)
+
 
 class EliminationGameEnd(GameEndException):
     ...
@@ -12,7 +21,7 @@ class EliminationGameEnd(GameEndException):
 class Elimination_Framework(Generic[Participant],Game):
     def __init__(self,gi:Game_Interface):
         Game.__init__(self,gi)
-        if not Elimination_Framework in self.initialized_bases:
+        if Elimination_Framework not in self.initialized_bases:
             self.initialized_bases.append(Elimination_Framework)
             self.part_str:Callable[[Participant],str] = lambda part: str(part)
     def configure(self,participants:Grouping[Participant]):
@@ -67,7 +76,7 @@ class Elimination_Framework(Generic[Participant],Game):
 class Elimination_Base(Elimination_Framework[PlayerId]):
     def __init__(self,gi:Game_Interface):
         Elimination_Framework.__init__(self,gi)
-        if not Elimination_Base in self.initialized_bases:
+        if Elimination_Base not in self.initialized_bases:
             self.initialized_bases.append(Elimination_Base)
             self.configure(self.all_players)
             self.part_str = lambda player: self.sender.format_players((player,))

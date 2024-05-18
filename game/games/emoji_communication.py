@@ -1,12 +1,18 @@
-from config.games_config import games_config
-
-from game.components.game_interface import Game_Interface
-from game.utils.types import PlayerId, PlayerDict
-from game.game_bases import Basic_Secret_Message_Base,Rounds_With_Points_Base,Game_Word_Base
-from game.utils.word_tools import find_random_related_scentences
-from game.utils.grammer import nice_sentence
-import emoji
 import random
+
+import emoji
+
+from config.games_config import games_config
+from game.components.game_interface import Game_Interface
+from game.game_bases import (
+    Basic_Secret_Message_Base,
+    Game_Word_Base,
+    Rounds_With_Points_Base,
+)
+from game.utils.grammer import nice_sentence
+from game.utils.types import PlayerDict, PlayerId
+from game.utils.word_tools import find_random_related_scentences
+
 #region config
 CONFIG = games_config['emoji_communications']
 
@@ -66,9 +72,9 @@ class Emoji_Communication(Basic_Secret_Message_Base,Rounds_With_Points_Base,Game
     async def game_intro(self):
         await self.basic_send(
             "# Welcome to a game of emoji communication!\n" +
-            f"In this game I will give each of you a sentence in secret and you will do your best to translate it into emojis.\n" +
+            "In this game I will give each of you a sentence in secret and you will do your best to translate it into emojis.\n" +
             f"Please note you can only use at max {MAX_EMOJI}, and all non-emoji characters in your responses will be ignored.\n" +
-            f"Then we will go through each players emoji message, and you will attempt to distiguish its orginating sentence from several false ones.\n" +
+            "Then we will go through each players emoji message, and you will attempt to distiguish its orginating sentence from several false ones.\n" +
             f"It is {POINTS_FOR_GUESS} for guessing it correct with {POINTS_PER_GUESSER} for the writer per person who guessed it, but" +
             f"beware! If all players guess it successfully they each get {POINTS_FOR_ALL_GUESS} while the person who wrote it gets none.\n" +
             f"In addition, if the writer used {BONUS_NUM} or less emojis, they earn {BONUS_POINTS_PER_GUESSER} points per person to guess it, if not all do.\n" +
@@ -78,7 +84,7 @@ class Emoji_Communication(Basic_Secret_Message_Base,Rounds_With_Points_Base,Game
         base_str:PlayerDict[str] = {}
         opt_str:PlayerDict[list[str]] = {}
         for player in self.unkicked_players:
-            while not player in base_str:
+            while player not in base_str:
                 raw = self.ww_sentence.sentence()
                 sentence = list(word for word in raw.lower()[:-1].split())
                 related = find_random_related_scentences(

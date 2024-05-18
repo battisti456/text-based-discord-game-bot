@@ -1,11 +1,12 @@
-#NEEDS TO BE TESTED
-from game.utils.types import PlayerId, PlayerDict
+import random
+
 from game import make_player_dict
-from game.game_bases import Elimination_Base
 from game.components.game_interface import Game_Interface
 from game.components.response_validator import single_choice_validator_maker
+from game.game_bases import Elimination_Base
 from game.utils.emoji_groups import ROCK_PAPER_SCISSORS_EMOJI
-import random
+from game.utils.types import PlayerDict, PlayerId
+
 
 class Elimination_Rock_Paper_Scissors(Elimination_Base):
     def __init__(self,gi:Game_Interface):
@@ -46,7 +47,7 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
             who_chooses=self.unkicked_players,
             emojis=list(ROCK_PAPER_SCISSORS_EMOJI),
             response_validator=single_choice_validator_maker(
-                {player:set(range(3)) for player in self.unkicked_players if not player in players_with_guns},
+                {player:set(range(3)) for player in self.unkicked_players if player not in players_with_guns},
                 list(ROCK_PAPER_SCISSORS_EMOJI)))
         my_pick = random.randint(0,2)
         players_eliminated:list[PlayerId] = []

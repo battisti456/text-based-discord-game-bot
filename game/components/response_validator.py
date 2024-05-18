@@ -1,9 +1,10 @@
-from game import PlayerId, PlayerDict
-from game.utils.grammer import wordify_iterable
-from typing import Callable, Any, Optional
+from typing import Any, Callable, Optional
+
+from profanity_check import predict_prob
 
 from config.config import config
-from profanity_check import predict_prob
+from game import PlayerDict, PlayerId
+from game.utils.grammer import wordify_iterable
 
 type Validation = tuple[bool,str|None]
 """
@@ -15,7 +16,9 @@ the str|None determines the feedback given; None results in no feedback, otherwi
 """
 type ResponseValidator[DataType] = Callable[[PlayerId,DataType|None],Validation]
 
-not_none:ResponseValidator[Any] = lambda player, data: (not data is None,None)
+def not_none(player:PlayerId,data:Any) -> Validation:
+    return data is not None , None
+
 
 def text_validator_maker(
         is_substr_of:Optional[str] = None,
@@ -43,40 +46,40 @@ def text_validator_maker(
             value = value.lower()
         if predict_prob([value])[0] >= config['profanity_threshold']:
             return (False,"given value set off the profanity filter")
-        if not is_in is None:
-            if not value in is_in:
+        if is_in is not None:
+            if value not in is_in:
                 return (False,f"given value '{value}' not in acceptable values")
-        if not not_is_in is None:
+        if not_is_in is not None:
             if value in not_is_in:
                 return (False,f"given value '{value}' is a banned value")
-        if not is_substr_of is None:
-            if not value in is_substr_of:
+        if is_substr_of is not None:
+            if value not in is_substr_of:
                 return (False,f"given value '{value}' not in '{is_substr_of}'")
-        if not is_supstr_of is None:
-            if not is_supstr_of in value:
+        if is_supstr_of is not None:
+            if is_supstr_of not in value:
                 return (False,f"'{is_supstr_of}' not in given value '{value}'")
-        if not max_length is None:
+        if max_length is not None:
             if len(value) > max_length:
                 return (False,f"given value '{value}' of length {len(value)} exceeds the maximum length of {max_length}")
-        if not min_length is None:
+        if min_length is not None:
             if len(value) < min_length:
                 return (False,f"given value '{value}' of length {len(value)} is below the minimum length of {min_length}")
-        if not is_alpha is None:
+        if is_alpha is not None:
             if not value.isalpha():
                 return (False,f"given value '{value}' contains non-alphabetical characters")
-        if not is_alnum is None:
+        if is_alnum is not None:
             if not value.isalnum():
                 return (False,f"given value '{value}' contains characters which are neither alphabetic or numeric")
-        if not is_decimal is None:
+        if is_decimal is not None:
             if not value.isdecimal():
                 return (False,f"given value '{value}' contains non-decimal characters")
-        if not is_digit is None:
+        if is_digit is not None:
             if not value.isdigit():
                 return (False,f"given value '{value}' is not a digit")
-        if not is_composed_of is None:
+        if is_composed_of is not None:
             if not all(letter in is_composed_of for letter in value):
                 return (False,f"given value '{value}' contains characters not found in '{is_composed_of}'")
-        if not is_stricly_composed_of is None:
+        if is_stricly_composed_of is not None:
             list_letters = list(is_stricly_composed_of)
             for letter in value:
                 if letter in list_letters:
@@ -84,10 +87,10 @@ def text_validator_maker(
                 else:
                     return (False,f"given value '{value}' contains more characters than are found in '{is_stricly_composed_of}'")
         num_words =  len(value.split())
-        if not min_num_words is None:
+        if min_num_words is not None:
             if num_words < min_num_words:
                 return (False,f"given value '{value}' contains {num_words} word(s) which is less than the minimum of {min_num_words} words")
-        if not max_num_words is None:
+        if max_num_words is not None:
             if num_words > max_num_words:
                 return (False,f"given value '{value}' contains {num_words} word(s) which is more than the maximum of {min_num_words} words")
         return (True,None)
@@ -98,7 +101,7 @@ def single_choice_validator_maker(
         option_repr:Optional[list[str]] = None
 ) -> ResponseValidator[int]:
     def str_opt(opt:int) -> str:
-        if not option_repr is None:
+        if option_repr is not None:
             return option_repr[opt]
         else:
             return "Option : " + str(opt + 1)
@@ -106,7 +109,7 @@ def single_choice_validator_maker(
         if data is None:
             return (False,None)
         if player in player_limits:
-            if not data in player_limits[player]:
+            if data not in player_limits[player]:
                 return (False,f"your choice of {str_opt(data)} is not allowed, you are only permitted to choose amongst {wordify_iterable(str_opt(val) for val in player_limits[player])}")
         return (True,None)
     return validator

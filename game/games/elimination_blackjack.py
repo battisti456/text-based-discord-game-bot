@@ -1,16 +1,11 @@
 #NEEDS TO BE TESTED
-from config.games_config import games_config
-
-from game.game_bases import Card_Base
-from game.game_bases import Elimination_Base
-
-from game.components.game_interface import Game_Interface
-from game.components.message import Message
-
 from math import ceil
 
-from typing import Iterable
-from game.utils.types import PlayerId, PlayerPlacement, PlayerDict
+from config.games_config import games_config
+from game.components.game_interface import Game_Interface
+from game.components.message import Message
+from game.game_bases import Card_Base, Elimination_Base
+from game.utils.types import PlayerDict, PlayerId
 
 HAND_LIMIT = games_config['elimination_blackjack']["hand_limit"]
 NUM_PLAYERS_PER_DECK = games_config['elimination_blackjack']['num_players_per_deck']
@@ -23,7 +18,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
         sum = 0
         num_aces = 0
         hand = self.hands[player]
-        assert not hand is None
+        assert hand is not None
         for card in hand.cards:
             if card.is_face():
                 sum += 10
@@ -51,7 +46,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
         players_passed:list[PlayerId] = []
         players_still_drawing = list(self.unkicked_players)
         while players_still_drawing:
-            will_draw:PlayerDict[int] = await self.basic_no_yes(f"Will you draw another card?",players_still_drawing)
+            will_draw:PlayerDict[int] = await self.basic_no_yes("Will you draw another card?",players_still_drawing)
             players_who_drew:list[PlayerId] = list(player for player in will_draw if will_draw[player])
             players_passed += list(player for player in will_draw if not will_draw[player])
             await self.player_draw(#---------------------------------------add score display
@@ -65,12 +60,12 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
                 exit_core = await self.eliminate(players_eliminated_this_draw)
                 if exit_core:
                     return
-            players_still_drawing = list(player for player in self.unkicked_players if not player in players_passed)
+            players_still_drawing = list(player for player in self.unkicked_players if player not in players_passed)
         scores:dict[PlayerId,int] = {}
         for player in self.unkicked_players:
             player_score = self.player_points(player)
             hand = self.hands[player]
-            assert not hand is None
+            assert hand is not None
             message = Message(
                 content = f"{self.format_players_md([player])} had a hand worth {player_score}.",
                 attach_paths=[self.ch_to_attachment(hand)]

@@ -1,10 +1,9 @@
-from game.utils.types import PlayerId, MessageId, ChannelId, InteractionId, PlayersIds
-from game.utils.grammer import wordify_iterable
-from game.utils.emoji_groups import NO_YES_EMOJI
-
 from math import ceil
+from typing import TYPE_CHECKING, Callable, Literal, Optional, Sequence, TypeVar
 
-from typing import Optional, Callable, TypeVar, Literal, Sequence, TYPE_CHECKING
+from game.utils.emoji_groups import NO_YES_EMOJI
+from game.utils.grammer import wordify_iterable
+from game.utils.types import ChannelId, InteractionId, MessageId, PlayersIds
 
 if TYPE_CHECKING:
     from game.components.interaction import Interaction
@@ -73,7 +72,7 @@ class Message(object):
         self.children:list[Message] = []
     def is_sent(self) -> bool:
         """return weather or not this Message object refers to an already sent message"""
-        return not self.message_id is None
+        return self.message_id is not None
     def is_response(self,interaction:'Interaction',allow:MessageSearchStrictness = 'sub_children') -> bool:
         """
         returns whether an interaction refers to this message with its reply_to_message_id
@@ -106,10 +105,11 @@ class Message(object):
                 sub_text = 'original'
             else:
                 sub_text = allow
-            if allow in ['sub_aliases','sub_aliases']:
-                check = lambda child: isinstance(child,Alias_Message)
-            else:
-                check = lambda child: True
+            def check(child):
+                if allow in ['sub_aliases','sub_aliases']: 
+                    return isinstance(child,Alias_Message)
+                else:
+                    return True
             is_response = is_response or any(child.is_message(message_id,sub_text) for child in self.children if check(child))
         return is_response
     def split(
@@ -138,13 +138,13 @@ class Message(object):
         if self.content is None:
             return [Content_Split_Message(self,0,0,add_start,add_end,True)]
         splits = []
-        if not deliminator is None:
+        if deliminator is not None:
             found_index = self.content.find(deliminator)
             while found_index != -1:
                 splits.append(found_index)
                 found_index = self.content.find(deliminator,found_index)
         splits = [0] + splits + [len(self.content)]
-        if not length is None:
+        if length is not None:
             for i in range(len(splits)-1,0,-1):
                 chars_in_segment = splits[i] - splits[i-1]
                 if chars_in_segment > length:
@@ -266,7 +266,7 @@ class Content_Split_Message(Unique_Id_Alias_Message):
             add_end:str = "",
             include_rest:bool = False):
         def index_content(content:Optional[str]) -> str | None:
-            if not content is None:
+            if content is not None:
                 return f"{add_start}{content[start_index:end_index]}{add_end}"
         Unique_Id_Alias_Message.__init__(
             self,parent_message,

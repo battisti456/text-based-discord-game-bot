@@ -1,14 +1,17 @@
-from typing import Optional, Iterable, override
-from game.components.game_interface import Channel_Limited_Game_Interface, Channel_Limited_Interface_Sender
-from game.components.message import Message, Add_Bullet_Points_To_Content_Alias_Message
-from game.components.interaction import Interaction
-from game.utils.grammer import wordify_iterable
+from random import shuffle
+from typing import Iterable, Optional, override
 
 import discord
-from random import shuffle
 
-from game.utils.types import PlayerId, MessageId, ChannelId
 from game import get_logger
+from game.components.game_interface import (
+    Channel_Limited_Game_Interface,
+    Channel_Limited_Interface_Sender,
+)
+from game.components.interaction import Interaction
+from game.components.message import Add_Bullet_Points_To_Content_Alias_Message, Message
+from game.utils.grammer import wordify_iterable
+from game.utils.types import ChannelId, MessageId, PlayerId
 
 logger = get_logger(__name__)
 
@@ -21,11 +24,11 @@ def discord_message_populate_interaction(
     interaction.content = payload.content
     interaction.interaction_id = payload.id#type: ignore
     if (
-        not (payload.reference is None)
+        payload.reference is not None
         ):
         reply_id:MessageId|None = payload.reference.message_id#type:ignore
         if reply_id is None:
-            logger.warning(f"received a message with a reference but no reference.message_id")
+            logger.warning("received a message with a reference but no reference.message_id")
         else:
             interaction.reply_to_message_id = reply_id
     return interaction
@@ -47,7 +50,7 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
         self.default_channel = gi.channel_id
     @override
     async def _send(self, message: Message):
-        if not message.content is None:
+        if message.content is not None:
             if len(message.content) > MESSAGE_MAX_LENGTH:
                 sub_messages = message.split(
                     length=MESSAGE_MAX_LENGTH,
@@ -68,10 +71,10 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
             channel = self.client.get_channel(message.channel_id)
         assert isinstance(channel,(discord.TextChannel,discord.Thread))
         attachments:list[discord.File] = []
-        if not message.attach_paths is None:
+        if message.attach_paths is not None:
             for path in message.attach_paths:
                 attachments.append(discord.File(path))
-        if message.message_id is None and not message.reply_to_id is None:
+        if message.message_id is None and message.reply_to_id is not None:
             await self.client.wait_until_ready()
             assert isinstance(message.reply_to_id,int)
             to_reply = await channel.fetch_message(message.reply_to_id)
@@ -84,7 +87,7 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
             await self.client.wait_until_ready()
             discord_message = await channel.send(
                 content=message.content 
-                if not message.content in (None,'') else "--empty--",
+                if message.content not in (None,'') else "--empty--",
                 files = attachments)
             message.message_id = discord_message.id#type:ignore
         else:#edit old message
@@ -95,7 +98,7 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
             message.message_id = discord_message.id#type:ignore
         if message.bullet_points:
             for bp in message.bullet_points:
-                if not bp.emoji is None:
+                if bp.emoji is not None:
                     emoji = discord.PartialEmoji(name = bp.emoji)
                     await self.client.wait_until_ready()
                     await discord_message.add_reaction(emoji)
@@ -108,7 +111,7 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
         for player in players:
             assert isinstance(player,int)
             user = self.client.get_user(player)
-            if not user is None:
+            if user is not None:
                 player_names.append(user.display_name)
             else:
                 player_names.append(str(player))
@@ -140,9 +143,10 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 await self._trigger_action(interaction)
         @self.client.event
         async def on_raw_message_edit(payload:discord.RawMessageUpdateEvent):
-            if (not payload.cached_message is None and
+            if (
+                payload.cached_message is not None and
                 (self.client.user is None or 
-                 payload.cached_message.author.id != self.client.user.id)):
+                payload.cached_message.author.id != self.client.user.id)):
                 interaction = Interaction('send_message')
                 discord_message_populate_interaction(
                     payload.cached_message,interaction)
@@ -152,9 +156,10 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 await self._trigger_action(interaction)
         @self.client.event
         async def on_raw_message_delete(payload:discord.RawMessageDeleteEvent):
-            if (not payload.cached_message is None and
+            if (
+                payload.cached_message is not None and
                 (self.client.user is None or 
-                 payload.cached_message.author.id != self.client.user.id)):
+                payload.cached_message.author.id != self.client.user.id)):
                 interaction = Interaction('delete_message')
                 discord_message_populate_interaction(
                     payload.cached_message,interaction)
@@ -171,13 +176,13 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 interaction.interaction_id = payload.emoji.id#type:ignore
                 
                 message = self.find_tracked_message(payload.message_id)#type:ignore
-                if not message is None:
-                    if not message.bullet_points is None:
+                if message is not None:
+                    if message.bullet_points is not None:
                         for i in range(len(message.bullet_points)):
                             if message.bullet_points[i].emoji == emoji:
                                 interaction.choice_index = i
                                 break
-                        if not interaction.choice_index is None:
+                        if interaction.choice_index is not None:
                             await self._trigger_action(interaction)
         @self.client.event
         async def on_raw_reaction_remove(payload:discord.RawReactionActionEvent):
@@ -190,13 +195,13 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 interaction.interaction_id = payload.emoji.id#type:ignore
                 
                 message = self.find_tracked_message(payload.message_id)#type:ignore
-                if not message is None:
-                    if not message.bullet_points is None:
+                if message is not None:
+                    if message.bullet_points is not None:
                         for i in range(len(message.bullet_points)):
                             if message.bullet_points[i].emoji == emoji:
                                 interaction.choice_index = i
                                 break
-                        if not interaction.choice_index is None:
+                        if interaction.choice_index is not None:
                             await self._trigger_action(interaction)
     @override
     async def reset(self):
@@ -216,7 +221,7 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
         await self.client.wait_until_ready()
         message = await channel.fetch_message(message_id)
 
-        assert not self.client.user is None
+        assert self.client.user is not None
         emoji:list[str] = []
         for reaction in message.reactions:
             async for user in reaction.users():
@@ -235,11 +240,11 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 name = ""
             await self.client.wait_until_ready()
             thread = await main_channel.create_thread(name = name)
-        if not who_can_see is None:
+        if who_can_see is not None:
             for player in who_can_see:
                 assert isinstance(player,int)
                 user = self.client.get_user(player)
-                assert not user is None#user not found
+                assert user is not None#user not found
                 await self.client.wait_until_ready()
                 await thread.add_user(user)
         return thread.id#type:ignore

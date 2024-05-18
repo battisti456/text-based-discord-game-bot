@@ -1,6 +1,7 @@
-from config.config import config
 import subprocess
 import sys
+
+from config.config import config
 
 EXIT_PATTERN = "SystemExit: "
 
@@ -12,7 +13,7 @@ while True:
         stderr=subprocess.PIPE
         #creationflags=subprocess.CREATE_NEW_CONSOLE
     )
-    assert not main.stderr is None
+    assert main.stderr is not None
     last_line:bytes = b''
     for line in iter(main.stderr.readline,b''):
         last_line = line

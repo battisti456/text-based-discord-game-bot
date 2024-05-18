@@ -1,18 +1,16 @@
 #NEEDS TO BE TESTED
-from config.games_config import games_config
-from config.config import config
-
-from game.utils.types import PlayerId
-from typing import TypedDict, Optional
-
-from game.game_bases import Elimination_Base, Chess_Base
-from game.components.game_interface import Game_Interface
-from game.utils.chess_tools import get_move_text, get_game_over_text
+import random
+from typing import Optional, TypedDict
 
 import chess
-import random
-
 import pandas
+
+from config.config import config
+from config.games_config import games_config
+from game.components.game_interface import Game_Interface
+from game.game_bases import Chess_Base, Elimination_Base
+from game.utils.chess_tools import get_game_over_text, get_move_text
+from game.utils.types import PlayerId
 
 CONFIG = games_config['chess_puzzle_elimination']
 
@@ -86,13 +84,13 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
             return correct_chess_puzzle(self.chess_puzzle_data.sample().to_dict())
         def get_diffs(puzzle:ChessPuzzleDict) ->tuple[int,int]:
             rating_diff = 0
-            if not rating_range is None:
+            if rating_range is not None:
                 if puzzle['Rating'] > rating_range[1]:
                     rating_diff = puzzle['Rating'] - rating_range[1]
                 elif puzzle['Rating'] < rating_range[0]:
                     rating_diff = rating_range[0] - puzzle['Rating']
             popularity_diff = 0
-            if not popularity_range is None:
+            if popularity_range is not None:
                 if puzzle['Popularity'] > popularity_range[1]:
                     popularity_diff = puzzle['Popularity'] - popularity_range[1]
                 elif puzzle['Popularity'] < popularity_range[0]:
@@ -117,7 +115,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
         await self.basic_send(
             "# Welcome to a game of elimination chess puzzles!\n" + 
             "In this game you will be presented with chess puzzles.\n" +
-            "" if RATING_RANGE is None else f"These puzzles will start with a chess rating between {RATING_RANGE[0]} and {RATING_RANGE[1]}, but may escalate if y'all do well.\n" +
+            "" if RATING_RANGE is None else f"These puzzles will start with a chess rating between {RATING_RANGE[0]} and {RATING_RANGE[1]}, but may escalate if y'all do well.\n"+
             f"You must then pick the best move for the position out of {NUM_MOVE_OPTIONS} options that I provide you," +
             "keeping in mind that this puzzle may extend through a multi-move strategy.\n" +
             "If you pick the wrong move, you are eliminated (unless no one gets it right).\n" +
@@ -154,7 +152,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
                 move_options = legal_moves
             else:
                 move_options = (random.sample(legal_moves,k=NUM_MOVE_OPTIONS))
-                if not moves[move_index] in move_options:
+                if moves[move_index] not in move_options:
                     move_options[random.randint(0,NUM_MOVE_OPTIONS-1)] = moves[move_index]
             option_text_list:list[str] = list(get_move_text(self.board,move_option) for move_option in move_options)
             
@@ -165,7 +163,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
             )
 
             correct_players = list(player for player in self.unkicked_players if best_move(move_options[responses[player]]))
-            incorrect_players = list(player for player in self.unkicked_players if not player in correct_players)
+            incorrect_players = list(player for player in self.unkicked_players if player not in correct_players)
 
             move_right_text = "No one got the move correct."
             best_move_text = f"The best move in this position for {player_color} is {get_move_text(self.board,moves[move_index])}."

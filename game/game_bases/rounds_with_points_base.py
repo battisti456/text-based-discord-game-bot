@@ -1,18 +1,27 @@
-from game.game import Game
-from game.components.game_interface import Game_Interface
-from game.utils.grammer import s
-from game.utils.types import PlayerId, PlayerPlacement, Participant, Placement, Number, Grouping
-from typing import Optional, Generic, Mapping, Callable
+from typing import Callable, Generic, Mapping, Optional
+
 from typing_extensions import TypeVar
-from game.utils.common import arg_fix_map, arg_fix_grouping
+
 from game import score_to_placement
+from game.components.game_interface import Game_Interface
+from game.game import Game
+from game.utils.common import arg_fix_grouping, arg_fix_map
+from game.utils.grammer import s
+from game.utils.types import (
+    Grouping,
+    Number,
+    Participant,
+    Placement,
+    PlayerId,
+    PlayerPlacement,
+)
 
 PointType = TypeVar('PointType',bound = Number, default=int)
 
 class Rounds_With_Points_Framework(Generic[Participant,PointType],Game):
     def __init__(self,gi:Game_Interface):
         Game.__init__(self,gi)
-        if not Rounds_With_Points_Framework in self.initialized_bases:
+        if Rounds_With_Points_Framework not in self.initialized_bases:
             self.initialized_bases.append(Rounds_With_Points_Framework)
             self.zero_score:PointType = 0#type: ignore
             self.num_rounds:int = 3
@@ -78,7 +87,7 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Game):
 class Rounds_With_Points_Base(Rounds_With_Points_Framework[PlayerId,int]):
     def __init__(self,gi:Game_Interface):
         Rounds_With_Points_Framework.__init__(self,gi)
-        if not Rounds_With_Points_Base in self.initialized_bases:
+        if Rounds_With_Points_Base not in self.initialized_bases:
             self.initialized_bases.append(Rounds_With_Points_Base)
             self.configure(self.unkicked_players)
             self.part_str = lambda player: self.format_players([player])

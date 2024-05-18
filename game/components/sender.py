@@ -1,8 +1,9 @@
-from game.utils.types import PlayerId
+from typing import Iterable
+
 from game.components.message import Message
 from game.utils.grammer import wordify_iterable
+from game.utils.types import PlayerId
 
-from typing import Iterable
 
 class Sender(object):
     """a callable object whose responsibility it is to interpret Messages and display them"""

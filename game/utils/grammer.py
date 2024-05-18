@@ -1,7 +1,9 @@
-from typing import Iterable, Any
 import uuid
-from game.utils.word_tools import Sentence
+from typing import Any, Iterable
+
 from game.utils.types import Number
+from game.utils.word_tools import Sentence
+
 
 def nice_sentence(sentence:Sentence) -> str:
     return (" ".join(sentence)).replace('_',' ').capitalize()

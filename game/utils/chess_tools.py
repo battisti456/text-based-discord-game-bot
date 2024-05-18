@@ -34,7 +34,7 @@ def get_move_text(board:chess.Board,move_uci:chess.Move|str) -> str:
     and_text = ""
     check_text = ""
 
-    assert not piece is None
+    assert piece is not None
 
     if (piece.piece_type == chess.PAWN and #en passant
         capture is None and #not capturing
@@ -49,7 +49,7 @@ def get_move_text(board:chess.Board,move_uci:chess.Move|str) -> str:
     if test.is_check():
         check_text = " resulting in a check"
 
-    if not capture is None:#capturing
+    if capture is not None:#capturing
         moves_to = f'captures {get_piece_name(capture.symbol())} {capture.unicode_symbol()} on'
 
     if (piece.piece_type == chess.PAWN and len(move_uci) == 5):#promotion
@@ -163,7 +163,7 @@ def render_chess(
         j = BOARD_SIZE -1 - rank if white_perspective else rank
         return (i*square_edge,j*square_edge)
 
-    if not last_move_color is None and len(board.move_stack)  > 0:
+    if last_move_color is not None and len(board.move_stack)  > 0:
         last_move_square = PIL.Image.new('RGBA',square_size,last_move_color)
         last_move = board.peek()
         for square in (last_move.from_square,last_move.to_square):
@@ -172,9 +172,9 @@ def render_chess(
                 square_to_xy(square),
                 last_move_square
             )
-    if not check_color is None and board.is_check():
+    if check_color is not None and board.is_check():
         king_square = board.king(board.turn)
-        if not king_square is None:
+        if king_square is not None:
             check_square = PIL.Image.new('RGBA',square_size,check_color)
             board_image.paste(
                 check_square,

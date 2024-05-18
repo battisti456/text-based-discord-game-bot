@@ -1,21 +1,23 @@
-from config.games_config import games_config
-from config.config import config
-
-from game.utils.types import PlayerId, PlayerDict, PlayerPlacement
-from game import make_player_dict, correct_int, merge_placements, score_to_placement
-from game.game import Game
-from game.components.game_interface import Game_Interface
-from game.components.player_input import Player_Input, Player_Single_Selection_Input, Player_Text_Input, run_inputs
-from game.components.message import Message, make_bullet_points
-from game.utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
-from game.utils.grammer import wordify_iterable, ordinate
-from game.components.response_validator import Validation
-
-import random
-
 import json
+import random
+from typing import TypedDict
 
-from typing import TypedDict, Callable
+from config.config import config
+from config.games_config import games_config
+from game import correct_int, make_player_dict, merge_placements, score_to_placement
+from game.components.game_interface import Game_Interface
+from game.components.message import Message, make_bullet_points
+from game.components.player_input import (
+    Player_Input,
+    Player_Single_Selection_Input,
+    Player_Text_Input,
+    run_inputs,
+)
+from game.components.response_validator import Validation
+from game.game import Game
+from game.utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
+from game.utils.grammer import ordinate, wordify_iterable
+from game.utils.types import PlayerDict, PlayerId, PlayerPlacement
 
 CONFIG = games_config['the_great_kitten_race']
 
@@ -65,7 +67,7 @@ class The_Great_Kitten_Race(Game):
                 f"An obstacle of **{obstacle_name}** which involves {wordify_iterable(formatted_stats)}."
             )
         await self.basic_send(
-            f"Before you began training you were told which obstacles would show up in today's competition:\n" +
+            "Before you began training you were told which obstacles would show up in today's competition:\n" +
             "\n".join(obstacle_text_list) + '\n' + 
             "So let's have you introduce your kittens!")
         
@@ -118,15 +120,16 @@ class The_Great_Kitten_Race(Game):
         
         await self.kick_none_response(*all_inputs)
         
-        make_kitten:Callable[[],Kitten] = lambda:{'name':"",'stats':{},'time':-1}
+        def make_kitten() -> Kitten:
+            return {'name':"",'stats':{},'time':-1}
         kittens:PlayerDict[Kitten] = make_player_dict(self.unkicked_players,make_kitten)
         for player in self.unkicked_players:
             name = name_input.responses[player]
-            assert not name is None
+            assert name is not None
             kittens[player]['name'] = name
             for stat in self.kitten_config['stats']:
                 value = stat_input_dict[stat].responses[player]
-                assert not value is None
+                assert value is not None
                 kittens[player]['stats'][stat] = value
             total:int = sum(kittens[player]["stats"][stat] for stat in self.kitten_config["stats"])
             ratio:float = self.kitten_config['point_limit']/total
@@ -160,7 +163,7 @@ class The_Great_Kitten_Race(Game):
             f"racing for {self.format_players_md([order[i]])} with a final time of " +
             f"{kittens[order[i]]['time']} seconds!" for i in range(len(order)))
         await self.basic_send(
-            f"Anxiously we await at the finish line. Who will be first? Then coming over the hill we see...\n"+
+            "Anxiously we await at the finish line. Who will be first? Then coming over the hill we see...\n"+
             '\n'.join(cross_finish_text_list)
             )
         

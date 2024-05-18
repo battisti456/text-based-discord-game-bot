@@ -1,20 +1,29 @@
-from config.config import config
-
-from game.utils.types import PlayerDict, PlayerDictOptional, PlayersIds
-
-from game import make_player_dict, correct_str, get_logger
-from game.components.sender import Sender
-from game.components.message import Message, Alias_Message
-from game.components.game_interface import Game_Interface
-from game.components.interaction import Interaction
-from game.components.response_validator import ResponseValidator, Validation, not_none, default_text_validator
-from game.utils.grammer import nice_time, ordinate
-from game.utils.types import Grouping, GS, PlayerId
-
-from typing import Optional, Any, Callable, Awaitable
-
 import asyncio
 from time import time
+from typing import Any, Awaitable, Callable, Optional
+
+from config.config import config
+from game import correct_str, get_logger, make_player_dict
+from game.components.game_interface import Game_Interface
+from game.components.interaction import Interaction
+from game.components.message import Alias_Message, Message
+from game.components.response_validator import (
+    ResponseValidator,
+    Validation,
+    default_text_validator,
+    not_none,
+)
+from game.components.sender import Sender
+from game.utils.grammer import nice_time, ordinate
+from game.utils.types import (
+    GS,
+    Grouping,
+    PlayerDict,
+    PlayerDictOptional,
+    PlayerId,
+    PlayersIds,
+)
+
 type Condition = dict[Player_Input,bool]
 
 logger = get_logger(__name__)
@@ -50,7 +59,7 @@ class Player_Input[T](GS):
         return f"{self.__class__.__name__}({self.name})"
     def on_update(self,func:Callable[[],Awaitable]) -> Callable[[],Awaitable]:
         """binds a callable to be run whenever the input changes"""
-        if not func in self.funcs_to_call_on_update:
+        if func not in self.funcs_to_call_on_update:
             logger.info(f"bound new on_update to {self}")
             self.funcs_to_call_on_update.append(func)
         return func
@@ -65,7 +74,7 @@ class Player_Input[T](GS):
         validation:PlayerDict[Validation] = {player:self._response_validator(player,self.responses[player]) for player in self.players}
         players_not_responded = list(player for player in self.players if not validation[player][0])
         player_text = self.sender.format_players_md(players_not_responded)
-        players_with_feedback = list(player for player in self.players if not validation[player][1] is None)
+        players_with_feedback = list(player for player in self.players if validation[player][1] is not None)
         if player_text:
             to_return = f"*Waiting for {player_text} to respond to {self.name}.*"
         else:
@@ -73,7 +82,7 @@ class Player_Input[T](GS):
         if not basic:
             for player in players_with_feedback:
                 feedback = validation[player][1]
-                if not feedback is None:
+                if feedback is not None:
                     to_return += f"\n{self.sender.format_players_md([player])}: __{feedback}__"
         return to_return
     def reset(self):
@@ -125,7 +134,7 @@ class Player_Input[T](GS):
             else:
                 warning_text = f"You have {len(self.warnings)-1-i} warning(s) remaining."
             timeout_text:str = ""
-            if not self.timeout is None:
+            if self.timeout is not None:
                 timeout_text = f"\nYou have {nice_time(self.timeout_time-int(time()))} to respond before timeout."
             await self.sender(Message(
                 players_who_can_see=self.who_can_see,
@@ -216,7 +225,7 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
         if interaction.player_id is None:
             logger.info(f"{interaction} ignored by {self} because it had no player_id")
             return False
-        if not interaction.player_id in self.players:
+        if interaction.player_id not in self.players:
             logger.info(f"{interaction} ignored by {self} because its player_id was not listed for the input")
             return False
         if not self.message.is_response(interaction):
@@ -248,13 +257,13 @@ class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
         @self.gi.on_action('send_message',self)
         async def on_message_action(interaction:Interaction):
             if self.allow_interaction(interaction):
-                assert not interaction.player_id is None
+                assert interaction.player_id is not None
                 self.responses[interaction.player_id] = interaction.content
                 await self._update()
         @self.gi.on_action('delete_message',self)
         async def on_delete_action(interaction:Interaction):
             if self.allow_interaction(interaction):
-                assert not interaction.player_id is None
+                assert interaction.player_id is not None
                 self.responses[interaction.player_id] = None
                 await self._update()
     async def _unsetup(self):
@@ -277,13 +286,13 @@ class Player_Single_Selection_Input(Player_Input_In_Response_To_Message[int]):
         @self.gi.on_action('select_option',self)
         async def on_reaction_action(interaction:Interaction):
             if self.allow_interaction(interaction):
-                assert not interaction.player_id is None
+                assert interaction.player_id is not None
                 self.responses[interaction.player_id] = interaction.choice_index
                 await self._update()
         @self.gi.on_action('deselect_option',self)
         async def on_unreaction_action(interaction:Interaction):
             if self.allow_interaction(interaction):
-                assert not interaction.player_id is None
+                assert interaction.player_id is not None
                 if self.responses[interaction.player_id] == interaction.choice_index:
                     self.responses[interaction.player_id] = None
                     await self._update()
@@ -303,8 +312,8 @@ class Player_Multiple_Selection_Input(Player_Input_In_Response_To_Message[set[in
         await Player_Input_In_Response_To_Message._setup(self)
         @self.gi.on_action('select_option',self)
         async def on_reaction_action(interaction:Interaction):
-            if self.allow_interaction(interaction) and not interaction.choice_index is None:
-                assert not interaction.player_id is None
+            if self.allow_interaction(interaction) and interaction.choice_index is not None:
+                assert interaction.player_id is not None
                 if self.responses[interaction.player_id] is None:
                     self.responses[interaction.player_id] = set()
                 proxy = self.responses[interaction.player_id]
@@ -314,9 +323,9 @@ class Player_Multiple_Selection_Input(Player_Input_In_Response_To_Message[set[in
         @self.gi.on_action('deselect_option',self)
         async def on_unreaction_action(interaction:Interaction):
             if self.allow_interaction(interaction):
-                assert not interaction.player_id is None
-                if not self.responses[interaction.player_id] is None:
-                    assert not interaction.choice_index is None
+                assert interaction.player_id is not None
+                if self.responses[interaction.player_id] is not None:
+                    assert interaction.choice_index is not None
                     proxy = self.responses[interaction.player_id]
                     assert isinstance(proxy,set)
                     if interaction.choice_index in proxy:
@@ -365,7 +374,7 @@ async def run_inputs(
     async def wait_until_completion():
         while not check_is_completion():
             await asyncio.sleep(SLEEP_TIME)
-    if not sender is None:
+    if sender is not None:
         def feedback_text() -> str:
             feedback_list = []
             for input in (input for input in inputs if not input.has_recieved_all_responses()):

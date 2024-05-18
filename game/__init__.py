@@ -1,9 +1,16 @@
-from typing import Iterable, Optional, Callable, Mapping
-from game.utils.types import KickReason, PlayerMapOptional,PlayerDict,PlayerId,Number,Placement,PlayerPlacement
-from config.config import config
-
-
 import logging
+from typing import Callable, Iterable, Mapping, Optional
+
+from config.config import config
+from game.utils.types import (
+    KickReason,
+    Number,
+    Placement,
+    PlayerDict,
+    PlayerId,
+    PlayerMapOptional,
+    PlayerPlacement,
+)
 
 fmt = logging.Formatter('%(asctime)s::%(levelname)s::%(name)s::%(message)s')
 h1 = logging.StreamHandler()
@@ -25,11 +32,11 @@ kick_text:dict[KickReason,str] = {
 def treat_responses[T](responses:PlayerMapOptional[T],players:Optional[None]=None) -> PlayerDict[T]:
         new_responses:PlayerDict[T] = {}
         for player in responses:
-            if not players is None:
-                if not player in players:
+            if players is not None:
+                if player not in players:
                     continue
             value:T|None = responses[player]
-            if not value is None:
+            if value is not None:
                 new_responses[player] = value
         return new_responses
 
@@ -78,7 +85,7 @@ def score_to_placement[Participant](
                 to_return[i-1] += (participants[i],)
                 continue
         to_return.append((participants[i],))
-    if not all_participants is None and set(all_participants) != set(participants):
+    if all_participants is not None and set(all_participants) != set(participants):
         to_return.append(tuple(set(all_participants)-set(participants)))
     return tuple(to_return)
 def _merge_placements(pl1:PlayerPlacement,pl2:PlayerPlacement):

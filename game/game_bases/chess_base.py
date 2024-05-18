@@ -2,20 +2,19 @@ from typing import Optional
 
 import chess
 
-from game.utils.pillow_tools import Color
-from game.game import Game
-from game.components.game_interface import Game_Interface
-from game.utils.grammer import temp_file_path
-from game.utils.chess_tools import render_chess
-
 from config.game_bases_config import game_bases_config
+from game.components.game_interface import Game_Interface
+from game.game import Game
+from game.utils.chess_tools import render_chess
+from game.utils.grammer import temp_file_path
+from game.utils.pillow_tools import Color
 
 CONFIG = game_bases_config['chess_base']
 
 class Chess_Base(Game):
     def __init__(self,gi:Game_Interface):
         super().__init__(gi)
-        if not Chess_Base in self.initialized_bases:
+        if Chess_Base not in self.initialized_bases:
             self.initialized_bases.append(Chess_Base)
             self.board = chess.Board()
             self.p_white_color:Color = CONFIG['p_white_color']

@@ -1,7 +1,16 @@
-from typing import Protocol, Iterator, runtime_checkable, NewType, Optional, Mapping, Literal, Any
+from dataclasses import dataclass
+from typing import (
+    Iterator,
+    Literal,
+    Mapping,
+    NewType,
+    Optional,
+    Protocol,
+    runtime_checkable,
+)
+
 from typing_extensions import TypeVar
 
-from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class GS():

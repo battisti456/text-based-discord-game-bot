@@ -1,15 +1,16 @@
-from config.games_config import games_config
-
-from game.utils.types import PlayerId, PlayerDict
-from game.components.game_interface import Game_Interface
-from game.game_bases import Rounds_With_Points_Base,Random_Image_Base
-from game.utils.grammer import temp_file_path
-
-import random
 import math
+import random
+
 import PIL.Image
-import PIL.ImageFilter
 import PIL.ImageDraw
+import PIL.ImageFilter
+
+from config.games_config import games_config
+from game.components.game_interface import Game_Interface
+from game.game_bases import Random_Image_Base, Rounds_With_Points_Base
+from game.utils.grammer import temp_file_path
+from game.utils.types import PlayerDict
+
 #region unpacking config
 CONFIG = games_config['altered_image_guess']
 
@@ -289,7 +290,7 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
         )
         
         responses:PlayerDict[int] = await self.basic_multiple_choice(
-            f"Which of these search prompts does this image correspond to?",
+            "Which of these search prompts does this image correspond to?",
             search_options,
             who_chooses=self.unkicked_players,
             emojis = list(SEARCH_TOPICS[topic] for topic in search_options)

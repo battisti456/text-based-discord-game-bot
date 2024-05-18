@@ -1,11 +1,9 @@
 import sys
 
-from discord_interface import Discord_Game_Interface
-from game.components.game_operator import Game_Operator
-
 from config.config import config
 from config.discord_config import discord_config
-
+from discord_interface import Discord_Game_Interface
+from game.components.game_operator import Game_Operator
 
 if __name__ == "__main__":
     gi = Discord_Game_Interface(config['main_channel_id'],config['players'])

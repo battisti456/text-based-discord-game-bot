@@ -1,14 +1,21 @@
-from typing import Literal, TypedDict, Optional, Any, TYPE_CHECKING
-from typing import _TypedDictMeta # type: ignore
-if TYPE_CHECKING:
-    from game.utils.types import PlayerId, ChannelId
-    from game.utils.pillow_tools import Color
-import ruamel.yaml.comments
-from typeguard import check_type, TypeCheckError
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+    Optional,
+    TypedDict,
+    _TypedDictMeta,  # type: ignore
+)
 
+if TYPE_CHECKING:
+    from game.utils.pillow_tools import Color
+    from game.utils.types import ChannelId, PlayerId
 from ast import literal_eval
 
 import ruamel.yaml
+import ruamel.yaml.comments
+from typeguard import TypeCheckError, check_type
+
 yaml = ruamel.yaml.YAML()
 
 LOCAL_CONFIG_FILE = "local_config.yaml"
@@ -175,7 +182,7 @@ def edit(keys:list[str],action:ConfigAction,val_str:str):
         val = literal_eval(val_str)
     except ValueError:#assume meant to be str
         raise IncoprehensibleValueString(f"Input: '{val_str}' could not be interpreted. Remember if you would like to input a string to surround it with quotation marks.")
-    if not keys[0] in CONFIG_TYPES:
+    if keys[0] not in CONFIG_TYPES:
         raise BaseConfigDoesNotExist(f"Config: {keys[0]} is not an available config to edit.")
     current:_TypedDictMeta = CONFIG_TYPES[keys[0]]
     for key in keys[1:]:
@@ -193,7 +200,7 @@ def edit(keys:list[str],action:ConfigAction,val_str:str):
     
     local:dict = local_config
     for key in keys[:-1]:
-        if not key in local:
+        if key not in local:
             local[key] = {}
             local = local[key]
         else:
@@ -202,7 +209,7 @@ def edit(keys:list[str],action:ConfigAction,val_str:str):
         case 'set':
             local[keys[-1]] = val
         case 'add':
-            if not keys[-1] in local:
+            if keys[-1] not in local:
                 local[keys[-1]] = []
             if val in local[keys[-1]]:
                 raise ListValueAlreadyExists(f"Value: {val} already exists in {keys[-1]}.")

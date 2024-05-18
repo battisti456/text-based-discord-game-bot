@@ -1,17 +1,24 @@
 #NEEDS TO BE TESTED
-from config.games_config import games_config
+import random
 
+from config.games_config import games_config
+from game.components.game_interface import Game_Interface
+from game.components.message import (
+    Message,
+    make_bullet_points,
+    make_no_yes_bullet_points,
+)
+from game.components.player_input import (
+    Player_Single_Selection_Input,
+    Player_Text_Input,
+    multi_bind_message,
+    run_inputs,
+)
+from game.components.response_validator import text_validator_maker
 from game.game_bases.elimination_base import Elimination_Base
 from game.game_bases.game_word_base import Game_Word_Base
-from game.components.game_interface import Game_Interface
-from game.components.message import Message, make_no_yes_bullet_points, make_bullet_points
-from game.components.player_input import Player_Single_Selection_Input, Player_Text_Input, run_inputs, multi_bind_message
-from game.components.response_validator import text_validator_maker
 from game.utils.emoji_groups import LEFT_RIGHT_EMOJI
-
 from game.utils.types import PlayerId, PlayerPlacement
-
-import random
 
 NUM_LETTERS = games_config['elimination_letter_adder']['num_letters']
 START_LETTERS = games_config['elimination_letter_adder']['start_letters']
@@ -101,7 +108,7 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
                 return
             if not challenge_input.responses[player]:#add letter
                 letter = letter_input.responses[player]
-                assert not letter is None
+                assert letter is not None
                 letter = letter.lower()
                 if left_right_input.responses[player]:#1 is right
                     letters = letters + letter
@@ -110,7 +117,7 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
                 if len(letters) > NUM_LETTERS and self.is_valid_word(letters):
                     definition = self.define(letters)
                     def_text = ""
-                    if not definition is None:
+                    if definition is not None:
                         def_text = f"\nHere are some definitions:\n{self.definition_string(definition)}"
                     await self.basic_send(
                         f"{self.format_players_md([player])} has spelled the word {letters}.{def_text}")
@@ -138,13 +145,13 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
                     self.last_player = player
                     return
                 word = word_input.responses[self.last_player]
-                assert not word is None
+                assert word is not None
                 word = word.lower()
                 word = "".join(word.split())#remove whitespace
                 if self.is_valid_word(word) and letters in word and len(word) > NUM_LETTERS:
                     definition = self.define(word)
                     definition_text = ""
-                    if not definition is None:
+                    if definition is not None:
                         definition_text = f"\n{self.definition_string(definition)}"
                     await self.basic_send(f"The word {word} is valid!{definition_text}")
                     self.last_player = player

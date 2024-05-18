@@ -1,11 +1,12 @@
-from game.game import Game
-from game.components.game_interface import Game_Interface
-from game.utils.grammer import temp_file_path
+import io
 from typing import Optional
 
 import PIL.Image
 import requests
-import io
+
+from game.components.game_interface import Game_Interface
+from game.game import Game
+from game.utils.grammer import temp_file_path
 
 BASE_URL = "https://source.unsplash.com"
 
@@ -16,7 +17,7 @@ class Random_Image_Base(Game):
     """
     def __init__(self,gh:Game_Interface):
         Game.__init__(self,gh)
-        if not Random_Image_Base in self.initialized_bases:
+        if Random_Image_Base not in self.initialized_bases:
             self.initialized_bases.append(Random_Image_Base)
     def random_image_url(
             self,
@@ -33,13 +34,13 @@ class Random_Image_Base(Game):
         search_terms: what keywords to include in the random search
         """
         source_text = "/random"
-        if not author is None:
+        if author is not None:
             source_text = f"/user/{author}"
         size_text = ""
-        if not size is None:
+        if size is not None:
             size_text = f"/{size[0]}x{size[1]}"
         search_text = ""
-        if not search_terms is None:
+        if search_terms is not None:
             search_text = f"/?{','.join(search_terms)}"
         return f"{BASE_URL}{source_text}{size_text}{search_text}"
     def get_image_from_url(self,url:str) -> PIL.Image.Image:
@@ -63,7 +64,7 @@ class Random_Image_Base(Game):
         """
         url = self.random_image_url(author,size,search_terms)
         image = self.get_image_from_url(url)
-        if not image is None:
+        if image is not None:
             return image
         else:
             return self.random_image(author,size,search_terms)

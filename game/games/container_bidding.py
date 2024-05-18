@@ -1,17 +1,14 @@
-from config.games_config import games_config
-from config.config import config
-
-from typing import TypedDict
-from game.utils.types import PlayerId, PlayerDict, Number
-from game import make_player_dict
-from game.game_bases import Rounds_With_Points_Base, Basic_Secret_Message_Base
-
-from game.components.game_interface import Game_Interface
-from game.utils.grammer import wordify_iterable
-
-
 import json
 import random
+from typing import TypedDict
+
+from config.config import config
+from config.games_config import games_config
+from game import make_player_dict
+from game.components.game_interface import Game_Interface
+from game.game_bases import Basic_Secret_Message_Base, Rounds_With_Points_Base
+from game.utils.grammer import wordify_iterable
+from game.utils.types import Number, PlayerDict, PlayerId
 
 CONFIG = games_config['container_bidding']
 
@@ -48,11 +45,11 @@ def percentify(value:float,decimal_points:int = 2):
 def validate_data(data:DataDict):
     for desc_text in data["container_descriptions"]:
         for tier_text in data["container_descriptions"][desc_text]["possible_item_tiers"]:
-            if not tier_text in data["container_types"]:
+            if tier_text not in data["container_types"]:
                 raise Exception(f"In container data tier '{tier_text}' from desc '{desc_text}' is undefined.")
     for tier in data["container_types"]:
         for item in data["container_types"][tier]:
-            if not item in data["items"]:
+            if item not in data["items"]:
                 raise Exception(f"In container data item '{item}' from tier '{tier}'is undefined.")
 
 class Container_Bidding(Rounds_With_Points_Base,Basic_Secret_Message_Base):
@@ -67,7 +64,7 @@ class Container_Bidding(Rounds_With_Points_Base,Basic_Secret_Message_Base):
         validate_data(self.data)
         self.money:PlayerDict[int] = make_player_dict(self.unkicked_players,int(STARTING_MONEY/len(self.unkicked_players)))
     async def game_intro(self):
-        await self.basic_send(f"# Welcome to a game of container bidding!\n" + 
+        await self.basic_send("# Welcome to a game of container bidding!\n" + 
                         f"In this game we will have {NUM_CONTAINERS} containers that we look at.\n" +
                         "For each container my expert evaluator will provide their decription.\n" +
                         "Then you must each secretly choose how much you would be willing to contribute for it!\n" +
@@ -131,14 +128,15 @@ class Container_Bidding(Rounds_With_Points_Base,Basic_Secret_Message_Base):
                 if player_bids[player] > player_return:
                     net_text = "loss"
                 await self.score(player,player_return,True)
-                await self.basic_secret_send(player,
-                                       f"Your portion of the bid was {percentify(player_portion)} making your return {moneyfy(player_return)}.\n" +
-                                       f"This means you had a net {net_text} of {moneyfy(abs(player_bids[player] - player_return))}.\n" +
-                                       f"You now have {moneyfy(self.money[player])} remaining to bid with and {moneyfy(self.point_totals[player])} in valuables.")
+                await self.basic_secret_send(
+                    player,
+                    f"Your portion of the bid was {percentify(player_portion)} making your return {moneyfy(player_return)}.\n" +
+                    f"This means you had a net {net_text} of {moneyfy(abs(player_bids[player] - player_return))}.\n" +
+                    f"You now have {moneyfy(self.money[player])} remaining to bid with and {moneyfy(self.point_totals[player])} in valuables.")
         else:
             await self.basic_send(
                 f"Your total bid of {moneyfy(total_bid)} didn't exceed our bid threshold of {moneyfy(total_bid_threshold)}.\n" +
-                f"Y'all have decided to pass on this container. Ah well.")
+                "Y'all have decided to pass on this container. Ah well.")
     async def game_cleanup(self):
         await self.basic_send(
             "That was our last container, so, at the end of the game: "+

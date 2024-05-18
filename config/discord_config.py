@@ -1,4 +1,3 @@
-from typing import TypedDict
 from config.config_tools import DiscordConfigDict, merge_local
 
 discord_config:DiscordConfigDict = {

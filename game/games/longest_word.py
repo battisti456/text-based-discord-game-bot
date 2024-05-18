@@ -1,16 +1,16 @@
 from config.games_config import games_config
-
-from game.utils.types import PlayerId
-from game.game_bases import Game_Word_Base,Rounds_With_Points_Base
 from game.components.game_interface import Game_Interface
-from game.components.message import Message, Alias_Message
+from game.components.message import Alias_Message, Message
 from game.components.player_input import Player_Text_Input, run_inputs
 from game.components.response_validator import text_validator_maker
+from game.game_bases import Game_Word_Base, Rounds_With_Points_Base
+from game.utils.types import PlayerId
 
 CONFIG = games_config['longest_word']
 
 NUM_LETTERS = CONFIG['num_letters']
-POINT_FUNCTION = lambda word: len(word)**2
+def POINT_FUNCTION(word):
+    return len(word)**2
 NUMBER_OF_ROUNDS = CONFIG['number_of_rounds']
 NUM_LETTERS_CAN_REFRESH:int = CONFIG['num_letters_can_refresh']
 
@@ -23,13 +23,14 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
         self.words_used = []
         self.current_letters = self.random_balanced_letters(NUM_LETTERS)
     async def game_intro(self):
-        await self.basic_send("# We are playing a game of create the longest word.\n" +
-                  f"Each turn you will be given a set of {NUM_LETTERS} letters and the choice of whether or not to refresh them.\n" +
-                  "If you do, you spend as many points as letters you refreshed.\n" +
-                  "You can go into negative points.\n" +
-                  "Then you must give the longest valid word that can be made from only those letters.\n" +
-                  "You will get as many points as the word is long squared.\n" +
-                  "Then the letters are passed on to the next player.")
+        await self.basic_send(
+            "# We are playing a game of create the longest word.\n" +
+            f"Each turn you will be given a set of {NUM_LETTERS} letters and the choice of whether or not to refresh them.\n" +
+            "If you do, you spend as many points as letters you refreshed.\n" +
+            "You can go into negative points.\n" +
+            "Then you must give the longest valid word that can be made from only those letters.\n" +
+            "You will get as many points as the word is long squared.\n" +
+            "Then the letters are passed on to the next player.")
     async def longest_word_question(self,player:PlayerId) -> str:
         num_letters_can_refresh = NUM_LETTERS_CAN_REFRESH
         change_letter_message = Alias_Message(
@@ -73,7 +74,7 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
                 chosen_word = choose_word_input.responses[player]
             else:
                 change_letters = change_letter_input.responses[player] 
-                if not change_letters is None:
+                if change_letters is not None:
                     list_letters = list(self.current_letters)
                     for letter in change_letters:
                         list_letters.remove(letter)

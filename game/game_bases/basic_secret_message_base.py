@@ -1,18 +1,23 @@
-from game.game import Game, police_game_callable
+from typing import Iterable, Optional, overload
+
+from game import make_player_dict
 from game.components.game_interface import Game_Interface
 from game.components.message import Message, make_bullet_points
-from game.components.player_input import Player_Single_Selection_Input, Player_Text_Input, run_inputs
-from game.utils.emoji_groups import COLORED_CIRCLE_EMOJI, NO_YES_EMOJI
+from game.components.player_input import (
+    Player_Single_Selection_Input,
+    Player_Text_Input,
+    run_inputs,
+)
 from game.components.response_validator import ResponseValidator, not_none
+from game.game import Game
+from game.utils.emoji_groups import COLORED_CIRCLE_EMOJI, NO_YES_EMOJI
+from game.utils.types import PlayerDict, PlayerDictOptional, PlayerId
 
-from game.utils.types import PlayerId,PlayerDict, PlayerDictOptional
-from game import make_player_dict
-from typing import Optional, overload, Iterable
 
 class Basic_Secret_Message_Base(Game):
     def __init__(self,gi:Game_Interface):
         Game.__init__(self,gi)
-        if not Basic_Secret_Message_Base in self.initialized_bases:
+        if Basic_Secret_Message_Base not in self.initialized_bases:
             self.initialized_bases.append(Basic_Secret_Message_Base)
 
     async def basic_secret_send(
@@ -126,7 +131,7 @@ class Basic_Secret_Message_Base(Game):
             allow_answer_change:bool=True,
             response_validator:ResponseValidator[int] = not_none
         ) -> int|PlayerDict[int]:
-        assert not options is None
+        assert options is not None
         p:Iterable[PlayerId] = []
         if players is None:
             p = self.unkicked_players

@@ -1,20 +1,20 @@
-from config.config import config
-from config.config_tools import ConfigError,ConfigAction
-from config.config_tools import edit as config_edit
-
-from typing import Literal, Optional
-from docopt import docopt, DocoptExit
 import asyncio
 import sys
-import git
+from typing import Literal, Optional
 
-from game.components.game_interface import Game_Interface
-from game.components.interface_operator import Interface_Operator
-from game.components.interaction import Interaction
-from game.game import Game
-from game.games import random_game, games
-from game.utils.grammer import wordify_iterable
+import git
+from docopt import DocoptExit, docopt
+
 import game.games
+from config.config import config
+from config.config_tools import ConfigAction, ConfigError
+from config.config_tools import edit as config_edit
+from game.components.game_interface import Game_Interface
+from game.components.interaction import Interaction
+from game.components.interface_operator import Interface_Operator
+from game.game import Game
+from game.games import games, random_game
+from game.utils.grammer import wordify_iterable
 
 CP = config['command_prefix']
 COMMAND_DOCSTRING= f"""
@@ -55,7 +55,7 @@ class Game_Operator(Interface_Operator):
     def bind(self):
         @self.gi.on_action('send_message',self)
         async def recv_command(interaction:Interaction):
-            if not interaction.content is None:
+            if interaction.content is not None:
                 if interaction.content.startswith(config['command_prefix']):
                     if interaction.reply_to_message_id is None:
                         async def send(content:str):
@@ -89,7 +89,7 @@ class Game_Operator(Interface_Operator):
                                 try:
                                     game_type = getattr(game.games,args['<name>'])
                                     assert issubclass(game_type,Game)
-                                except:
+                                except AssertionError:
                                     await send(f"'{args['<name>']}' is not the name of a valid game.")
                                     return
                             self.game = game_type(self.gi)

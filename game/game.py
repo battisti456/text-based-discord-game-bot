@@ -1,18 +1,31 @@
-from game.components.interface_component import Interface_Component
+import functools
+from typing import Awaitable, Callable, Optional, ParamSpec, TypeVar, overload
 
-from game.utils.exceptions import GameEndException, GameEndInsufficientPlayers
-from game.utils.types import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional, KickReason, PlayersIds, PlayerMapOptional, Grouping
-from game import kick_text, score_to_placement
 import game.utils.emoji_groups
+from game import kick_text, score_to_placement
 from game.components.game_interface import Game_Interface
+from game.components.interface_component import Interface_Component
 from game.components.message import Message
 from game.components.player_input import Player_Input
-from game.components.response_validator import ResponseValidator, not_none, default_text_validator
-from game.utils.grammer import ordinate, wordify_iterable
+from game.components.response_validator import (
+    ResponseValidator,
+    default_text_validator,
+    not_none,
+)
 from game.utils.common import arg_fix_grouping
-import functools
-
-from typing import Optional, TypeVar, Callable, Awaitable, ParamSpec, overload, Iterable
+from game.utils.exceptions import GameEndException, GameEndInsufficientPlayers
+from game.utils.grammer import ordinate, wordify_iterable
+from game.utils.types import (
+    ChannelId,
+    Grouping,
+    KickReason,
+    PlayerDict,
+    PlayerDictOptional,
+    PlayerId,
+    PlayerMapOptional,
+    PlayerPlacement,
+    PlayersIds,
+)
 
 MULTIPLE_CHOICE_LINE_THRESHOLD = 30
 
@@ -37,7 +50,7 @@ class Game(Interface_Component):
         return tuple(player for player in self.all_players if player in self.kicked)#maintian order
     @property 
     def unkicked_players(self) -> tuple[PlayerId,...]:
-        return tuple(player for player in self.all_players if not player in self.kicked)
+        return tuple(player for player in self.all_players if player not in self.kicked)
     async def game_intro(self):
         ...
     async def game_setup(self):
@@ -205,9 +218,10 @@ class Game(Interface_Component):
         """
         returns whether the current member function is restricted by being policed
         """
-        return not self.current_class_execution in self.classes_banned_from_speaking
-    async def basic_policed_send(self,content:Optional[str] = None,attatchements_data:list[str] = [],
-                   channel_id:Optional[ChannelId] = None):
+        return self.current_class_execution not in self.classes_banned_from_speaking
+    async def basic_policed_send(
+            self,content:Optional[str] = None,attatchements_data:list[str] = [],
+            channel_id:Optional[ChannelId] = None):
         """
         self.basic_send if self.allowed_to_speak
         
@@ -285,7 +299,7 @@ class Game(Interface_Component):
             players = list(responses)
         for player in players:
             if player in responses:
-                if not responses[player] is None:
+                if responses[player] is not None:
                     clean_responses[player] = responses[player]
         return clean_responses
     

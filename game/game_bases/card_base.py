@@ -1,21 +1,18 @@
-import game.utils.emoji_groups
 import random
-
-from game.game import Game, police_game_callable
-from game.components.game_interface import Game_Interface
-from game.components.message import Message
-from game.utils.grammer import temp_file_path, wordify_iterable
-from game.utils.common import arg_fix_grouping
-
+from collections import Counter
+from itertools import combinations
 
 import PIL.Image
 import PIL.ImageOps
 
-from game.utils.types import PlayerId, PlayerDict, ChannelId, Grouping, GS
+import game.utils.emoji_groups
 from game import make_player_dict
-
-from itertools import combinations
-from collections import Counter
+from game.components.game_interface import Game_Interface
+from game.components.message import Message
+from game.game import Game, police_game_callable
+from game.utils.common import arg_fix_grouping
+from game.utils.grammer import temp_file_path, wordify_iterable
+from game.utils.types import GS, ChannelId, Grouping, PlayerDict, PlayerId
 
 POKER_HAND_NAMES = ["high card","pair","two pair","three of a kind","straight","flush","full house","four of a kind","straight flush","royal flush"]
 SUIT_NAMES = ["spades","hearts","diamonds","clubs"]
@@ -107,7 +104,7 @@ class Card_Holder(object):
             added = False
             while not added:
                 card = random.choice(self.cards)
-                if not card in cards_to_remove:
+                if card not in cards_to_remove:
                     cards_to_remove.add(card)
                     added = True
         for card in cards_to_remove:
@@ -277,7 +274,7 @@ def name_poker_hand_by_rank(rank:int) -> str:
 class Card_Base(Game):
     def __init__(self,gi:Game_Interface):
         Game.__init__(self,gi)
-        if not Card_Base in self.initialized_bases:
+        if Card_Base not in self.initialized_bases:
             self.initialized_bases.append(Card_Base)
             self.hand_threads:PlayerDict[ChannelId] = {}
             self.hand_message:PlayerDict[Message] = make_player_dict(self.unkicked_players,Message)
@@ -288,7 +285,7 @@ class Card_Base(Game):
         for player in self.unkicked_players:
             self.hands[player] = Hand()
         for player in self.unkicked_players:
-            if not player in self.hand_threads:#if first time
+            if player not in self.hand_threads:#if first time
                 thread_id = await self.gi.new_channel("Your hand",[player])
                 self.hand_threads[player] = thread_id
             await self.update_hand(player)
@@ -301,7 +298,7 @@ class Card_Base(Game):
     async def update_hand(self,player:PlayerId,add_text:str = ""):
         contents = add_text
         hand = self.hands[player]
-        assert not hand is None
+        assert hand is not None
         if self.allowed_to_speak():
             if contents != "":
                 contents += "; "
@@ -310,7 +307,7 @@ class Card_Base(Game):
             else:
                 contents += "Your hand is empty."
         message = self.hand_message[player]
-        assert not message is None
+        assert message is not None
         message.players_who_can_see = [player]
         message.content = contents
         message.channel_id = self.hand_threads[player]
@@ -324,7 +321,7 @@ class Card_Base(Game):
             await self.basic_policed_send(f"{self.format_players_md(players)} drew {num} card(s).")
         for player in players:
             hand:Hand|None = self.hands[player]
-            assert not hand is None
+            assert hand is not None
             cards = hand.take(self.deck,num)
             draw_text = ""
             if self.allowed_to_speak():
@@ -333,7 +330,7 @@ class Card_Base(Game):
     @police_game_callable
     async def player_discard(self,player:PlayerId,num_random:int = 0,cards:int|Card|Grouping[int]|Grouping[Card] = []):
         hand = self.hands[player]
-        assert not hand is None
+        assert hand is not None
         cards = hand.give(self.discard,num_random,cards)
         discard_text = ""
         await self.basic_policed_send(f"{self.format_players_md([player])} discarded {len(cards)} card(s).")

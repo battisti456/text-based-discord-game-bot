@@ -1,10 +1,9 @@
+from math import ceil, floor
 from typing import Optional
 
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
-
-from math import ceil, floor
 
 type Font = PIL.ImageFont.ImageFont|PIL.ImageFont.FreeTypeFont|PIL.ImageFont.TransposedFont
 "all PIL.ImageFont font objects (as they do not inherit from a common class)"
@@ -22,7 +21,7 @@ class ExtendedImageDraw(PIL.ImageDraw.ImageDraw):
             outline_width:Optional[float] = 1,
             outline_color:Optional[Color] = None,
             resolution:float = 0.1):
-        if not outline_width is None:
+        if outline_width is not None:
             max_width = ceil(outline_width)
             draw_points:int = floor(max_width/resolution)
             offsets = set(

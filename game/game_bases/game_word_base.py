@@ -1,9 +1,17 @@
-from game.game import Game
-from game.components.game_interface import Game_Interface
-from game.utils.word_tools import DefinitionDict, DefinitionList, definition_dict_to_list, get_word_definition, word_generator, sentence_generator
+import random
 
 import fogleman_TWL06_scrabble as scrabble
-import random
+
+from game.components.game_interface import Game_Interface
+from game.game import Game
+from game.utils.word_tools import (
+    DefinitionDict,
+    DefinitionList,
+    definition_dict_to_list,
+    get_word_definition,
+    sentence_generator,
+    word_generator,
+)
 
 LETTER_FREQUENCY = {
     "a" : 9,
@@ -42,7 +50,7 @@ WORD_LIST_LEN_CAP = 100
 class Game_Word_Base(Game):
     def __init__(self,gh:Game_Interface):
         Game.__init__(self,gh)
-        if not Game_Word_Base in self.initialized_bases:
+        if Game_Word_Base not in self.initialized_bases:
             self.initialized_bases.append(Game_Word_Base)
             self.ww_word = word_generator
             self.ww_sentence = sentence_generator

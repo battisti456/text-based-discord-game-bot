@@ -1,12 +1,27 @@
 from typing import Optional
 
-from game.utils.types import PlayerId, ChannelId, PlayerDictOptional, PlayersIds, Grouping
-from game.components.game_interface import Game_Interface
-from game.components.message import Message, Bullet_Point
-from game.components.player_input import Player_Single_Selection_Input, Player_Text_Input
-from game.components.response_validator import ResponseValidator, default_text_validator, not_none
 import game.utils.emoji_groups
+from game.components.game_interface import Game_Interface
+from game.components.message import Bullet_Point, Message
+from game.components.player_input import (
+    Player_Single_Selection_Input,
+    Player_Text_Input,
+)
+from game.components.response_validator import (
+    ResponseValidator,
+    default_text_validator,
+    not_none,
+)
 from game.utils.common import arg_fix_grouping
+from game.utils.types import (
+    ChannelId,
+    Grouping,
+    PlayerDictOptional,
+    PlayerId,
+    PlayersIds,
+)
+
+
 class Interface_Component():
     def __init__(self,gi:Game_Interface):
         self.gi = gi

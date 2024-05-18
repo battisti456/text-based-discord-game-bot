@@ -1,14 +1,14 @@
-from game.utils.common import L
-
-from nltk.corpus import wordnet
-from nltk.tag.perceptron import PerceptronTagger
-from nltk.corpus.reader.wordnet import Synset, Lemma
-import wonderwords
-from word_forms.word_forms import get_word_forms #type: ignore
-from dataclasses import dataclass
 import random
+from dataclasses import dataclass
+from typing import Literal, get_args, overload
 
-from typing import Literal, overload, get_args
+import wonderwords
+from nltk.corpus import wordnet
+from nltk.corpus.reader.wordnet import Lemma, Synset
+from nltk.tag.perceptron import PerceptronTagger
+from word_forms.word_forms import get_word_forms  #type: ignore
+
+from game.utils.common import L
 
 type SimplePartOfSpeach = Literal['Noun','Verb','Adjective','Adverb']
 
@@ -54,7 +54,7 @@ class Word_Definition():
     def to_dict(self) -> DefinitionDict:
         to_return:DefinitionDict = {}
         for definition in self.definitions:
-            if not definition.pos in to_return:
+            if definition.pos not in to_return:
                 to_return[definition.pos] = []
             to_return[definition.pos].append(definition.definition)
         return to_return
@@ -177,7 +177,7 @@ def find_related_words_in_context(
             form_tags = tagger.tag(words,return_conf=True)
             if any(form_tags[j][2] < cft[j] for j in range(len(words))):
                 continue
-            if not '_' in var and not all(tags[j][1] == form_tags[j][1] for j in range(len(words))):
+            if '_' not in var and not all(tags[j][1] == form_tags[j][1] for j in range(len(words))):
                 continue
             success.add(var)
     if context[word_index] in success:

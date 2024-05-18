@@ -1,4 +1,5 @@
 from typing import Sequence
+
 #https://www.piliapp.com/emoji/list/symbols/
 PLAYING_CARD_EMOJI:Sequence[str] = tuple("🂡🂢🂣🂤🂥🂦🂧🂨🂩🂪🂫🂬🂭🂮 🂱🂲🂳🂴🂵🂶🂷🂸🂹🂺🂻🂼🂽🂾 🃁🃂🃃🃄🃅🃆🃇🃈🃉🃊🃋🃌🃍🃎 🃑🃒🃓🃔🃕🃖🃗🃘🃙🃚🃛🃜🃝🃞 🂠 🃟".split())#spades,hearts,diamonds,clubs,back of card,joker
 COLORED_HEART_EMOJI:Sequence[str] = tuple("❤️🩷🧡💛💚💙🩵💜🤎🖤🩶🤍".split())
