@@ -64,16 +64,17 @@ class Container_Bidding(Rounds_With_Points_Base,Basic_Secret_Message_Base):
         validate_data(self.data)
         self.money:PlayerDict[int] = make_player_dict(self.unkicked_players,int(STARTING_MONEY/len(self.unkicked_players)))
     async def game_intro(self):
-        await self.basic_send("# Welcome to a game of container bidding!\n" + 
-                        f"In this game we will have {NUM_CONTAINERS} containers that we look at.\n" +
-                        "For each container my expert evaluator will provide their decription.\n" +
-                        "Then you must each secretly choose how much you would be willing to contribute for it!\n" +
-                        "All of you are bidding together, but each secretly deciding how much to contribute.\n" +
-                        "The proportion of the total bid that your contribution takes up determines your share of the valuables inside the container.\n" +
-                        f"If your cumulitive bidding exceeds your starting cash of {moneyfy(int(STARTING_MONEY/len(self.unkicked_players)))}, " +
-                        f"then you will lose an extra {END_OF_GAME_INTEREST}% at the end of the game for interest for all money spent in excess of that.\n"+
-                        "Any money you don't end up spending will be added to your total at the end of the game.\n"
-                        "**WARNING: Your answers are only evaluated based of the digits they contain. All other characters are ignored. So '$100.00' is '$10000'.**")
+        await self.basic_send(
+            "# Welcome to a game of container bidding!\n" + 
+            f"In this game we will have {NUM_CONTAINERS} containers that we look at.\n" +
+            "For each container my expert evaluator will provide their decription.\n" +
+            "Then you must each secretly choose how much you would be willing to contribute for it!\n" +
+            "All of you are bidding together, but each secretly deciding how much to contribute.\n" +
+            "The proportion of the total bid that your contribution takes up determines your share of the valuables inside the container.\n" +
+            f"If your cumulitive bidding exceeds your starting cash of {moneyfy(int(STARTING_MONEY/len(self.unkicked_players)))}, " +
+            f"then you will lose an extra {END_OF_GAME_INTEREST}% at the end of the game for interest for all money spent in excess of that.\n"+
+            "Any money you don't end up spending will be added to your total at the end of the game.\n"
+            "**WARNING: Your answers are only evaluated based of the digits they contain. All other characters are ignored. So '$100.00' is '$10000'.**")
     def evaluate_container(self,desc:DescDict) -> tuple[int,list[str]]:
         total_reward:int = 0
         tier = random.choices(list(desc["possible_item_tiers"]),list(desc["possible_item_tiers"][tier] for tier in desc["possible_item_tiers"]))[0]

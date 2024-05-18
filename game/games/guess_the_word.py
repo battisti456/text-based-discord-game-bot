@@ -32,14 +32,15 @@ class Guess_The_Word(Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Poin
         Rounds_With_Points_Base.__init__(self,gi)
         self.num_rounds = NUM_ROUNDS
     async def game_intro(self):
-        await self.basic_send("# This is a game of guessing the word!\n" +
-                        f"I will generate a random secret word of a length from {MIN_WORD_LEN}-{MAX_WORD_LEN}.\n" +
-                        f"Then I will give you {NUM_DEFINITIONS} different definitions for it.\n" +
-                        "After each definintion, you will be given a chance to guess the word being defined.\n" +
-                        "The fewer definitions you need, the more points you will get for a success.\n" +
-                        f"This will continue across {NUM_ROUNDS} different word(s).\n" + 
-                        "The highest points at the end is the winner!\n" +
-                        "CAUTION: Sometimes words can be spelled other ways....")
+        await self.basic_send(
+            "# This is a game of guessing the word!\n" +
+            f"I will generate a random secret word of a length from {MIN_WORD_LEN}-{MAX_WORD_LEN}.\n" +
+            f"Then I will give you {NUM_DEFINITIONS} different definitions for it.\n" +
+            "After each definintion, you will be given a chance to guess the word being defined.\n" +
+            "The fewer definitions you need, the more points you will get for a success.\n" +
+            f"This will continue across {NUM_ROUNDS} different word(s).\n" + 
+            "The highest points at the end is the winner!\n" +
+            "CAUTION: Sometimes words can be spelled other ways....")
     async def core_game(self):
         definition_list:DefinitionList = []
         type_set:set[SimplePartOfSpeach] = set()
