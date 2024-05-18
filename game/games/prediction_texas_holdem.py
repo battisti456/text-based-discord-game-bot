@@ -7,7 +7,8 @@ from game.game_bases.card_base import Card_Holder,best_poker_hand, Poker_Hand, n
 from game.utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
 from game.utils.grammer import ordinate
 
-from game import PlayerId, PlayerDict, make_player_dict
+from game.utils.types import PlayerId, PlayerDict
+from game import make_player_dict
 
 CONFIG = games_config['prediction_texas_holdem']
 

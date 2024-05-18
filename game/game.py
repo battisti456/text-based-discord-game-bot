@@ -1,13 +1,14 @@
 from game.components.interface_component import Interface_Component
 
-from game import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional, KickReason, GameEndException, GameEndInsufficientPlayers, kick_text, score_to_placement, PlayersIds, PlayerMap, PlayerMapOptional
+from game.utils.types import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional, KickReason, PlayersIds, PlayerMapOptional, Grouping
+from game import GameEndException, GameEndInsufficientPlayers, kick_text, score_to_placement
 import game.utils.emoji_groups
 from game.components.game_interface import Game_Interface
 from game.components.message import Message
 from game.components.player_input import Player_Input
 from game.components.response_validator import ResponseValidator, not_none, default_text_validator
 from game.utils.grammer import ordinate, wordify_iterable
-from game.utils.common import arg_fix_tuple, arg_fix_frozenset, arg_fix_iterable
+from game.utils.common import arg_fix_grouping
 import functools
 
 
@@ -101,7 +102,7 @@ class Game(Interface_Component):
 
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
-        w = arg_fix_iterable(self.unkicked_players,who_chooses)
+        w = arg_fix_grouping(self.unkicked_players,who_chooses)
         responses:PlayerDictOptional = await self._basic_multiple_choice(
             content=content,
             options=options,
@@ -114,7 +115,7 @@ class Game(Interface_Component):
         )
         await self.kick_none_response(responses)
         clean_responses = self.clean_player_dict(responses,w,frozenset(self.unkicked_players))
-        if isinstance(who_chooses,Iterable) or who_chooses is None:
+        if isinstance(who_chooses,Grouping) or who_chooses is None:
             return clean_responses
         else:
             if tuple(w)[0] in clean_responses:
@@ -124,7 +125,7 @@ class Game(Interface_Component):
     #region basic_no_yes overloads
     @overload
     async def basic_no_yes(
-            self,content:Optional[str]=...,who_chooses:Optional[Iterable[PlayerId]]=...,
+            self,content:Optional[str]=...,who_chooses:Optional[Grouping[PlayerId]]=...,
             channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...,
             response_validator:ResponseValidator[int] = ...) -> PlayerDict[int]:
         ...
@@ -136,7 +137,7 @@ class Game(Interface_Component):
         ...
     #endregion
     async def basic_no_yes(
-            self,content:Optional[str] = None,who_chooses:Optional[PlayerId|Iterable[PlayerId]] = None,
+            self,content:Optional[str] = None,who_chooses:Optional[PlayerId|Grouping[PlayerId]] = None,
             channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True,
             response_validator:ResponseValidator[int] = not_none) -> int | PlayerDict[int]:
         """
@@ -155,7 +156,7 @@ class Game(Interface_Component):
     #region text_response overloads
     @overload
     async def basic_text_response(
-            self,content:str,who_chooses:Iterable[PlayerId]|None=...,
+            self,content:str,who_chooses:Grouping[PlayerId]|None=...,
             channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...,
             response_validator:ResponseValidator[str] = ...) -> PlayerDict[str]:
         ...
@@ -181,7 +182,7 @@ class Game(Interface_Component):
 
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
-        w = arg_fix_iterable(self.unkicked_players,who_chooses)
+        w = arg_fix_grouping(self.unkicked_players,who_chooses)
         responses:PlayerDictOptional = await self._basic_text_response(
             content=content,
             who_chooses=w,
@@ -192,7 +193,7 @@ class Game(Interface_Component):
         )
         await self.kick_none_response(responses)
         clean_responses = self.clean_player_dict(responses,w,self.unkicked_players)
-        if isinstance(who_chooses,Iterable) or who_chooses is None:
+        if isinstance(who_chooses,Grouping) or who_chooses is None:
             return clean_responses
         else:
             if who_chooses in clean_responses:
@@ -225,11 +226,11 @@ class Game(Interface_Component):
         text_list:list[str] = []
         place = 1
         for group in placement:
-            if len(group) >1:
+            if len(group) > 1:
                 places = list(ordinate(place+i) for i in range(len(group)))
                 text_list.append(f"tied in {wordify_iterable(places)} places we have {self.format_players_md(group)}")
                 place += len(group)
-            else:
+            elif len(group) == 1:
                 text_list.append(f"in {ordinate(place)} place we have {self.format_players_md(group)}")
                 place += 1
 

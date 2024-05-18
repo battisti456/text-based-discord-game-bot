@@ -1,8 +1,8 @@
 from config.games_config import games_config
 from config.config import config
 
-from game import PlayerId, PlayerDict, make_player_dict, PlayerPlacement, correct_int, merge_placements, score_to_placement
-
+from game.utils.types import PlayerId, PlayerDict, PlayerPlacement
+from game import make_player_dict, correct_int, merge_placements, score_to_placement
 from game.game import Game
 from game.components.game_interface import Game_Interface
 from game.components.player_input import Player_Input, Player_Single_Selection_Input, Player_Text_Input, run_inputs

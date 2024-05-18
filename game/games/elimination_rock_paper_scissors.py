@@ -1,5 +1,6 @@
 #NEEDS TO BE TESTED
-from game import PlayerId, PlayerDict, make_player_dict
+from game.utils.types import PlayerId, PlayerDict
+from game import make_player_dict
 from game.game_bases import Elimination_Base
 from game.components.game_interface import Game_Interface
 from game.components.response_validator import single_choice_validator_maker

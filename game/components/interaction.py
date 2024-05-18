@@ -1,4 +1,4 @@
-from game import PlayerId,MessageId,ChannelId,InteractionId
+from game.utils.types import PlayerId,MessageId,ChannelId,InteractionId
 from typing import Optional, Literal, get_args
 
 from game.components.message import Message

@@ -10,7 +10,7 @@ from game.components.message import Message
 from math import ceil
 
 from typing import Iterable
-from game import PlayerId, PlayerPlacement, PlayerDict
+from game.utils.types import PlayerId, PlayerPlacement, PlayerDict
 
 HAND_LIMIT = games_config['elimination_blackjack']["hand_limit"]
 NUM_PLAYERS_PER_DECK = games_config['elimination_blackjack']['num_players_per_deck']

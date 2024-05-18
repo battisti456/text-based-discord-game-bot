@@ -1,7 +1,7 @@
-from typing_extensions import TypeVar
-from typing import Iterable, Optional, Callable, Literal, Hashable, NewType, Mapping, Iterator
+from typing import Iterable, Optional, Callable, Mapping
+from game.utils.types import KickReason, PlayerMapOptional,PlayerDict,PlayerId,Number,Placement,PlayerPlacement
 from config.config import config
-from game.utils.common import Number
+
 
 import logging
 
@@ -14,31 +14,6 @@ def get_logger(name:str) -> logging.Logger:
     logger.addHandler(h1)
     logger.setLevel(config['logging_level'])
     return logger
-
-DataType = TypeVar('DataType')
-R = TypeVar('R')
-
-PlayerId = NewType('PlayerId',Hashable)#type: ignore
-MessageId = NewType('MessageId',Hashable)#type: ignore
-ChannelId = NewType('ChannelId',Hashable)#type: ignore
-InteractionId = NewType('InteractionId',Hashable)#type: ignore
-
-type PlayersIds = Iterable[PlayerId]
-
-type Placement[T] = tuple[tuple[T,...],...]
-
-type PlayerPlacement = Placement[PlayerId]
-
-type PlayerDictOptional[DataType] = dict[PlayerId,Optional[DataType]]
-type PlayerDict[DataType] = dict[PlayerId,DataType]
-type PlayerMapOptional[DataType] = Mapping[PlayerId,Optional[DataType]]
-type PlayerMap[DataType] = Mapping[PlayerId,DataType]
-
-type KickReason = Literal['timeout','eliminated','unspecified']
-
-type Operators = Literal['command','run_game']
-
-Participant = TypeVar('Participant',bound=Hashable|PlayerId,default=PlayerId)
 
 #player/players being _______
 kick_text:dict[KickReason,str] = {
@@ -79,22 +54,22 @@ class GameEndInsufficientPlayers(GameEndException):
         GameEndException.__init__(self,message)
         self._explanation:str = "a lack of sufficient remaining players" 
 
-def treat_responses(responses:PlayerMapOptional[R],players:Optional[None]=None) -> PlayerDict[R]:
-        new_responses:PlayerDict[R] = {}
+def treat_responses[T](responses:PlayerMapOptional[T],players:Optional[None]=None) -> PlayerDict[T]:
+        new_responses:PlayerDict[T] = {}
         for player in responses:
             if not players is None:
                 if not player in players:
                     continue
-            value:R|None = responses[player]
+            value:T|None = responses[player]
             if not value is None:
                 new_responses[player] = value
         return new_responses
 
-def make_player_dict(
+def make_player_dict[T](
         players:Iterable[PlayerId],
-        value:DataType|Callable[[],DataType]|Callable[[PlayerId],DataType] = None
-        ) -> PlayerDict[DataType]:
-    to_return:PlayerDict[DataType] = {}
+        value:T|Callable[[],T]|Callable[[PlayerId],T] = None
+        ) -> PlayerDict[T]:
+    to_return:PlayerDict[T] = {}
     for player in players:
         if callable(value):
             try:

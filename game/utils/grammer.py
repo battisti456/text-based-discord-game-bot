@@ -1,7 +1,7 @@
 from typing import Iterable, Any
 import uuid
 from game.utils.word_tools import Sentence
-from game.utils.common import Number
+from game.utils.types import Number
 
 def nice_sentence(sentence:Sentence) -> str:
     return (" ".join(sentence)).replace('_',' ').capitalize()
@@ -35,7 +35,7 @@ def wordify_iterable(values:Iterable[str|Any],operator:str = 'and',comma:str = "
         else:
             to_return += str(values[i])
     return to_return
-def ordinate(num:int|str) -> str:
+def ordinate(num:Number|str) -> str:
     """
     takes a number and returns a string with the appropriate 'st', 'nd', 'rd', or 'th' apennded to that number
     """
@@ -77,7 +77,7 @@ def nice_time(time:int) -> str:
     if num_seconds:
         strings.append(f"{num_seconds} second{s(num_seconds)}")
     return wordify_iterable(strings)
-def s(num:Any) -> str:
+def s(num:Number) -> str:
     return '' if num == 1 else 's'
 def temp_file_path(file_type:str) -> str:
     """

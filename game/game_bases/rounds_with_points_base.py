@@ -1,10 +1,11 @@
 from game.game import Game
 from game.components.game_interface import Game_Interface
 from game.utils.grammer import s
-from game import PlayerId, PlayerPlacement, score_to_placement, Participant, Placement
-from typing import Optional, Generic, Mapping, Callable, Iterable
+from game.utils.types import PlayerId, PlayerPlacement, Participant, Placement, Number, Grouping
+from typing import Optional, Generic, Mapping, Callable
 from typing_extensions import TypeVar
-from game.utils.common import arg_fix_map, Number, arg_fix_iterable
+from game.utils.common import arg_fix_map, arg_fix_grouping
+from game import score_to_placement
 
 PointType = TypeVar('PointType',bound = Number, default=int)
 
@@ -19,17 +20,17 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Game):
             self.round_word:str = "round"
             self.reverse_points:bool = False
             self.part_str:Callable[[Participant],str] = lambda part: str(part)
-    def configure(self,participants:Iterable[Participant]):
+    def configure(self,participants:Grouping[Participant]):
         self.participants:tuple[Participant,...] = tuple(participants)
         self.point_totals:dict[Participant,PointType] = {
             participant:self.zero_score for participant in self.participants
         }
     async def announce_score(
             self,
-            who:Optional[Participant|Iterable[Participant]] = None,
+            who:Optional[Participant|Grouping[Participant]] = None,
             amount:Optional[PointType|Mapping[Participant,PointType]] = None
             ):
-        w = arg_fix_iterable(self.participants,who)
+        w = arg_fix_grouping(self.participants,who)
         a:Mapping[Participant,PointType] = arg_fix_map(w,self.zero_score,amount)
         participant_lines:list[str]
         if amount is None:
@@ -48,16 +49,16 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Game):
         return f"{num} {self.point_word}{s(num)}"
     def receive_score(
             self,
-            who:Optional[Participant|Iterable[Participant]] = None,
+            who:Optional[Participant|Grouping[Participant]] = None,
             amount:Optional[PointType|Mapping[Participant,PointType]] = None
             ):
-        w = arg_fix_iterable(self.participants,who)
+        w = arg_fix_grouping(self.participants,who)
         a:Mapping[Participant,PointType] = arg_fix_map(w,self.zero_score,amount)
         for participant in w:
             self.point_totals[participant] += a[participant]#type: ignore
     async def announce_and_receive_score(
         self,
-        who:Optional[Participant|Iterable[Participant]] = None,
+        who:Optional[Participant|Grouping[Participant]] = None,
         amount:Optional[PointType|Mapping[Participant,PointType]] = None
         ):
         await self.announce_score(who,amount)
@@ -83,7 +84,7 @@ class Rounds_With_Points_Base(Rounds_With_Points_Framework[PlayerId,int]):
             self.part_str = lambda player: self.format_players([player])
     def generate_placements(self) -> PlayerPlacement:
         return self.generate_participant_placements()
-    async def score(self,who:Optional[PlayerId|Iterable[PlayerId]] = None,
+    async def score(self,who:Optional[PlayerId|Grouping[PlayerId]] = None,
             amount:Optional[int|Mapping[PlayerId,int]] = None,
             mute:bool = False):
         if not mute:

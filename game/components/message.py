@@ -1,4 +1,4 @@
-from game import PlayerId, MessageId, ChannelId, InteractionId, PlayersIds
+from game.utils.types import PlayerId, MessageId, ChannelId, InteractionId, PlayersIds
 from game.utils.grammer import wordify_iterable
 from game.utils.emoji_groups import NO_YES_EMOJI
 

@@ -1,4 +1,4 @@
-from game import PlayerDict, make_player_dict, PlayerDictOptional, PlayerId
+from game.utils.types import PlayerDict, PlayerDictOptional, PlayerId
 from game.game_bases import Rounds_With_Points_Base, Random_Image_Base
 from game.components.game_interface import Game_Interface
 

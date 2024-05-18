@@ -1,5 +1,5 @@
 #NEEDS TO BE TESTED
-from game import PlayerDict
+from game.utils.types import PlayerDict
 from game.game_bases import Elimination_Base, Trivia_Base
 from game.components.game_interface import Game_Interface
 
@@ -17,4 +17,4 @@ class Elimination_Trivia(Elimination_Base,Trivia_Base):
         )
     async def core_game(self):
         player_correct:PlayerDict[bool] = await self.basic_ask_trivia(self.unkicked_players)
-        await self.eliminate(player for player in self.unkicked_players if not player_correct[player])
+        await self.eliminate(tuple(player for player in self.unkicked_players if not player_correct[player]))

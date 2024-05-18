@@ -1,4 +1,4 @@
-from game import PlayerId, PlayerDict
+from game.utils.types import PlayerId, PlayerDict
 from config.games_config import games_config
 from game.game_bases import Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Points_Base
 

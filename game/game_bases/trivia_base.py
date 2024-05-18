@@ -1,9 +1,9 @@
-from game import PlayerId, PlayerDict
+from game.utils.types import PlayerId, PlayerDict, Grouping
 from game.game import Game
 from game.components.game_interface import Game_Interface
 import pytrivia
 
-from typing import TypedDict, Optional, Iterable
+from typing import TypedDict, Optional
 
 import random
 
@@ -65,7 +65,7 @@ class Trivia_Base(Game):
             raw = self.trivia_client.request(1,**kwargs)
         return raw['results'][0]
     async def basic_ask_trivia(
-            self,players:Iterable[PlayerId],
+            self,players:Grouping[PlayerId],
             category:Optional[pytrivia.Category] = None,
             difficulty:Optional[pytrivia.Diffculty] = None,
             type_:Optional[pytrivia.Type] = None) -> dict[PlayerId,bool]:

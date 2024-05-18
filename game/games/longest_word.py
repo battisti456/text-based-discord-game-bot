@@ -1,6 +1,6 @@
 from config.games_config import games_config
 
-from game import PlayerId
+from game.utils.types import PlayerId
 from game.game_bases import Game_Word_Base,Rounds_With_Points_Base
 from game.components.game_interface import Game_Interface
 from game.components.message import Message, Alias_Message

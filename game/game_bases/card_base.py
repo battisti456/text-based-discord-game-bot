@@ -5,14 +5,14 @@ from game.game import Game, police_game_callable
 from game.components.game_interface import Game_Interface
 from game.components.message import Message
 from game.utils.grammer import temp_file_path, wordify_iterable
-from game.utils.common import arg_fix_iterable
+from game.utils.common import arg_fix_grouping
 
 
 import PIL.Image
 import PIL.ImageOps
 
-from typing import Iterable
-from game import PlayerId, PlayerDict, ChannelId, make_player_dict
+from game.utils.types import PlayerId, PlayerDict, ChannelId, Grouping, GS
+from game import make_player_dict
 
 from itertools import combinations
 from collections import Counter
@@ -38,12 +38,12 @@ def card_file_name(suit:int,value:int):
         card_text = str(value +1)
     return f"{card_text}_of_{SUIT_NAMES[suit]}{better_art}.png"
 
-def wordify_cards(cards:Iterable['Card']) -> str:
+def wordify_cards(cards:Grouping['Card']) -> str:
     return wordify_iterable(card.string() for card in cards)
 def frequency(values:list[int]) -> dict[int,int]:
     return dict(Counter(values))
 
-class Card(object):
+class Card(GS):
     def __init__(self,suit:int,value:int):
         self.suit = suit
         self.value = value
@@ -91,7 +91,7 @@ class Card_Holder(object):
         for i in range(len(self.cards)):
             base.paste(card_images[i],(int(offset+i*card_width*overlap_ratio),0))
         return PIL.ImageOps.expand(base,border = HAND_PADDING,fill =HAND_COLOR)
-    def give(self,other:'Card_Holder',num_random_cards:int = 0,cards:int|Card|Iterable[int|Card]= []) -> list[Card]:
+    def give(self,other:'Card_Holder',num_random_cards:int = 0,cards:int|Card|Grouping[int]|Grouping[Card]= []) -> list[Card]:
         cards_to_remove:set[Card] = set()
         if isinstance(cards,int):
             cards_to_remove.add(self.cards[cards])
@@ -114,7 +114,7 @@ class Card_Holder(object):
             self.cards.remove(card)
             other.cards.append(card)
         return list(cards_to_remove)
-    def take(self,other:'Card_Holder',num_random_cards:int = 0,cards:int|Card|Iterable[int|Card]= []) -> Iterable[Card]:
+    def take(self,other:'Card_Holder',num_random_cards:int = 0,cards:int|Card|Grouping[int]|Grouping[Card]= []) -> Grouping[Card]:
         return other.give(self,num_random_cards,cards)
 
         
@@ -318,8 +318,8 @@ class Card_Base(Game):
         message.attach_paths = [ch_to_attachment]
         await self.sender(message)
     @police_game_callable
-    async def player_draw(self,player:PlayerId|Iterable[PlayerId],num:int = 1):
-        players:Iterable[PlayerId] = arg_fix_iterable(self.unkicked_players,player)
+    async def player_draw(self,player:PlayerId|Grouping[PlayerId],num:int = 1):
+        players:Grouping[PlayerId] = arg_fix_grouping(self.unkicked_players,player)
         if players:
             await self.basic_policed_send(f"{self.format_players_md(players)} drew {num} card(s).")
         for player in players:
@@ -331,7 +331,7 @@ class Card_Base(Game):
                 draw_text = f"You drew: {wordify_cards(cards)}."
             await self.update_hand(player,draw_text)
     @police_game_callable
-    async def player_discard(self,player:PlayerId,num_random:int = 0,cards:int|Card|Iterable[int]|list[Card] = []):
+    async def player_discard(self,player:PlayerId,num_random:int = 0,cards:int|Card|Grouping[int]|Grouping[Card] = []):
         hand = self.hands[player]
         assert not hand is None
         cards = hand.give(self.discard,num_random,cards)

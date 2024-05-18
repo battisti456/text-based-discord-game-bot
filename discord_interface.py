@@ -7,7 +7,8 @@ from game.utils.grammer import wordify_iterable
 import discord
 from random import shuffle
 
-from game import PlayerId, MessageId, ChannelId, InteractionId, get_logger
+from game.utils.types import PlayerId, MessageId, ChannelId
+from game import get_logger
 
 logger = get_logger(__name__)
 

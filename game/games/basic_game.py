@@ -1,4 +1,4 @@
-from game import PlayerDict
+from game.utils.types import PlayerDict
 from game.game_bases import Rounds_With_Points_Base
 from game.utils.grammer import s
 from game.utils.emoji_groups import NUMBERED_KEYCAP_EMOJI

@@ -1,4 +1,4 @@
-from game import PlayerId
+from game.utils.types import PlayerId
 from game.components.message import Message
 from game.utils.grammer import wordify_iterable
 

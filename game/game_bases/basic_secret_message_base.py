@@ -5,7 +5,8 @@ from game.components.player_input import Player_Single_Selection_Input, Player_T
 from game.utils.emoji_groups import COLORED_CIRCLE_EMOJI, NO_YES_EMOJI
 from game.components.response_validator import ResponseValidator, not_none
 
-from game import PlayerId,PlayerDict, PlayerDictOptional, make_player_dict
+from game.utils.types import PlayerId,PlayerDict, PlayerDictOptional
+from game import make_player_dict
 from typing import Optional, overload, Iterable
 
 class Basic_Secret_Message_Base(Game):

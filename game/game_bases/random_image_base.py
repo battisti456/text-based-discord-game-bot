@@ -1,7 +1,7 @@
 from game.game import Game
 from game.components.game_interface import Game_Interface
 from game.utils.grammer import temp_file_path
-from typing import TypedDict, Optional
+from typing import Optional
 
 import PIL.Image
 import requests

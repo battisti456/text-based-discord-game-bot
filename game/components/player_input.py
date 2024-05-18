@@ -1,14 +1,17 @@
 from config.config import config
 
-from game import PlayerId,PlayerDict,PlayerDictOptional, make_player_dict, correct_str, get_logger, PlayersIds
+from game.utils.types import PlayerDict, PlayerDictOptional, PlayersIds
+
+from game import make_player_dict, correct_str, get_logger
 from game.components.sender import Sender
 from game.components.message import Message, Alias_Message
 from game.components.game_interface import Game_Interface
 from game.components.interaction import Interaction
 from game.components.response_validator import ResponseValidator, Validation, not_none, default_text_validator
 from game.utils.grammer import nice_time, ordinate
+from game.utils.types import Grouping, GS, PlayerId
 
-from typing import Optional, Any, Callable, Awaitable, Iterable
+from typing import Optional, Any, Callable, Awaitable
 
 import asyncio
 from time import time
@@ -17,7 +20,7 @@ type Condition = dict[Player_Input,bool]
 logger = get_logger(__name__)
 SLEEP_TIME = 10
 
-class Player_Input[T]():
+class Player_Input[T](GS):
     """
     base player input class
     
@@ -26,7 +29,7 @@ class Player_Input[T]():
     def __init__(
             self,name:str, gi:Game_Interface,sender:Sender,players:PlayersIds,
             response_validator:ResponseValidator[T] = not_none, 
-            who_can_see:Optional[Iterable[PlayerId]] = None, 
+            who_can_see:Optional[Grouping[PlayerId]] = None, 
             timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings']):
         self.timeout = timeout
         self.warnings = warnings
@@ -335,7 +338,7 @@ def multi_bind_message(message:Message,*player_inputs:Player_Input_In_Response_T
     for player_input in player_inputs:
         player_input.message = _message
 async def run_inputs(
-        inputs:Iterable[Player_Input],completion_sets:Optional[Iterable[set[Player_Input]]] = None,
+        inputs:Grouping[Player_Input[Any]],completion_sets:Optional[list[set[Player_Input[Any]]]] = None,
         sender:Optional[Sender] = None,who_can_see:Optional[PlayersIds] = None,
         codependant:bool = False, basic_feedback:bool = False):
     """

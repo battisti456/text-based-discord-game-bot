@@ -9,7 +9,7 @@ from game.components.player_input import Player_Single_Selection_Input, Player_T
 from game.components.response_validator import text_validator_maker
 from game.utils.emoji_groups import LEFT_RIGHT_EMOJI
 
-from game import PlayerId, PlayerPlacement
+from game.utils.types import PlayerId, PlayerPlacement
 
 import random
 

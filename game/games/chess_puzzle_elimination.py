@@ -2,7 +2,7 @@
 from config.games_config import games_config
 from config.config import config
 
-from game import PlayerId
+from game.utils.types import PlayerId
 from typing import TypedDict, Optional
 
 from game.game_bases import Elimination_Base, Chess_Base
