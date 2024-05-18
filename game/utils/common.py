@@ -27,7 +27,6 @@ def L[R](lst:list[R|None]|list[None]|list[R]|None) -> list[R]:
     else:
         return list(item for item in lst if not item is None)
 
-
 """
 def _list_combine(current:list[R],future_options:list[Sequence[R]]) -> list[list[R]]:
     if len(future_options) == 0:

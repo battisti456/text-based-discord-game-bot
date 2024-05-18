@@ -92,7 +92,6 @@ class Game_Operator(Interface_Operator):
                                 except:
                                     await send(f"'{args['<name>']}' is not the name of a valid game.")
                                     return
-                                
                             self.game = game_type(self.gi)
                             self.state = 'run_individual_game'
                             self.run_task = asyncio.create_task(self.game.run())
@@ -134,12 +133,3 @@ class Game_Operator(Interface_Operator):
                                 await send(
                                     f"Failed to edit config:\n{e}"
                                 )
-
-
-                        
-
-
-
-
-
-

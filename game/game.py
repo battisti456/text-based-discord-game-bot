@@ -1,7 +1,8 @@
 from game.components.interface_component import Interface_Component
 
+from game.utils.exceptions import GameEndException, GameEndInsufficientPlayers
 from game.utils.types import PlayerId, ChannelId, PlayerPlacement, PlayerDict, PlayerDictOptional, KickReason, PlayersIds, PlayerMapOptional, Grouping
-from game import GameEndException, GameEndInsufficientPlayers, kick_text, score_to_placement
+from game import kick_text, score_to_placement
 import game.utils.emoji_groups
 from game.components.game_interface import Game_Interface
 from game.components.message import Message
@@ -10,7 +11,6 @@ from game.components.response_validator import ResponseValidator, not_none, defa
 from game.utils.grammer import ordinate, wordify_iterable
 from game.utils.common import arg_fix_grouping
 import functools
-
 
 from typing import Optional, TypeVar, Callable, Awaitable, ParamSpec, overload, Iterable
 

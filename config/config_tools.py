@@ -1,7 +1,7 @@
 from typing import Literal, TypedDict, Optional, Any, TYPE_CHECKING
 from typing import _TypedDictMeta # type: ignore
 if TYPE_CHECKING:
-    from game import PlayerId, ChannelId
+    from game.utils.types import PlayerId, ChannelId
     from game.utils.pillow_tools import Color
 import ruamel.yaml.comments
 from typeguard import check_type, TypeCheckError

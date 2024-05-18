@@ -1,6 +1,7 @@
 from typing import Optional
+from game.utils.exceptions import GameEndInsufficientTeams
 from game.utils.types import PlayerId, PlayerPlacement, Placement, KickReason, Grouping, Team, TeamDict
-from game import GameEndInsufficientPlayers, kick_text
+from game import kick_text
 
 from game.game import Game
 from game.game_bases.rounds_with_points_base import Rounds_With_Points_Framework
@@ -10,9 +11,6 @@ from game.utils.grammer import wordify_iterable
 from game.utils.common import arg_fix_grouping
 
 import asyncio
-
-class GameEndInsufficientTeams(GameEndInsufficientPlayers):
-    ...
 
 def random_team_name() -> Team:
     adj:str = word_generator.word(include_categories=['adjective'])

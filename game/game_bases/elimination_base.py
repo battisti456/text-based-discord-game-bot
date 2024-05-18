@@ -3,7 +3,7 @@ from game.components.game_interface import Game_Interface
 from game.game import Game
 from game.utils.common import arg_fix_grouping
 from game.utils.grammer import wordify_iterable
-from game import GameEndException
+from game.utils.exceptions import GameEndException
 from typing import Generic, Callable, Optional
 
 class EliminationGameEnd(GameEndException):
