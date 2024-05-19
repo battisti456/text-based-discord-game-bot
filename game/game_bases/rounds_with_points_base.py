@@ -1,10 +1,11 @@
-from typing import Callable, Generic, Mapping, Optional, override
+from typing import Generic, Mapping, Optional, override
 
 from typing_extensions import TypeVar
 
 from game import score_to_placement
 from game.components.game_interface import Game_Interface
-from game.game import Game
+from game.game_bases.round_base import Rounds_Base
+from game.game_bases.participant_base import Participant_Base
 from game.utils.common import arg_fix_grouping, arg_fix_map
 from game.utils.grammer import s
 from game.utils.types import (
@@ -18,19 +19,18 @@ from game.utils.types import (
 
 PointType = TypeVar('PointType',bound = Number, default=int)
 
-class Rounds_With_Points_Framework(Generic[Participant,PointType],Game):
+class Rounds_With_Points_Framework(Generic[Participant,PointType],Participant_Base[Participant],Rounds_Base):
     def __init__(self,gi:Game_Interface):
-        Game.__init__(self,gi)
+        Rounds_Base.__init__(self,gi)
         if Rounds_With_Points_Framework not in self.initialized_bases:
             self.initialized_bases.append(Rounds_With_Points_Framework)
             self.zero_score:PointType = 0#type: ignore
-            self.num_rounds:int = 3
+            self.num_rounds = 3
             self.point_word:str = "point"
             self.round_word:str = "round"
             self.reverse_points:bool = False
-            self.part_str:Callable[[Participant],str] = lambda part: str(part)
-    def configure(self,participants:Grouping[Participant]):
-        self.participants:tuple[Participant,...] = tuple(participants)
+    @override
+    def configure_participants(self):
         self.point_totals:dict[Participant,PointType] = {
             participant:self.zero_score for participant in self.participants
         }
@@ -72,15 +72,10 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Game):
         ):
         await self.announce_score(who,amount)
         self.receive_score(who,amount)
-    async def core_game(self):
-        ...
     @override
-    async def _run(self):
-        for i in range(self.num_rounds):
-            if not self.num_rounds == 1:
-                await self.basic_send(f"## {self.round_word.capitalize()} {i+1} of {self.num_rounds}:")
-            await self.core_game()
-            await self.announce_score()
+    async def end_round(self):
+        await self.announce_score()
+    @override
     def generate_participant_placements(self) -> Placement[Participant]:
         return score_to_placement(self.point_totals,self.participants,not self.reverse_points)
 
@@ -90,7 +85,7 @@ class Rounds_With_Points_Base(Rounds_With_Points_Framework[PlayerId,int]):
         Rounds_With_Points_Framework.__init__(self,gi)
         if Rounds_With_Points_Base not in self.initialized_bases:
             self.initialized_bases.append(Rounds_With_Points_Base)
-            self.configure(self.unkicked_players)
+            self.participants = self.all_players
             self.part_str = lambda player: self.format_players([player])
     @override
     def generate_placements(self) -> PlayerPlacement:

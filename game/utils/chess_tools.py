@@ -16,11 +16,36 @@ CASTLE_UCI_DICT = {
     'e1b1': "white castles queenside",
     'e8g8': "black castles kingside"
 }
+def get_raw_move(text:str) -> chess.Move:
+    return chess.Move.from_uci(text)
+def get_move(text:str,from_square:Optional[chess.Square] = None,to_square:Optional[chess.Square] = None) -> Optional[chess.Move]:
+        move:Optional[chess.Move] = None
+        try:
+            move = get_raw_move(text)
+        except chess.InvalidMoveError:
+            if from_square is None and to_square is None:
+                return None
+            else:
+                if from_square is not None:
+                    try:
+                        move = get_raw_move(chess.SQUARE_NAMES[from_square] + text)
+                    except (chess.InvalidMoveError,IndexError):
+                        ...
+                if to_square is not None:
+                    try:
+                        move = get_raw_move(text + chess.SQUARE_NAMES[to_square])
+                    except (chess.InvalidMoveError,IndexError):
+                        ...
+        return move
 #region get text
 def get_piece_name(piece:chess.Piece|str) -> str:
     if isinstance(piece,str):
         piece = chess.Piece.from_symbol(piece)
     return f"{chess.COLOR_NAMES[piece.color]} {chess.PIECE_NAMES[piece.piece_type]}"
+def get_square_name(square:chess.Square) -> str:
+    return chess.SQUARE_NAMES[square]
+def get_square_and_piece(square:chess.Square, piece:chess.Piece) -> str:
+    return f"{get_piece_name(piece)} on {get_square_name(square)}"
 
 def get_move_text(board:chess.Board,move_uci:chess.Move|str) -> str:
     if isinstance(move_uci,chess.Move):

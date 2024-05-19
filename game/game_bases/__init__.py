@@ -6,6 +6,7 @@ from game.game_bases.game_word_base import Game_Word_Base
 from game.game_bases.random_image_base import Random_Image_Base
 from game.game_bases.rounds_with_points_base import Rounds_With_Points_Base
 from game.game_bases.trivia_base import Trivia_Base
+from game.game_bases.team_base import Team_Base, Rounds_With_Points_Team_Base, Elimination_Team_Base
 
 __all__ = (
     'Elimination_Base',
@@ -15,5 +16,8 @@ __all__ = (
     'Rounds_With_Points_Base',
     'Random_Image_Base',
     'Basic_Secret_Message_Base',
-    'Chess_Base'
+    'Chess_Base',
+    'Team_Base',
+    'Rounds_With_Points_Team_Base',
+    'Elimination_Team_Base'
 )

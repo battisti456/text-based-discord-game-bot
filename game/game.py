@@ -45,12 +45,14 @@ class Game(Interface_Component):
 
             self.kicked:PlayerDict[tuple[int,KickReason]] = {}
             self.game_end_exception:Optional[GameEndException] = None
+    def is_player_kicked(self,player:PlayerId) -> bool:
+        return player in self.kicked
     @property
     def kicked_players(self) -> tuple[PlayerId,...]:
-        return tuple(player for player in self.all_players if player in self.kicked)#maintian order
+        return tuple(player for player in self.all_players if self.is_player_kicked(player))#maintian order
     @property 
     def unkicked_players(self) -> tuple[PlayerId,...]:
-        return tuple(player for player in self.all_players if player not in self.kicked)
+        return tuple(player for player in self.all_players if not self.is_player_kicked(player))
     async def game_intro(self):
         ...
     async def game_setup(self):

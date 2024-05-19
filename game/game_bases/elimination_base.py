@@ -1,7 +1,8 @@
-from typing import Callable, Generic, Optional, override
+from typing import Optional, override
 
 from game.components.game_interface import Game_Interface
-from game.game import Game
+from game.game_bases.round_base import Rounds_Base
+from game.game_bases.participant_base import Participant_Base
 from game.utils.common import arg_fix_grouping
 from game.utils.exceptions import GameEndException
 from game.utils.grammer import wordify_iterable
@@ -18,14 +19,13 @@ from game.utils.types import (
 class EliminationGameEnd(GameEndException):
     ...
 
-class Elimination_Framework(Generic[Participant],Game):
+class Elimination_Framework(Participant_Base[Participant],Rounds_Base):
     def __init__(self,gi:Game_Interface):
-        Game.__init__(self,gi)
+        Rounds_Base.__init__(self,gi)
         if Elimination_Framework not in self.initialized_bases:
             self.initialized_bases.append(Elimination_Framework)
-            self.part_str:Callable[[Participant],str] = lambda part: str(part)
-    def configure(self,participants:Grouping[Participant]):
-        self.participants:tuple[Participant,...] = tuple(participants)
+    @override
+    def configure_participants(self):
         self.elimination_order:Placement[Participant] = tuple()
     @property
     def eliminated(self) -> frozenset[Participant]:
@@ -61,16 +61,8 @@ class Elimination_Framework(Generic[Participant],Game):
         if not to_eliminate == set(self.not_eliminated) and len(to_eliminate) > 0:
             self.elimination_order += (tuple(to_eliminate),)
         if len(self.not_eliminated) == 1:
-            raise EliminationGameEnd()
-    async def core_game(self):
-        ...
+            raise EliminationGameEnd(f"all but one {self.participant_name} being eliminated")
     @override
-    async def _run(self):
-        try:
-            while True:
-                await self.core_game()
-        except EliminationGameEnd:
-            ...
     def generate_participant_placements(self) -> Placement[Participant]:
         return self.elimination_order
         
@@ -79,8 +71,8 @@ class Elimination_Base(Elimination_Framework[PlayerId]):
         Elimination_Framework.__init__(self,gi)
         if Elimination_Base not in self.initialized_bases:
             self.initialized_bases.append(Elimination_Base)
-            self.configure(self.all_players)
             self.part_str = lambda player: self.sender.format_players((player,))
+            self.participant_name = "player"
     async def eliminate(self,players:PlayerId|Grouping[PlayerId]):
         players = arg_fix_grouping(self.unkicked_players,players)
         await self.announce_eliminate(players)

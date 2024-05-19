@@ -2,6 +2,10 @@ from typing import Iterable, Mapping, Optional
 
 from game.utils.types import Grouping, GroupingSafeVar
 
+def get_first[T](grouping:Iterable[T]) -> T:
+    for item in grouping:
+        return item
+    raise IndexError(f"Empty grouping {grouping}, cannot get first.")
 
 def arg_fix_grouping(default:Grouping[GroupingSafeVar],inpt:Optional[GroupingSafeVar|Grouping[GroupingSafeVar]]) -> tuple[GroupingSafeVar,...]:
     if inpt is None:

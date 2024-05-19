@@ -3,8 +3,10 @@ from typing import Optional, override
 
 from game import kick_text
 from game.components.game_interface import Game_Interface
-from game.game import Game
+from game.components.message import Message
 from game.game_bases.rounds_with_points_base import Rounds_With_Points_Framework
+from game.game_bases.elimination_base import Elimination_Framework
+from game.game_bases.round_base import Rounds_Base
 from game.utils.common import arg_fix_grouping
 from game.utils.exceptions import GameEndInsufficientTeams
 from game.utils.grammer import wordify_iterable
@@ -13,9 +15,11 @@ from game.utils.types import (
     KickReason,
     Placement,
     PlayerId,
+    ChannelId,
     PlayerPlacement,
     Team,
     TeamDict,
+    KickReason  # noqa: F811
 )
 from game.utils.word_tools import word_generator
 
@@ -34,7 +38,7 @@ def format_team(teams:Grouping[Team]|Team) -> str:
     teams = arg_fix_grouping([],teams)
     return wordify_iterable(str(team) for team in teams)
 
-class Team_Base(Game):
+class Team_Base(Rounds_Base):
     """
     a base for working with your players in teams; 
     will split your players (as evenly as possible) into self.num_teams teams with random names, defualts to 2;
@@ -43,30 +47,71 @@ class Team_Base(Game):
     generate placements would need to be defined in any inheriting games
     """
     def __init__(self,gi:Game_Interface):
-        Game.__init__(self,gi)
+        Rounds_Base.__init__(self,gi)
         if Team_Base not in self.initialized_bases:
             self.initialized_bases.append(Team_Base)
             self.num_teams:int = 2
-            self.concurrent:bool = True
-            self.setup_teams()
+            self.teams_concurrent:bool = True
+            self.players_concurrent = True
             self.team_kicked:dict[Team,tuple[int,KickReason]] = {}
-    def setup_teams(self):
-        self.teams:tuple[Team,...] = tuple(random_team_name() for _ in range(self.num_teams))
+            self.all_teams:tuple[Team,...]
+            self.num_rounds = 1
+    def is_team_kicked(self,team:Team) -> bool:
+        return team in self.team_kicked
+    @property
+    def kicked_teams(self) -> tuple[Team, ...]:
+        return tuple(team for team in self.all_teams if self.is_team_kicked(team))
+    @property
+    def unkicked_teams(self) -> tuple[Team, ...]:
+        return tuple(team for team in self.all_teams if not self.is_team_kicked(team))
+    @override
+    async def game_setup(self):
+        await super().game_setup()
+        self.all_teams:tuple[Team,...] = tuple(random_team_name() for _ in range(self.num_teams))
         self.team_players:TeamDict[frozenset[PlayerId]] = {
-            self.teams[i]:frozenset(self.unkicked_players[i::self.num_teams])
+            self.all_teams[i]:frozenset(self.unkicked_players[i::self.num_teams])
             for i in range(self.num_teams)
         }
+        self.team_channeld:TeamDict[ChannelId] = {
+            team:await self.gi.new_channel(
+                f"{str(team)}'s Team Channel",
+                self.team_players[team]
+            ) for team in self.all_teams
+        }
+    async def basic_send_team(
+            self,
+            teams:Grouping[Team]|Team|None,
+            content:Optional[str] = None,
+            attatchements_data:list[str] = []):
+        """
+        creates a message with the given parameters and sends it with self.sender
+
+        teams: the teams to send the message to on their channels, if None defaults to all teams
+        
+        content: the text content of the message
+        
+        attatchements_data: a list of file paths to attatch to the message
+        """
+        teams = arg_fix_grouping(self.all_teams,teams)
+        for team in teams:
+            await self.sender(Message(
+                content=content,
+                attach_paths=attatchements_data,
+                channel_id=self.team_channeld[team]
+            ))
     async def kick_teams(
             self,
             teams:Grouping[Team],
             reason:KickReason = 'unspecified',
             priority:Optional[int] = None) :
         """
-        adds players to the kicked dict with the approprite priority and reason
+        adds teams to the team_kicked dict with the approprite priority and reason
 
-        players: a list of players to eliminate
+        teams: a list of teams to eliminate
+
         reason: one of a set list of reasons which might have further implications elsewhere
-        priority: where should these players be placed in the order of their elimination, if None, assumes after the lastmost eliminated of players so far
+
+        priority: where should these teams be placed in the order of their elimination, if None, assumes after the lastmost eliminated of teams so far
         """
         if priority is None:
             priority = self.max_kick_priority() + 1
@@ -74,26 +119,58 @@ class Team_Base(Game):
             self.team_kicked[team] = (priority,reason)
         if len(self.unkicked_players) <= 1:
             raise GameEndInsufficientTeams(f"{format_team(teams)} being {kick_text[reason]}")
-    @override
-    async def _run(self):
-        await self.core_game()
-    async def core_team(self,team:Team):
+    async def core_player(self,team:Team,player:PlayerId):
         ...
+    async def core_team(self,team:Team):
+        if not self.players_concurrent:
+            for player in self.team_players[team]:
+                await self.core_player(team,player)
+        else:
+            tasks:list[asyncio.Task] = list(asyncio.create_task(self.core_player(team,player)) for player in self.team_players[team])
+            await asyncio.gather(*tasks)
+    @override
     async def core_game(self):
-        if not self.concurrent:
-            for team in self.teams:
+        if not self.teams_concurrent:
+            for team in self.all_teams:
                 await self.core_team(team)
         else:
-            tasks:list[asyncio.Task] = list(asyncio.create_task(self.core_team(team)) for team in self.teams)
-            asyncio.gather(*tasks)
+            tasks:list[asyncio.Task] = list(asyncio.create_task(self.core_team(team)) for team in self.all_teams)
+            await asyncio.gather(*tasks)
+    @override
+    async def kick_players(self, players: Grouping[PlayerId], reason:KickReason = 'unspecified', priority: Optional[int]= None):
+        await super().kick_players(players, reason, priority)
+        kick_teams = tuple(team for team in self.unkicked_teams if all(self.is_player_kicked(player) for player in self.team_players[team]))
+        if kick_teams:
+            await self.kick_teams(kick_teams,reason)
 
 
-class Rounds_With_Points_Team_Base(Rounds_With_Points_Framework[Team,int],Team_Base):
+
+class Rounds_With_Points_Team_Base(Team_Base,Rounds_With_Points_Framework[Team,int]):
     def __init__(self,gi:Game_Interface):
-        Rounds_With_Points_Framework.__init__(self,gi)#type:ignore
         Team_Base.__init__(self,gi)
+        Rounds_With_Points_Framework.__init__(self,gi) # type: ignore
         if Rounds_With_Points_Team_Base not in self.initialized_bases:
             self.initialized_bases.append(Rounds_With_Points_Team_Base)
     @override
+    def configure_participants(self):
+        self.participants = self.all_teams
+    @override
     def generate_placements(self) -> PlayerPlacement:
         return team_to_player_placements(self.generate_participant_placements(),self.team_players)
+    @override
+    async def _run(self):
+        await Rounds_With_Points_Framework._run(self) #type:ignore
+
+
+class Elimination_Team_Base(Team_Base,Elimination_Framework[Team]):
+    def __init__(self,gi:Game_Interface):
+        Team_Base.__init__(self,gi)
+        Elimination_Framework(self,gi)#type:ignore
+        if Elimination_Team_Base not in self.initialized_bases:
+            self.initialized_bases.append(Elimination_Framework)
+    @override
+    def configure_participants(self):
+        self.participants = self.all_teams
+    @override
+    async def _run(self):
+        await Elimination_Framework._run(self)#type:ignore
