@@ -1,4 +1,4 @@
-from typing import Callable, Generic, Mapping, Optional
+from typing import Callable, Generic, Mapping, Optional, override
 
 from typing_extensions import TypeVar
 
@@ -74,6 +74,7 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Game):
         self.receive_score(who,amount)
     async def core_game(self):
         ...
+    @override
     async def _run(self):
         for i in range(self.num_rounds):
             if not self.num_rounds == 1:
@@ -91,6 +92,7 @@ class Rounds_With_Points_Base(Rounds_With_Points_Framework[PlayerId,int]):
             self.initialized_bases.append(Rounds_With_Points_Base)
             self.configure(self.unkicked_players)
             self.part_str = lambda player: self.format_players([player])
+    @override
     def generate_placements(self) -> PlayerPlacement:
         return self.generate_participant_placements()
     async def score(self,who:Optional[PlayerId|Grouping[PlayerId]] = None,

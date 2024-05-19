@@ -7,6 +7,7 @@ from typing import (
     Optional,
     Protocol,
     runtime_checkable,
+    override
 )
 
 from typing_extensions import TypeVar
@@ -40,6 +41,7 @@ type Operators = Literal['command','run_game']
 @dataclass(frozen=True)
 class Team(GS):
     string:str
+    @override
     def __str__(self) -> str:
         return self.string
 

@@ -1,4 +1,5 @@
 import random
+from typing import override
 
 from config.games_config import games_config
 from game import make_player_dict
@@ -24,6 +25,7 @@ class Tricky_Trivia(Basic_Secret_Message_Base,Trivia_Base,Rounds_With_Points_Bas
         Trivia_Base.__init__(self,gi)
         Rounds_With_Points_Base.__init__(self,gi)
         self.num_rounds = NUM_QUESTIONS
+    @override
     async def game_intro(self):
         await self.basic_send(
             "# Today we are playing a game of tricky trivia!\n" +
@@ -35,6 +37,7 @@ class Tricky_Trivia(Basic_Secret_Message_Base,Trivia_Base,Rounds_With_Points_Bas
             "The highest points at the end wins!\n" +
             "**WARNING: Sometimes the trivia is phrased in such a way that you can provide an alternative correct answer. Please provide an incorrect answer!**"
         )
+    @override
     async def core_game(self):
         trivia_dict:TriviaDict = await self.get_trivia(type_ = self.type_.Multiple_Choice)
         while trivia_dict['question'][0:5] == "Which" or "hich of these" in trivia_dict['question']:#hopefully prevent some bad qs

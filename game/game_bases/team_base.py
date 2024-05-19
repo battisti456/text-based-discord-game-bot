@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional
+from typing import Optional, override
 
 from game import kick_text
 from game.components.game_interface import Game_Interface
@@ -74,6 +74,7 @@ class Team_Base(Game):
             self.team_kicked[team] = (priority,reason)
         if len(self.unkicked_players) <= 1:
             raise GameEndInsufficientTeams(f"{format_team(teams)} being {kick_text[reason]}")
+    @override
     async def _run(self):
         await self.core_game()
     async def core_team(self,team:Team):
@@ -93,5 +94,6 @@ class Rounds_With_Points_Team_Base(Rounds_With_Points_Framework[Team,int],Team_B
         Team_Base.__init__(self,gi)
         if Rounds_With_Points_Team_Base not in self.initialized_bases:
             self.initialized_bases.append(Rounds_With_Points_Team_Base)
+    @override
     def generate_placements(self) -> PlayerPlacement:
         return team_to_player_placements(self.generate_participant_placements(),self.team_players)

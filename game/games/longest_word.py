@@ -1,3 +1,5 @@
+from typing import override
+
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
 from game.components.message import Alias_Message, Message
@@ -22,6 +24,7 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
         self.num_rounds = NUMBER_OF_ROUNDS
         self.words_used = []
         self.current_letters = self.random_balanced_letters(NUM_LETTERS)
+    @override
     async def game_intro(self):
         await self.basic_send(
             "# We are playing a game of create the longest word.\n" +
@@ -82,7 +85,7 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
                     self.current_letters = "".join(list_letters)
                     num_letters_can_refresh -= len(change_letters)
         return chosen_word
-    
+    @override
     async def core_game(self):
         for player in self.unkicked_players:
             word = await self.longest_word_question(player)

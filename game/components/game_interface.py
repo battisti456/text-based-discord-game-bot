@@ -1,4 +1,4 @@
-from typing import Any, Awaitable, Callable, Hashable, Optional
+from typing import Any, Awaitable, Callable, Hashable, Optional, override
 
 from game import get_logger
 from game.components.interaction import INTERACTION_TYPES, Interaction, InteractionType
@@ -18,6 +18,7 @@ class Interface_Sender(Sender):
     def __init__(self,gi:'Game_Interface'):
         Sender.__init__(self)
         self.gi = gi
+    @override
     async def __call__(self,message:Message) -> Any:
         self.gi.track_message(message)
         return await self._send(message)
@@ -138,6 +139,7 @@ class Channel_Limited_Interface_Sender(Interface_Sender):
     """
     def __init__(self,gi:'Channel_Limited_Game_Interface'):
         Interface_Sender.__init__(self,gi)
+    @override
     async def __call__(self,message:Message):
         if (message.players_who_can_see is not None) and message.channel_id is None:
             assert isinstance(self.gi,Channel_Limited_Game_Interface)

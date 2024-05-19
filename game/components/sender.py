@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, override
 
 from game.components.message import Message
 from game.utils.grammer import wordify_iterable
@@ -25,6 +25,7 @@ class Multiple_Sender(Sender):
     def __init__(self,senders:list[Sender]):
         Sender.__init__(self)
         self.senders = senders
+    @override
     async def __call__(self, message: Message):
         for sender in self.senders:
             await sender(message)

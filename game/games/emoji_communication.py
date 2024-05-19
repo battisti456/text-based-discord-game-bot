@@ -1,4 +1,5 @@
 import random
+from typing import override
 
 import emoji
 
@@ -69,6 +70,7 @@ class Emoji_Communication(Basic_Secret_Message_Base,Rounds_With_Points_Base,Game
         Rounds_With_Points_Base.__init__(self,gh)
         Game_Word_Base.__init__(self,gh)
         self.num_rounds = NUM_ROUNDS
+    @override
     async def game_intro(self):
         await self.basic_send(
             "# Welcome to a game of emoji communication!\n" +
@@ -80,6 +82,7 @@ class Emoji_Communication(Basic_Secret_Message_Base,Rounds_With_Points_Base,Game
             f"In addition, if the writer used {BONUS_NUM} or less emojis, they earn {BONUS_POINTS_PER_GUESSER} points per person to guess it, if not all do.\n" +
             "That's about it. Lets get started!"
         )
+    @override
     async def core_game(self):
         base_str:PlayerDict[str] = {}
         opt_str:PlayerDict[list[str]] = {}

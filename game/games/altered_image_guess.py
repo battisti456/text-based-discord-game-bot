@@ -1,5 +1,6 @@
 import math
 import random
+from typing import override
 
 import PIL.Image
 import PIL.ImageDraw
@@ -263,6 +264,7 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
         Rounds_With_Points_Base.__init__(self,gi)
         Random_Image_Base.__init__(self,gi)
         self.num_rounds = NUM_ROUNDS
+    @override
     async def game_intro(self):
         await self.basic_send(
             "# Welcome to a game of guess what I searched!\n" + 
@@ -271,6 +273,7 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
             f"Then, for a point, you will attempt to correctly guess from {NUM_CHOICES} options which term I searched for.\n" +
             f"We will play {NUM_ROUNDS} rounds. Most points at the end wins!"
         )
+    @override
     async def core_game(self):
         search_options:list[str] = random.sample(list(SEARCH_TOPICS),NUM_CHOICES)
         actual_search:str = search_options[random.randint(0,NUM_CHOICES-1)]

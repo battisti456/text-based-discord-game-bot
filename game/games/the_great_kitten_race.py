@@ -1,6 +1,6 @@
 import json
 import random
-from typing import TypedDict
+from typing import TypedDict, override
 
 from config.config import config
 from config.games_config import games_config
@@ -46,6 +46,7 @@ class The_Great_Kitten_Race(Game):
         with open(DATA_PATH,'r') as file:
             self.kitten_config:KittenConfig = json.load(file)
             self.times:PlayerDict[int] = {}
+    @override
     async def game_intro(self):
         await self.basic_send(
             "# Here y'all are, finally, at the great kitten race!\n" +
@@ -57,6 +58,7 @@ class The_Great_Kitten_Race(Game):
             "Now is the day where you kittens will finally race! The lowest time at the end wins!\n" +
             "All you can do now is watch and hope your training pulled off...."
         )
+    @override
     async def _run(self):
         obstacles = random.choices(list(self.kitten_config["obstacles"]),k=NUM_OBSTACLES)
         obstacle_text_list:list[str] = []
@@ -168,6 +170,7 @@ class The_Great_Kitten_Race(Game):
             )
         
         self.times = {player:kittens[player]['time'] for player in self.unkicked_players}
+    @override
     def generate_placements(self) -> PlayerPlacement:
         return merge_placements(
             score_to_placement(self.times,self.all_players),

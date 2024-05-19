@@ -1,4 +1,5 @@
 import random
+from typing import override
 
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
@@ -31,6 +32,7 @@ class Guess_The_Word(Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Poin
         Basic_Secret_Message_Base.__init__(self,gi)
         Rounds_With_Points_Base.__init__(self,gi)
         self.num_rounds = NUM_ROUNDS
+    @override
     async def game_intro(self):
         await self.basic_send(
             "# This is a game of guessing the word!\n" +
@@ -41,6 +43,7 @@ class Guess_The_Word(Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Poin
             f"This will continue across {NUM_ROUNDS} different word(s).\n" + 
             "The highest points at the end is the winner!\n" +
             "CAUTION: Sometimes words can be spelled other ways....")
+    @override
     async def core_game(self):
         definition_list:DefinitionList = []
         type_set:set[SimplePartOfSpeach] = set()

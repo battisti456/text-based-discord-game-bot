@@ -1,6 +1,6 @@
 import asyncio
 from time import time
-from typing import Any, Awaitable, Callable, Optional
+from typing import Any, Awaitable, Callable, Optional, override
 
 from config.config import config
 from game import correct_str, get_logger, make_player_dict
@@ -55,6 +55,7 @@ class Player_Input[T](GS):
         self.funcs_to_call_on_update:list[Callable[[],Awaitable]] = []
         self._last_response_status:str = ""
         self.timeout_time:int = 0
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.name})"
     def on_update(self,func:Callable[[],Awaitable]) -> Callable[[],Awaitable]:
@@ -207,8 +208,10 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
     def bind_message(self,message:Message) -> Message:
         self.message = Alias_Message(message,lambda content: self.add_response_status(content))
         return self.message
+    @override
     def response_status(self, basic: bool = False) -> str:
         return super().response_status(basic) + f" *(Edits are {'not ' if not self.allow_edits else ''}allowed.)*"
+    @override
     async def update_response_status(self):
         await self.sender(self.message)
     def add_response_status(self,content:str|None):
@@ -236,6 +239,7 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
             logger.info(f"{interaction} ignored by {self} because edits are not allowed and they already have a valid response of '{self.responses[interaction.player_id]}'")
             return False
         return True
+    @override
     async def _setup(self):
         if not self.message.is_sent():
             await self.sender(self.message)
@@ -252,6 +256,7 @@ class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
             message:Optional[Message|str] = None,
             allow_edits:bool = True):
         Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,timeout,warnings,message,allow_edits)
+    @override
     async def _setup(self):
         await Player_Input_In_Response_To_Message._setup(self)
         @self.gi.on_action('send_message',self)
@@ -266,6 +271,7 @@ class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
                 assert interaction.player_id is not None
                 self.responses[interaction.player_id] = None
                 await self._update()
+    @override
     async def _unsetup(self):
         self.gi.purge_actions(self)
 
@@ -281,6 +287,7 @@ class Player_Single_Selection_Input(Player_Input_In_Response_To_Message[int]):
             message:Optional[Message|str] = None,
             allow_edits:bool = True):
         Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,timeout,warnings,message,allow_edits)
+    @override
     async def _setup(self):
         await Player_Input_In_Response_To_Message._setup(self)
         @self.gi.on_action('select_option',self)
@@ -296,6 +303,7 @@ class Player_Single_Selection_Input(Player_Input_In_Response_To_Message[int]):
                 if self.responses[interaction.player_id] == interaction.choice_index:
                     self.responses[interaction.player_id] = None
                     await self._update()
+    @override
     async def _unsetup(self):
         self.gi.purge_actions(self)
 class Player_Multiple_Selection_Input(Player_Input_In_Response_To_Message[set[int]]):
@@ -308,6 +316,7 @@ class Player_Multiple_Selection_Input(Player_Input_In_Response_To_Message[set[in
             who_can_see:Optional[list[PlayerId]] = None, 
             timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings'], message:Optional[Message|str] = None):
         Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,timeout,warnings,message,True)
+    @override
     async def _setup(self):
         await Player_Input_In_Response_To_Message._setup(self)
         @self.gi.on_action('select_option',self)
@@ -331,6 +340,7 @@ class Player_Multiple_Selection_Input(Player_Input_In_Response_To_Message[set[in
                     if interaction.choice_index in proxy:
                         proxy.remove(interaction.choice_index)
                         await self._update()
+    @override
     async def _unsetup(self):
         self.gi.purge_actions(self)
 def multi_bind_message(message:Message,*player_inputs:Player_Input_In_Response_To_Message):

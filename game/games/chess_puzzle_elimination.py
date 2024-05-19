@@ -1,6 +1,6 @@
 #NEEDS TO BE TESTED
 import random
-from typing import Optional, TypedDict
+from typing import Optional, TypedDict, override
 
 import chess
 import pandas
@@ -111,6 +111,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
                 puzzle = row_puzzle
                 puzzle_diffs = row_diffs
         return puzzle
+    @override
     async def game_intro(self):
         await self.basic_send(
             "# Welcome to a game of elimination chess puzzles!\n" + 
@@ -121,6 +122,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
             "If you pick the wrong move, you are eliminated (unless no one gets it right).\n" +
             "Last player standing wins!"
         )
+    @override
     async def core_game(self):
         puzzle:ChessPuzzleDict = self.random_puzzle(self.rating_range,POPULARITY_RANGE)
         self.rating_range = (self.rating_range[0],self.rating_range[1]+PUZZLE_RATING_CAP_ESCALATION)

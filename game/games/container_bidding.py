@@ -1,6 +1,6 @@
 import json
 import random
-from typing import TypedDict
+from typing import TypedDict, override
 
 from config.config import config
 from config.games_config import games_config
@@ -63,6 +63,7 @@ class Container_Bidding(Rounds_With_Points_Base,Basic_Secret_Message_Base):
             self.data:DataDict = json.load(file)
         validate_data(self.data)
         self.money:PlayerDict[int] = make_player_dict(self.unkicked_players,int(STARTING_MONEY/len(self.unkicked_players)))
+    @override
     async def game_intro(self):
         await self.basic_send(
             "# Welcome to a game of container bidding!\n" + 
@@ -88,6 +89,7 @@ class Container_Bidding(Rounds_With_Points_Base,Basic_Secret_Message_Base):
             reward_text.append(f"> {item} evaluated for {moneyfy(value)}")
             total_reward += value
         return total_reward, reward_text
+    @override
     async def core_game(self):
         desc_name:str = random.choice(list(self.data["container_descriptions"]))
         desc:DescDict = self.data['container_descriptions'][desc_name]

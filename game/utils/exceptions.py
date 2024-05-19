@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, override
 
 
 class GameBotException(Exception):
@@ -24,6 +24,7 @@ class GameEndException(GameException):
         if self.args:
             end = f" caused by {self.args[0]}."
         return f"{start}{self._explanation}{end}"
+    @override
     def __str__(self) -> str:
         return f"{self.__class__.__name__}: {self.explanation}"
 

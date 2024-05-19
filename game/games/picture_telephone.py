@@ -1,3 +1,5 @@
+from typing import override
+
 from game.components.game_interface import Game_Interface
 from game.components.message import Message
 from game.components.player_input import Player_Text_Input, run_inputs
@@ -35,8 +37,10 @@ class Picture_Telephone(Rounds_With_Points_Base, Random_Image_Base):
         self._images = []
         self.failed_paths = set()
         self.current_offset = 0
+    @override
     async def game_intro(self):
         pass
+    @override
     async def core_game(self) -> PlayerDict[int] | None:
         self.reset()
         while self.current_offset < len(self.unkicked_players):

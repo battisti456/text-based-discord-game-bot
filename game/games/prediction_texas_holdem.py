@@ -1,3 +1,5 @@
+from typing import override
+
 from config.games_config import games_config
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
@@ -26,6 +28,7 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
         self.reverse_scoring = True
         self.points_format = lambda points: f"{points} penalties"
         self.num_rounds = NUM_ROUNDS
+    @override
     async def game_intro(self):
         await self.basic_send(
             "# Welcome to a game of prediction Texas Holdem!\n" +
@@ -36,6 +39,7 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
             "The further you are from guessing your rank correctly, the more penalties you accrue.\n" +
             "Lowest penalties at the end of the game wins!"
         )
+    @override
     async def core_game(self) -> PlayerDict[int] | None:
         await self.setup_cards()
         shared:Card_Holder = Card_Holder("Shared cards.")

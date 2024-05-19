@@ -1,5 +1,6 @@
 #NEEDS TO BE TESTED
 from math import ceil
+from typing import override
 
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
@@ -31,6 +32,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
             sum += 10
             num_aces -= 1
         return sum
+    @override
     async def game_intro(self):
         await self.basic_send(
             "# This will be a game of elimination blackjack!\n" +
@@ -40,6 +42,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
             f"Aces are worth 11 points, unless that would put you over {HAND_LIMIT} in which case they are worth 1 point.\n" +
             f"If your score goes above {HAND_LIMIT}, you are immediately eliminated (earlier than if you had just scored lowest in the round).\n" +
             f"The closer to {HAND_LIMIT} you get, the higher the chance you will defeat your competitors, however.")
+    @override
     async def core_game(self):
         await self.setup_cards(ceil(len(self.unkicked_players)/NUM_PLAYERS_PER_DECK))
         await self.player_draw(self.unkicked_players,2)

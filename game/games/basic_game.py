@@ -1,3 +1,5 @@
+from typing import override
+
 from game.components.game_interface import Game_Interface
 from game.components.message import Message
 from game.components.player_input import Player_Text_Input
@@ -14,11 +16,13 @@ validator = text_validator_maker(
 class Basic_Game(Rounds_With_Points_Base):
     def __init__(self,gi:Game_Interface):
         Rounds_With_Points_Base.__init__(self,gi)
+    @override
     async def game_intro(self):
         await self.basic_send(
             "# Hi welcome to this basic game!\n" +
             "Answer with how many points you would like to get!"
         )
+    @override
     async def core_game(self):
         message = Message("Respond here with how many points you would like!")
         inpt = Player_Text_Input(

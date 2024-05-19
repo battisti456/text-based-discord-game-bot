@@ -1,4 +1,5 @@
 import random
+from typing import override
 
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
@@ -13,12 +14,14 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
         Elimination_Base.__init__(self,gi)
         self.guns:PlayerDict[int] = make_player_dict(self.unkicked_players,0)
         self.announced_guns:bool = False
+    @override
     async def game_intro(self):
         await self.basic_send(
             "# Welcome to a game of elimination rock paper scizzors!\n" +
             "In this game you can choose to throw rock paper or scizzors.\n" +
             "Then I will tell you what I picked.\n" +
             "If I beat you, you are eliminated!")
+    @override
     async def core_game(self):
         options = ['rock','paper','scissors']
         players_with_guns = list(player for player in self.unkicked_players if self.guns[player] > 0)

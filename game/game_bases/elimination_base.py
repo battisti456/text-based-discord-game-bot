@@ -1,4 +1,4 @@
-from typing import Callable, Generic, Optional
+from typing import Callable, Generic, Optional, override
 
 from game.components.game_interface import Game_Interface
 from game.game import Game
@@ -64,6 +64,7 @@ class Elimination_Framework(Generic[Participant],Game):
             raise EliminationGameEnd()
     async def core_game(self):
         ...
+    @override
     async def _run(self):
         try:
             while True:
@@ -84,11 +85,13 @@ class Elimination_Base(Elimination_Framework[PlayerId]):
         players = arg_fix_grouping(self.unkicked_players,players)
         await self.announce_eliminate(players)
         self.eliminate_participants(players)
+    @override
     async def kick_players(self, players: Grouping[PlayerId], reason: KickReason = 'unspecified', priority:Optional[int] = None):
         players = tuple(players)
         await super().kick_players(players, reason, priority)
         await self.announce_eliminate(players)
         self.eliminate_participants(players)
+    @override
     def generate_placements(self) -> PlayerPlacement:
         print(self.generate_participant_placements())
         return (tuple(self.not_eliminated),) + self.generate_participant_placements()

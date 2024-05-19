@@ -1,4 +1,4 @@
-from typing import Literal, Optional, get_args
+from typing import Literal, Optional, get_args, override
 
 from game.components.message import Message
 from game.utils.types import ChannelId, InteractionId, MessageId, PlayerId
@@ -35,6 +35,7 @@ class Interaction(object):
         self.interaction_type:InteractionType = interaction_type
 
         self.choice_index:Optional[int] = choice_index
+    @override
     def __repr__(self) -> str:
         return f"Interaction[{self.interaction_type}]]({self.content})"
     def reply(self,content:str) -> Message:

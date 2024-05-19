@@ -1,5 +1,5 @@
 from math import ceil
-from typing import TYPE_CHECKING, Callable, Literal, Optional, Sequence, TypeVar
+from typing import TYPE_CHECKING, Callable, Literal, Optional, Sequence, TypeVar, override
 
 from game.utils.emoji_groups import NO_YES_EMOJI
 from game.utils.grammer import wordify_iterable
@@ -37,6 +37,7 @@ class Bullet_Point(object):
     def __init__(self,text:Optional[str] = None, emoji:Optional[str] = None):
         self.text = text
         self.emoji = emoji
+    @override
     def __str__(self):
         return f"{self.emoji} (*{self.text}*)"
 
@@ -218,27 +219,34 @@ class Alias_Message(Child_Message):
         self.bullet_points_modifier = bullet_points_modifier
         self.reply_to_id_mnodifier = reply_to_id_modifier
     @property
+    @override
     def content(self) -> str | None:
         return self.content_modifier(self.parent_message.content)
     @property
+    @override
     def attach_paths(self) -> list[str] | None:
         return self.attach_paths_modifier(self.parent_message.attach_paths)
     @property
+    @override
     def channel_id(self) -> ChannelId | None:
         return self.channel_id_modifier(self.parent_message.channel_id)
     @property
+    @override
     def message_id(self) -> MessageId | None:
         return self.message_id_modifier(self.parent_message.message_id)
     @message_id.setter
     def message_id(self,message_id:MessageId):
         self.parent_message.message_id = message_id
     @property
+    @override
     def players_who_can_see(self) -> PlayersIds | None:
         return self.players_who_can_see_modifier(self.parent_message.players_who_can_see)
     @property
+    @override
     def bullet_points(self) -> list[Bullet_Point] | None:
         return self.bullet_points_modifier(self.parent_message.bullet_points)
     @property
+    @override
     def reply_to_id(self) -> InteractionId|MessageId|None:
         return self.reply_to_id_mnodifier(self.parent_message.reply_to_id)
 class Unique_Id_Alias_Message(Alias_Message):

@@ -1,7 +1,8 @@
+import dataclasses
 import random
 from collections import Counter
 from itertools import combinations
-import dataclasses
+from typing import override
 
 import PIL.Image
 import PIL.ImageOps
@@ -47,6 +48,7 @@ class Card(GS):
     value:int
     def string(self)->str:
         return f"{CARD_NAMES[self.value].capitalize()} of {SUIT_NAMES[self.suit].capitalize()}"
+    @override
     def __str__(self) -> str:
         return f"{type(self)}({self.string})"
     def emoji(self)->str:
@@ -60,6 +62,7 @@ class Card(GS):
         return self.value+1
     def is_face(self):
         return self.value > 9
+    @override
     def __hash__(self) -> int:
         return self.suit*4 + self.value
 class Card_Holder(object):

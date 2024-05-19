@@ -1,5 +1,6 @@
 #NEEDS TO BE TESTED
 import random
+from typing import override
 
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
@@ -28,6 +29,7 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
         Elimination_Base.__init__(self,gi)
         Game_Word_Base.__init__(self,gi)
         self.last_player:PlayerId = self.unkicked_players[0]
+    @override
     async def game_intro(self):
         await self.basic_send(
             "# We are playing a game of word creation!\n" +
@@ -38,8 +40,10 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
             "If the challenge was made in haste, however, the challenger is eliminated instead.\n" +
             f"To start us off in a round, I will generate {START_LETTERS} letters which are definitely a part of a word."
         )
+    @override
     async def game_outro(self,order:PlayerPlacement):
         pass
+    @override
     async def core_game(self):
         num_letters_in_starting_word = START_LETTERS + random.randint(1,len(self.unkicked_players))
         starting_word = self.random_valid_word(num_letters_in_starting_word)
