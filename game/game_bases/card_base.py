@@ -52,7 +52,7 @@ class Card(GS):
     def emoji(self)->str:
         return game.utils.emoji_groups.PLAYING_CARD_EMOJI[self.suit*len(CARD_NAMES)+self.value]
     def image(self,card_width:int = CARD_WIDTH)->PIL.Image.Image:#doen't keep transparent corners....?
-        image = PIL.Image.open(f"{CARD_PATH}\\{card_file_name(self.suit,self.value)}")
+        image = PIL.Image.open(f"{CARD_PATH}/{card_file_name(self.suit,self.value)}")
         image = image.convert('RGBA')
         width,height = image.size
         return image.resize((card_width,int(height/width*card_width)))
