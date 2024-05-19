@@ -85,6 +85,7 @@ class Elimination_Base(Elimination_Framework[PlayerId]):
         players = arg_fix_grouping(self.unkicked_players,players)
         await self.announce_eliminate(players)
         self.eliminate_participants(players)
+        await super().kick_players(players, 'eliminated')
     @override
     async def kick_players(self, players: Grouping[PlayerId], reason: KickReason = 'unspecified', priority:Optional[int] = None):
         players = tuple(players)
