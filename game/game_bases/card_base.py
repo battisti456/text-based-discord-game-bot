@@ -1,6 +1,7 @@
 import random
 from collections import Counter
 from itertools import combinations
+import dataclasses
 
 import PIL.Image
 import PIL.ImageOps
@@ -40,12 +41,14 @@ def wordify_cards(cards:Grouping['Card']) -> str:
 def frequency(values:list[int]) -> dict[int,int]:
     return dict(Counter(values))
 
+@dataclasses.dataclass(frozen=True)
 class Card(GS):
-    def __init__(self,suit:int,value:int):
-        self.suit = suit
-        self.value = value
+    suit:int
+    value:int
     def string(self)->str:
         return f"{CARD_NAMES[self.value].capitalize()} of {SUIT_NAMES[self.suit].capitalize()}"
+    def __str__(self) -> str:
+        return f"{type(self)}({self.string})"
     def emoji(self)->str:
         return game.utils.emoji_groups.PLAYING_CARD_EMOJI[self.suit*len(CARD_NAMES)+self.value]
     def image(self,card_width:int = CARD_WIDTH)->PIL.Image.Image:#doen't keep transparent corners....?
@@ -57,6 +60,8 @@ class Card(GS):
         return self.value+1
     def is_face(self):
         return self.value > 9
+    def __hash__(self) -> int:
+        return self.suit*4 + self.value
 class Card_Holder(object):
     def __init__(self,name:str = ""):
         self.name = name
@@ -100,13 +105,10 @@ class Card_Holder(object):
                     cards_to_remove.add(self.cards[card])
                 else:
                     cards_to_remove.add(card)
-        for i in range(num_random_cards):
-            added = False
-            while not added:
-                card = random.choice(self.cards)
-                if card not in cards_to_remove:
-                    cards_to_remove.add(card)
-                    added = True
+        if num_random_cards + len(cards_to_remove) > len(self.cards):
+            raise Exception(f"We cannot remove {num_random_cards+len(cards_to_remove)} from {len(self.cards)} cards")
+        random_cards:set[Card] = set(random.sample(list(card for card in self.cards if card not in cards_to_remove), num_random_cards))
+        cards_to_remove.update(random_cards)
         for card in cards_to_remove:
             self.cards.remove(card)
             other.cards.append(card)

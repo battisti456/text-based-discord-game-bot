@@ -379,7 +379,10 @@ async def run_inputs(
             feedback_list = []
             for input in (input for input in inputs if not input.has_recieved_all_responses()):
                 feedback_list.append("Monitoring: " + input.response_status(basic_feedback))
-            return "\n".join(feedback_list)
+            if len(feedback_list) == 0:
+                return "*All inputs are satisfied.*"
+            else:
+                return "\n".join(feedback_list)
         feedback_message:Message = Alias_Message(
             Message(players_who_can_see=who_can_see),content_modifier=lambda content:feedback_text())
         await sender(feedback_message)
@@ -404,3 +407,6 @@ async def run_inputs(
     await asyncio.wait(all_tasks)
     """for task in all_tasks:
         task.cancel()"""
+    #make sure feedback is correct when we exit
+    if sender is not None:
+        await sender(feedback_message)

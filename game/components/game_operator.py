@@ -1,6 +1,8 @@
 import asyncio
 import sys
-from typing import Literal, Optional
+from typing import Literal, Optional, Any, get_type_hints
+from ast import literal_eval
+import shlex
 
 import git
 from docopt import DocoptExit, docopt
@@ -27,14 +29,17 @@ Usage:
     {CP} restart_server
     {CP} update_server
     {CP} edit_config <val> (-s|-a|-r) <keys>...
+    {CP} manual_interaction [<key>=<value>]...
 
 Options:
-    <name>      name of game to launch
-    <val>       value to be edited in
-    -s          set the value into config with that key path
-    -a          add the value to a list at the key path
-    -r          remove the value from a list at the key path
-    <keys>      path of keys to navigate through config with, starting with config name
+    <name>          name of game to launch
+    <val>           value to be edited in
+    -s              set the value into config with that key path
+    -a              add the value to a list at the key path
+    -r              remove the value from a list at the key path
+    <keys>          path of keys to navigate through config with, starting with 
+    <key>=<value>   a key value pair to be stored
+    config name
 """
 
 
@@ -61,7 +66,7 @@ class Game_Operator(Interface_Operator):
                         async def send(content:str):
                             await self.send(interaction.reply(content))
                         try:
-                            args = docopt(COMMAND_DOCSTRING,interaction.content[len(CP):],default_help=False)
+                            args = docopt(COMMAND_DOCSTRING,list(shlex.shlex(interaction.content[len(CP):])),default_help=False)
                         except DocoptExit as e:
                             await send(
                                 "Our interpreter was unable to interpret this command of:\n" +
@@ -92,6 +97,7 @@ class Game_Operator(Interface_Operator):
                                 except AssertionError:
                                     await send(f"'{args['<name>']}' is not the name of a valid game.")
                                     return
+                                
                             self.game = game_type(self.gi)
                             self.state = 'run_individual_game'
                             self.run_task = asyncio.create_task(self.game.run())
@@ -133,3 +139,43 @@ class Game_Operator(Interface_Operator):
                                 await send(
                                     f"Failed to edit config:\n{e}"
                                 )
+                        elif args['manual_interaction']:
+                            types:dict[str,type[Any]] = get_type_hints(Interaction.__init__)
+                            print(args['<key>=<value>'])
+                            val_strs:dict[str,str] = {}
+                            kvargs = args['<key>=<value>']
+                            num_args = int(len(kvargs)/3)
+                            if num_args != len(kvargs)/3:
+                                await send(f"I interpreted this as {kvargs}, but if they were, it would need to be diviable by 3")
+                                return
+                            for i in range(num_args):
+                                val_strs[kvargs[i*3]] = kvargs[i*3+2]
+                            invalid = set(val_strs) - set(types)
+                            if invalid:
+                                await send(f"these keys are not permitted: {invalid}")
+                                return
+                            vals:dict[str,Any] = {}
+                            for key_str,val_str in val_strs.items():
+                                try:
+                                    vals[key_str] = literal_eval(val_str)
+                                except SyntaxError:
+                                    vals[key_str] = val_str
+                            """#type checking wouldn't work for id's, I don't think
+                            for key in vals:
+                                try:
+                                    check_type(vals[key],types[key])
+                                except TypeCheckError:
+                                    await send(f"on key {key} your value registered as type {type(vals[key])} which is not permitted in {types[key]}")
+                                    return"""
+                            interaction_type:str = 'interaction_type'
+                            if interaction_type not in vals:
+                                vals[interaction_type] = 'send_message'
+                            interaction = Interaction(**vals)
+                            if interaction.content is not None:
+                                if CP in interaction.content:
+                                    await send(f"containing '{CP}' in your content is not permitted")
+                                    return
+                            await self.gi._trigger_action(interaction)
+                                
+                                
+                                

@@ -7,9 +7,10 @@ from game.components.game_operator import Game_Operator
 
 if __name__ == "__main__":
     gi = Discord_Game_Interface(config['main_channel_id'],config['players'])
-    go = Game_Operator(gi)
-    @gi.client.event
+    @gi.on_start
     async def on_ready():
+        await gi.reset()
+        go = Game_Operator(gi)
         text = ""
         if len(sys.argv) > 1:
             text = f"{sys.argv[1]}\n"

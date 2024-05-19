@@ -1,5 +1,6 @@
 from random import shuffle
-from typing import Iterable, Optional, override
+from typing import Iterable, Optional, override, Callable, Awaitable
+from time import sleep
 
 import discord
 
@@ -13,9 +14,14 @@ from game.components.message import Add_Bullet_Points_To_Content_Alias_Message, 
 from game.utils.grammer import wordify_iterable
 from game.utils.types import ChannelId, MessageId, PlayerId
 
+
+type AsyncCallback = Callable[[],Awaitable[None]]
+DiscordChannel = discord.TextChannel|discord.Thread
+
 logger = get_logger(__name__)
 
 MESSAGE_MAX_LENGTH = 1800#actually 2000, but I leave extra for split indicators
+SLEEP429 = 10
 
 def discord_message_populate_interaction(
         payload:discord.Message, interaction:Interaction):
@@ -48,6 +54,7 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
         Channel_Limited_Interface_Sender.__init__(self,gi)
         self.client = gi.client
         self.default_channel = gi.channel_id
+
     @override
     async def _send(self, message: Message):
         if message.content is not None:
@@ -69,7 +76,7 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
         else:
             assert isinstance(message.channel_id,int)
             channel = self.client.get_channel(message.channel_id)
-        assert isinstance(channel,(discord.TextChannel,discord.Thread))
+        assert isinstance(channel,DiscordChannel)
         attachments:list[discord.File] = []
         if message.attach_paths is not None:
             for path in message.attach_paths:
@@ -96,12 +103,19 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
             discord_message:discord.Message = await channel.fetch_message(message.message_id)
             await discord_message.edit(content=message.content,attachments=attachments)
             message.message_id = discord_message.id#type:ignore
-        if message.bullet_points:
+        if message.bullet_points:#STILL BREAKS SOMETIMES!!!!!!!!!!!!!!!!!!!!!!!!
             for bp in message.bullet_points:
                 if bp.emoji is not None:
                     emoji = discord.PartialEmoji(name = bp.emoji)
-                    await self.client.wait_until_ready()
-                    await discord_message.add_reaction(emoji)
+                    success = False
+                    while not success:
+                        try:
+                            await self.client.wait_until_ready()
+                            await discord_message.add_reaction(emoji)
+                            success = True
+                        except Exception as e:#not sure what the actual exceptions are
+                            logger.error(f"failed to add bullet points due to:\n{type(e)}: {e}")
+                            sleep(SLEEP429)
     @override
     def format_players_md(self, players: Iterable[PlayerId]) -> str:
         return wordify_iterable(f"<@{player}>" for player in players)
@@ -131,9 +145,17 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
         self.client = discord.Client(intents = intents)
         self.default_sender = Discord_Sender(self)
 
+        self.first_intialization = True
+        self.on_start_callbacks:list[AsyncCallback] = []
+
         @self.client.event
         async def on_ready():#triggers when client is logged into discord
-            pass
+            if self.first_intialization:
+                for callback in self.on_start_callbacks:
+                    await callback()
+                self.first_intialization = False
+            else:
+                await self.reconnect()
         @self.client.event
         async def on_message(payload:discord.Message):#triggers when client
             if (self.client.user is None or 
@@ -212,6 +234,29 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
         assert isinstance(channel,discord.TextChannel)
         for thread in channel.threads:
             await thread.delete()
+    async def reconnect(self):
+        """this method is called by discord.py when we have gotten on_ready more than once to hopefully ensure the game remains functional"""
+        #ISSUE1: after reconnect message.reference seems to sometimes be None when it shouldn't be
+        #POSSIBLE SOLUTION: fetch all currently tracked messages to hopefully pu them in the discord cach or somesuch
+        logger.warning("reconnecting after discord service reconnect")
+        logger.warning("attempting to fetch tracked messages")
+        channels:set[ChannelId|None] = set(message.channel_id for message in self.tracked_messages)
+        for channel in channels:
+            channel_id:ChannelId = channel if channel is not None else self.channel_id
+            assert channel_id is int
+            channel = self.client.get_channel(channel_id)
+            assert isinstance(channel,DiscordChannel)
+            for message_id,message in ((message.message_id,message) for message in self.tracked_messages if message.channel_id == channel):
+                if message_id is not None:
+                    assert message_id is int
+                    partial = channel.get_partial_message(message_id)
+                    try:
+                        await partial.fetch()
+                    except discord.NotFound:
+                        logger.error(f"failed to find message {message}")
+                    except discord.HTTPException:
+                        logger.error(f"failed to fetch message {message}")
+
     async def _infer_option_order(self,channel_id:ChannelId,message_id:MessageId) -> list[str]:#very very slow
         assert isinstance(channel_id,int)
         await self.client.wait_until_ready()
@@ -253,6 +298,9 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
         players = self.players.copy()
         shuffle(players)
         return frozenset(players)
+    def on_start(self,callback:AsyncCallback) -> AsyncCallback:
+        self.on_start_callbacks.append(callback)
+        return callback
 
         
         

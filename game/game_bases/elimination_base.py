@@ -52,7 +52,7 @@ class Elimination_Framework(Generic[Participant],Game):
         else:
             message_text += '.'
         await self.basic_send(message_text)
-    def eliminate_participant(self,participants:Grouping[Participant]|Participant):
+    def eliminate_participants(self,participants:Grouping[Participant]|Participant):
         """
         attempts to eliminate participants; returns True if successful, False if not
         """
@@ -82,12 +82,13 @@ class Elimination_Base(Elimination_Framework[PlayerId]):
             self.part_str = lambda player: self.sender.format_players((player,))
     async def eliminate(self,players:PlayerId|Grouping[PlayerId]):
         players = arg_fix_grouping(self.unkicked_players,players)
-        await self.kick_players(players,'eliminated')
+        await self.announce_eliminate(players)
+        self.eliminate_participants(players)
     async def kick_players(self, players: Grouping[PlayerId], reason: KickReason = 'unspecified', priority:Optional[int] = None):
         players = tuple(players)
         await super().kick_players(players, reason, priority)
         await self.announce_eliminate(players)
-        self.eliminate_participant(players)
+        self.eliminate_participants(players)
     def generate_placements(self) -> PlayerPlacement:
         print(self.generate_participant_placements())
         return (tuple(self.not_eliminated),) + self.generate_participant_placements()

@@ -16,16 +16,25 @@ class Interaction(object):
     
     each interaction follows a designated InteractionType, but it is up to the implemantation to actually store the relavant data
     """
-    def __init__(self,interaction_type:InteractionType):
-        self.player_id:Optional[PlayerId] = None
-        self.interaction_id:Optional[InteractionId] = None
-        self.channel_id:Optional[ChannelId] = None
-        self.reply_to_message_id:Optional[MessageId] = None
+    def __init__(
+            self,
+            interaction_type:InteractionType, 
+            player_id:Optional[PlayerId] = None, 
+            interaction_id:Optional[InteractionId] = None,
+            channel_id:Optional[ChannelId] = None,
+            reply_to_message_id:Optional[MessageId] = None,
+            content:Optional[str] = None,
+            choice_index:Optional[int] = None
+            ):
+        self.player_id:Optional[PlayerId] = player_id
+        self.interaction_id:Optional[InteractionId] = interaction_id
+        self.channel_id:Optional[ChannelId] = channel_id
+        self.reply_to_message_id:Optional[MessageId] = reply_to_message_id
 
-        self.content:Optional[str] = None
+        self.content:Optional[str] = content
         self.interaction_type:InteractionType = interaction_type
 
-        self.choice_index:Optional[int] = None
+        self.choice_index:Optional[int] = choice_index
     def __repr__(self) -> str:
         return f"Interaction[{self.interaction_type}]]({self.content})"
     def reply(self,content:str) -> Message:

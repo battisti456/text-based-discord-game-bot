@@ -49,17 +49,16 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
             will_draw:PlayerDict[int] = await self.basic_no_yes("Will you draw another card?",players_still_drawing)
             players_who_drew:list[PlayerId] = list(player for player in will_draw if will_draw[player])
             players_passed += list(player for player in will_draw if not will_draw[player])
-            await self.player_draw(#---------------------------------------add score display
-                players_who_drew,1)
+            await self.player_draw(players_who_drew,1)
             players_eliminated_this_draw:list[PlayerId] = list(player for player in players_who_drew if self.player_points(player) > HAND_LIMIT)
             if players_eliminated_this_draw:
                 have_text = "have"
                 if len(players_eliminated_this_draw) == 1:
                     have_text = "has"
                 await self.basic_send(f"{self.format_players_md(players_eliminated_this_draw)} {have_text} overdrawn.")
-                exit_core = await self.eliminate(players_eliminated_this_draw)
-                if exit_core:
-                    return
+                await self.eliminate(players_eliminated_this_draw)
+                if set(players_eliminated_this_draw) == set(self.not_eliminated):
+                    return#restart the round
             players_still_drawing = list(player for player in self.unkicked_players if player not in players_passed)
         scores:dict[PlayerId,int] = {}
         for player in self.unkicked_players:
