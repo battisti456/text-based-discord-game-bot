@@ -8,7 +8,7 @@ from nltk.corpus.reader.wordnet import Lemma, Synset
 from nltk.tag.perceptron import PerceptronTagger
 from word_forms.word_forms import get_word_forms  #type: ignore
 
-from game.utils.common import L
+from utils.common import L
 
 type SimplePartOfSpeach = Literal['Noun','Verb','Adjective','Adverb']
 

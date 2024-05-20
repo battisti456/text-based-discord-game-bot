@@ -7,14 +7,14 @@ from typing import override
 import PIL.Image
 import PIL.ImageOps
 
-import game.utils.emoji_groups
+import utils.emoji_groups
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
 from game.components.message import Message
 from game.game import Game, police_game_callable
-from game.utils.common import arg_fix_grouping
-from game.utils.grammer import temp_file_path, wordify_iterable
-from game.utils.types import GS, ChannelId, Grouping, PlayerDict, PlayerId
+from utils.common import arg_fix_grouping
+from utils.grammer import temp_file_path, wordify_iterable
+from utils.types import GS, ChannelId, Grouping, PlayerDict, PlayerId
 
 POKER_HAND_NAMES = ["high card","pair","two pair","three of a kind","straight","flush","full house","four of a kind","straight flush","royal flush"]
 SUIT_NAMES = ["spades","hearts","diamonds","clubs"]
@@ -52,7 +52,7 @@ class Card(GS):
     def __str__(self) -> str:
         return f"{type(self)}({self.string})"
     def emoji(self)->str:
-        return game.utils.emoji_groups.PLAYING_CARD_EMOJI[self.suit*len(CARD_NAMES)+self.value]
+        return utils.emoji_groups.PLAYING_CARD_EMOJI[self.suit*len(CARD_NAMES)+self.value]
     def image(self,card_width:int = CARD_WIDTH)->PIL.Image.Image:#doen't keep transparent corners....?
         image = PIL.Image.open(f"{CARD_PATH}/{card_file_name(self.suit,self.value)}")
         image = image.convert('RGBA')
@@ -324,14 +324,14 @@ class Card_Base(Game):
         players:Grouping[PlayerId] = arg_fix_grouping(self.unkicked_players,player)
         if players:
             await self.basic_policed_send(f"{self.format_players_md(players)} drew {num} card(s).")
-        for player in players:
-            hand:Hand|None = self.hands[player]
+        for _player in players:
+            hand:Hand|None = self.hands[_player]
             assert hand is not None
             cards = hand.take(self.deck,num)
             draw_text = ""
             if self.allowed_to_speak():
                 draw_text = f"You drew: {wordify_cards(cards)}."
-            await self.update_hand(player,draw_text)
+            await self.update_hand(_player,draw_text)
     @police_game_callable
     async def player_discard(self,player:PlayerId,num_random:int = 0,cards:int|Card|Grouping[int]|Grouping[Card] = []):
         hand = self.hands[player]

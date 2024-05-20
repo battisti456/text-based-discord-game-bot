@@ -1,6 +1,6 @@
 from typing import Optional
 
-import game.utils.emoji_groups
+import utils.emoji_groups
 from game.components.game_interface import Game_Interface
 from game.components.message import Bullet_Point, Message
 from game.components.player_input import (
@@ -12,8 +12,8 @@ from game.components.response_validator import (
     default_text_validator,
     not_none,
 )
-from game.utils.common import arg_fix_grouping
-from game.utils.types import (
+from utils.common import arg_fix_grouping
+from utils.types import (
     ChannelId,
     Grouping,
     PlayerDictOptional,
@@ -82,7 +82,7 @@ class Interface_Component():
         wc:PlayersIds = arg_fix_grouping(self.all_players,who_chooses)
         emj:list[str] = []
         if emojis is None:
-            emj += game.utils.emoji_groups.COLORED_CIRCLE_EMOJI
+            emj += utils.emoji_groups.COLORED_CIRCLE_EMOJI
         else:
             emj += emojis
         bp:list[Bullet_Point] = []
@@ -121,8 +121,9 @@ class Interface_Component():
         returns the senders formatting of a list of players without markdown
         """
         return self.sender.format_players(user_id)
-    async def basic_send(self,content:Optional[str] = None,attatchements_data:list[str] = [],
-                   channel_id:Optional[ChannelId] = None):
+    async def basic_send(
+            self,content:Optional[str] = None,attatchements_data:list[str] = [],
+            channel_id:Optional[ChannelId] = None):
         """
         creates a message with the given parameters and sends it with self.sender
         

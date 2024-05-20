@@ -4,7 +4,7 @@ import fogleman_TWL06_scrabble as scrabble
 
 from game.components.game_interface import Game_Interface
 from game.game import Game
-from game.utils.word_tools import (
+from utils.word_tools import (
     DefinitionDict,
     DefinitionList,
     definition_dict_to_list,

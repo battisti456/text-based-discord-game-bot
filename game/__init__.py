@@ -2,7 +2,7 @@ import logging
 from typing import Callable, Iterable, Mapping, Optional
 
 from config.config import config
-from game.utils.types import (
+from utils.types import (
     KickReason,
     Number,
     Placement,

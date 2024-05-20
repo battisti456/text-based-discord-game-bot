@@ -6,11 +6,10 @@ from config.game_bases_config import game_bases_config
 from game.components.game_interface import Game_Interface
 from game.components.response_validator import ResponseValidator, Validation
 from game.game import Game
-from game.utils.chess_tools import get_move, get_square_name, render_chess
-from game.utils.common import get_first
-from game.utils.grammer import temp_file_path, wordify_iterable
-from game.utils.pillow_tools import Color
-from game.utils.types import Grouping, PlayerId
+from utils.chess_tools import get_move, get_square_name, render_chess, RenderChessAll, RenderChessOptional, RENDERCHESSOPTIONS
+from utils.common import get_first
+from utils.grammer import temp_file_path, wordify_iterable
+from utils.types import Grouping, PlayerId
 
 CONFIG = game_bases_config['chess_base']
 
@@ -84,51 +83,16 @@ class Chess_Base(Game):
         if Chess_Base not in self.initialized_bases:
             self.initialized_bases.append(Chess_Base)
             self.board = chess.Board()
-            self.p_white_color:Color = CONFIG['p_white_color']
-            self.p_black_color:Color = CONFIG['p_black_color']
-            self.p_white_hollow:bool = CONFIG['p_white_hollow']
-            self.p_black_hollow:bool = CONFIG['p_black_hollow']
-            self.b_white_color:Color = CONFIG['b_white_color']
-            self.b_black_color:Color = CONFIG['b_black_color']
-            self.image_size:int = CONFIG['image_size']
-            self.border_width:int = CONFIG['border_width']
-            self.back_grnd_color:Color = CONFIG['back_grnd_color']
-            self.text_color:Color = CONFIG['text_color']
-            self.p_size:float = CONFIG['p_size']
-            self.p_font:Optional[str] = CONFIG['p_font']
-            self.t_size:float = CONFIG['t_size']
-            self.t_font:Optional[str] = CONFIG['t_font']
-            self.white_perspective:bool = CONFIG['white_perspective']
-            self.p_white_outline:int = CONFIG['p_white_outline']
-            self.p_black_outline:int = CONFIG['p_black_outline']
-            self.p_white_outline_color:Color = CONFIG['p_white_outline_color']
-            self.p_black_outline_color:Color = CONFIG['p_black_outline_color']
-            self.last_move_color:Optional[Color] = CONFIG['last_move_color']
-            self.check_color:Optional[Color] = CONFIG['check_color']
-    def make_board_image(self) -> str:
+            self.default_render:RenderChessAll = {
+                'board' : self.board
+            }
+            for key,item in CONFIG.items():
+                if key in RENDERCHESSOPTIONS:
+                    self.default_render[key] = item
+    def make_board_image(self,render_args:RenderChessOptional = {}) -> str:
+        args:RenderChessAll = self.default_render|render_args
         image = render_chess(
-            self.board,
-            self.p_white_color,
-            self.p_black_color,
-            self.p_white_hollow,
-            self.p_black_hollow,
-            self.b_white_color,
-            self.b_black_color,
-            self.image_size,
-            self.border_width,
-            self.back_grnd_color,
-            self.text_color,
-            self.p_size,
-            self.p_font,
-            self.t_size,
-            self.t_font,
-            self.white_perspective,
-            self.p_white_outline,
-            self.p_black_outline,
-            self.p_white_outline_color,
-            self.p_black_outline_color,
-            self.last_move_color,
-            self.check_color
+            **args
         )
         file_path = temp_file_path('.png')
         image.save(file_path)

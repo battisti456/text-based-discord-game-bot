@@ -10,9 +10,9 @@ from game.game_bases.card_base import (
     best_poker_hand,
     name_poker_hand_by_rank,
 )
-from game.utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
-from game.utils.grammer import ordinate
-from game.utils.types import PlayerDict, PlayerId
+from utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
+from utils.grammer import ordinate
+from utils.types import PlayerDict, PlayerId
 
 CONFIG = games_config['prediction_texas_holdem']
 

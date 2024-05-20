@@ -2,7 +2,7 @@ from typing import override
 
 from game.components.game_interface import Game_Interface
 from game.game_bases import Elimination_Base, Trivia_Base
-from game.utils.types import PlayerDict
+from utils.types import PlayerDict
 
 
 class Elimination_Trivia(Elimination_Base,Trivia_Base):

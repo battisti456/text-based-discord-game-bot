@@ -1,7 +1,7 @@
 import functools
 from typing import Awaitable, Callable, Optional, ParamSpec, TypeVar, overload
 
-import game.utils.emoji_groups
+import utils.emoji_groups
 from game import kick_text, score_to_placement
 from game.components.game_interface import Game_Interface
 from game.components.interface_component import Interface_Component
@@ -12,10 +12,10 @@ from game.components.response_validator import (
     default_text_validator,
     not_none,
 )
-from game.utils.common import arg_fix_grouping
-from game.utils.exceptions import GameEndException, GameEndInsufficientPlayers
-from game.utils.grammer import ordinate, wordify_iterable
-from game.utils.types import (
+from utils.common import arg_fix_grouping
+from utils.exceptions import GameEndException, GameEndInsufficientPlayers
+from utils.grammer import ordinate, wordify_iterable
+from utils.types import (
     ChannelId,
     Grouping,
     KickReason,
@@ -167,7 +167,7 @@ class Game(Interface_Component):
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
         #returns 0 for no and 1 for yes to a yes or no question, waits for user to respond
-        return await self.basic_multiple_choice(content,["no","yes"],who_chooses,list(game.utils.emoji_groups.NO_YES_EMOJI),channel_id,allow_answer_change,response_validator)
+        return await self.basic_multiple_choice(content,["no","yes"],who_chooses,list(utils.emoji_groups.NO_YES_EMOJI),channel_id,allow_answer_change,response_validator)
     #region text_response overloads
     @overload
     async def basic_text_response(

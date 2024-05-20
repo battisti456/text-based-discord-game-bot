@@ -18,8 +18,8 @@ from game.components.player_input import (
 from game.components.response_validator import text_validator_maker
 from game.game_bases.elimination_base import Elimination_Base
 from game.game_bases.game_word_base import Game_Word_Base
-from game.utils.emoji_groups import LEFT_RIGHT_EMOJI
-from game.utils.types import PlayerId, PlayerPlacement
+from utils.emoji_groups import LEFT_RIGHT_EMOJI
+from utils.types import PlayerId, PlayerPlacement
 
 NUM_LETTERS = games_config['elimination_letter_adder']['num_letters']
 START_LETTERS = games_config['elimination_letter_adder']['start_letters']

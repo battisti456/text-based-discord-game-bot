@@ -5,7 +5,7 @@ from game.components.message import Message
 from game.components.player_input import Player_Text_Input, run_inputs
 from game.components.response_validator import text_validator_maker
 from game.game_bases import Random_Image_Base, Rounds_With_Points_Base
-from game.utils.types import PlayerDict, PlayerDictOptional, PlayerId
+from utils.types import PlayerDict, PlayerDictOptional, PlayerId
 
 NUM_ROUNDS = 1
 MIN_NUM_WORDS = 1

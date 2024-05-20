@@ -1,8 +1,8 @@
 from typing import Iterable, override
 
 from game.components.message import Message
-from game.utils.grammer import wordify_iterable
-from game.utils.types import PlayerId
+from utils.grammer import wordify_iterable
+from utils.types import PlayerId
 
 
 class Sender(object):

@@ -6,7 +6,7 @@ import chess
 import json
 
 PIECE_VALUES:list[float] = [0,1,3,3,5,9,4]# [None, "pawn", "knight", "bishop", "rook", "queen", "king"]
-MIN_PLAYERS:int = 2
+MIN_PLAYERS:int = 1
 MAX_PLAYERS:int = 16
 
 OUT_FILE = "data/chess_piece_sharing.json"
@@ -29,12 +29,11 @@ def generate_sharing(
         num_players:int) -> list[list[chess.Square]]:
     value_dict = {option:value_func(option) for option in options if value_func(option) > 0}
     valuations:dict[int,dict[chess.Square,float]] = {
-        player:dict(value_dict) for player in range(num_players)
+        player:value_dict for player in range(num_players)
     }
     instance = fairpyx.Instance(valuations=valuations)
-    print(valuations)
     allocation:Mapping[int,Sequence[chess.Square]] = fairpyx.divide(
-        fairpyx.algorithms.almost_egalitarian_allocation,
+        fairpyx.algorithms.iterated_maximum_matching_adjusted,
         instance=instance,
     )
     return list(
@@ -50,7 +49,7 @@ def main():
             values[color][num_players] = generate_sharing(generate_board_value(board,color),chess.SQUARES,num_players)
     print(values)
     with open(OUT_FILE,'w') as file:
-        json.dump(values,file)
+        json.dump(values,file,indent=4)
 
 if __name__ == '__main__':
     main()

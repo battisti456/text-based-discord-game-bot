@@ -1,6 +1,6 @@
 from typing import Iterable, Mapping, Optional
 
-from game.utils.types import Grouping, GroupingSafeVar
+from utils.types import Grouping, GroupingSafeVar
 
 def get_first[T](grouping:Iterable[T]) -> T:
     for item in grouping:

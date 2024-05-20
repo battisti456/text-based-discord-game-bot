@@ -6,7 +6,7 @@ import requests
 
 from game.components.game_interface import Game_Interface
 from game.game import Game
-from game.utils.grammer import temp_file_path
+from utils.grammer import temp_file_path
 
 BASE_URL = "https://source.unsplash.com"
 

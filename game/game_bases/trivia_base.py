@@ -5,7 +5,7 @@ import pytrivia
 
 from game.components.game_interface import Game_Interface
 from game.game import Game
-from game.utils.types import Grouping, PlayerDict, PlayerId
+from utils.types import Grouping, PlayerDict, PlayerId
 
 
 class TriviaDict(TypedDict):

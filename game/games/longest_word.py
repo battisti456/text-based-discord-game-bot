@@ -6,7 +6,7 @@ from game.components.message import Alias_Message, Message
 from game.components.player_input import Player_Text_Input, run_inputs
 from game.components.response_validator import text_validator_maker
 from game.game_bases import Game_Word_Base, Rounds_With_Points_Base
-from game.utils.types import PlayerId
+from utils.types import PlayerId
 
 CONFIG = games_config['longest_word']
 

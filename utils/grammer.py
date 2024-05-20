@@ -1,8 +1,8 @@
 import uuid
 from typing import Any, Iterable
 
-from game.utils.types import Number
-from game.utils.word_tools import Sentence
+from utils.types import Number
+from utils.word_tools import Sentence
 
 
 def nice_sentence(sentence:Sentence) -> str:

@@ -4,24 +4,23 @@ from typing import Optional, override
 from game import kick_text
 from game.components.game_interface import Game_Interface
 from game.components.message import Message
-from game.game_bases.rounds_with_points_base import Rounds_With_Points_Framework
 from game.game_bases.elimination_base import Elimination_Framework
 from game.game_bases.round_base import Rounds_Base
-from game.utils.common import arg_fix_grouping
-from game.utils.exceptions import GameEndInsufficientTeams
-from game.utils.grammer import wordify_iterable
-from game.utils.types import (
+from game.game_bases.rounds_with_points_base import Rounds_With_Points_Framework
+from utils.common import arg_fix_grouping
+from utils.exceptions import GameEndInsufficientTeams
+from utils.grammer import wordify_iterable
+from utils.types import (
+    ChannelId,
     Grouping,
-    KickReason,
+    KickReason,  # noqa: F811
     Placement,
     PlayerId,
-    ChannelId,
     PlayerPlacement,
     Team,
     TeamDict,
-    KickReason  # noqa: F811
 )
-from game.utils.word_tools import word_generator
+from utils.word_tools import word_generator
 
 
 def random_team_name() -> Team:
@@ -117,7 +116,7 @@ class Team_Base(Rounds_Base):
             priority = self.max_kick_priority() + 1
         for team in teams:
             self.team_kicked[team] = (priority,reason)
-        if len(self.unkicked_players) <= 1:
+        if len(self.unkicked_teams) <= 1:
             raise GameEndInsufficientTeams(f"{format_team(teams)} being {kick_text[reason]}")
     async def core_player(self,team:Team,player:PlayerId):
         ...
@@ -152,11 +151,11 @@ class Rounds_With_Points_Team_Base(Team_Base,Rounds_With_Points_Framework[Team,i
         if Rounds_With_Points_Team_Base not in self.initialized_bases:
             self.initialized_bases.append(Rounds_With_Points_Team_Base)
     @override
-    def configure_participants(self):
-        self.participants = self.all_teams
+    def _configure_participants(self):
+        self._participants = self.all_teams
     @override
     def generate_placements(self) -> PlayerPlacement:
-        return team_to_player_placements(self.generate_participant_placements(),self.team_players)
+        return team_to_player_placements(self._generate_participant_placements(),self.team_players)
     @override
     async def _run(self):
         await Rounds_With_Points_Framework._run(self) #type:ignore
@@ -169,8 +168,8 @@ class Elimination_Team_Base(Team_Base,Elimination_Framework[Team]):
         if Elimination_Team_Base not in self.initialized_bases:
             self.initialized_bases.append(Elimination_Framework)
     @override
-    def configure_participants(self):
-        self.participants = self.all_teams
+    def _configure_participants(self):
+        self._participants = self.all_teams
     @override
     async def _run(self):
         await Elimination_Framework._run(self)#type:ignore

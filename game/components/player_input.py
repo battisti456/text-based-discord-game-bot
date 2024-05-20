@@ -1,6 +1,6 @@
 import asyncio
 from time import time
-from typing import Any, Awaitable, Callable, Optional, override
+from typing import Any, Awaitable, Callable, Optional, Sequence, override
 
 from config.config import config
 from game import correct_str, get_logger, make_player_dict
@@ -14,8 +14,8 @@ from game.components.response_validator import (
     not_none,
 )
 from game.components.sender import Sender
-from game.utils.grammer import nice_time, ordinate
-from game.utils.types import (
+from utils.grammer import nice_time, ordinate
+from utils.types import (
     GS,
     Grouping,
     PlayerDict,
@@ -25,6 +25,7 @@ from game.utils.types import (
 )
 
 type Condition = dict[Player_Input,bool]
+type OnUpdate = Callable[[],Awaitable]
 
 logger = get_logger(__name__)
 SLEEP_TIME = 10
@@ -58,7 +59,7 @@ class Player_Input[T](GS):
     @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.name})"
-    def on_update(self,func:Callable[[],Awaitable]) -> Callable[[],Awaitable]:
+    def on_update(self,func:OnUpdate) -> OnUpdate:
         """binds a callable to be run whenever the input changes"""
         if func not in self.funcs_to_call_on_update:
             logger.info(f"bound new on_update to {self}")
@@ -113,8 +114,9 @@ class Player_Input[T](GS):
             await func()
     async def update_response_status(self):
         """updates status_message, if it is different"""
-        if self.status_message.content != self._last_response_status:
-            self._last_response_status = correct_str(self.status_message.content)
+        status_message_content = self.status_message.content
+        if status_message_content != self._last_response_status:
+            self._last_response_status = correct_str(status_message_content)
             await self.sender(self.status_message)
     def has_recieved_all_responses(self) -> bool:
         """returns whether all responses meet the validator's requirements"""
@@ -357,7 +359,7 @@ def multi_bind_message(message:Message,*player_inputs:Player_Input_In_Response_T
     for player_input in player_inputs:
         player_input.message = _message
 async def run_inputs(
-        inputs:Grouping[Player_Input[Any]],completion_sets:Optional[list[set[Player_Input[Any]]]] = None,
+        inputs:Sequence[Player_Input[Any]],completion_sets:Optional[list[set[Player_Input[Any]]]] = None,
         sender:Optional[Sender] = None,who_can_see:Optional[PlayersIds] = None,
         codependant:bool = False, basic_feedback:bool = False):
     """

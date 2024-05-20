@@ -5,8 +5,8 @@ from game import make_player_dict
 from game.components.game_interface import Game_Interface
 from game.components.response_validator import single_choice_validator_maker
 from game.game_bases import Elimination_Base
-from game.utils.emoji_groups import ROCK_PAPER_SCISSORS_EMOJI
-from game.utils.types import PlayerDict, PlayerId
+from utils.emoji_groups import ROCK_PAPER_SCISSORS_EMOJI
+from utils.types import PlayerDict, PlayerId
 
 
 class Elimination_Rock_Paper_Scissors(Elimination_Base):

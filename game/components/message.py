@@ -1,9 +1,9 @@
 from math import ceil
 from typing import TYPE_CHECKING, Callable, Literal, Optional, Sequence, TypeVar, override
 
-from game.utils.emoji_groups import NO_YES_EMOJI
-from game.utils.grammer import wordify_iterable
-from game.utils.types import ChannelId, InteractionId, MessageId, PlayersIds
+from utils.emoji_groups import NO_YES_EMOJI
+from utils.grammer import wordify_iterable
+from utils.types import ChannelId, InteractionId, MessageId, PlayersIds
 
 if TYPE_CHECKING:
     from game.components.interaction import Interaction

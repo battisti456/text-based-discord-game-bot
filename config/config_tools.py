@@ -1,5 +1,4 @@
 from typing import (
-    TYPE_CHECKING,
     Any,
     Literal,
     Optional,
@@ -7,9 +6,8 @@ from typing import (
     _TypedDictMeta,  # type: ignore
 )
 
-if TYPE_CHECKING:
-    from game.utils.pillow_tools import Color
-    from game.utils.types import ChannelId, PlayerId
+from utils.types import ChannelId, PlayerId
+from utils.chess_tools import _RenderChessOptions
 from ast import literal_eval
 
 import ruamel.yaml
@@ -130,28 +128,8 @@ class GamesConfigDict(TypedDict):
     the_great_kitten_race:TheGreatKittenRaceConfig
     tricky_trivia:TrickyTriviaConfig
 #region game base specific settings
-class ChessBaseConfig(TypedDict):
-    p_white_color:'Color'
-    p_black_color:'Color'
-    p_white_hollow:bool
-    p_black_hollow:bool
-    b_white_color:'Color'
-    b_black_color:'Color'
-    image_size:int
-    border_width:int
-    back_grnd_color:'Color'
-    text_color:'Color'
-    p_size:float
-    p_font:Optional[str]
-    t_size:float
-    t_font:Optional[str]
-    white_perspective:bool
-    p_white_outline:int
-    p_black_outline:int
-    p_white_outline_color:'Color'
-    p_black_outline_color:'Color'
-    last_move_color:Optional['Color']
-    check_color:Optional['Color']
+class ChessBaseConfig(_RenderChessOptions):
+    ...
 #endregion
 class GameBasesConfigDict(TypedDict):
     chess_base:ChessBaseConfig

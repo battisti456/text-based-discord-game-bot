@@ -10,8 +10,8 @@ from game.components.player_input import (
 )
 from game.components.response_validator import ResponseValidator, not_none
 from game.game import Game
-from game.utils.emoji_groups import COLORED_CIRCLE_EMOJI, NO_YES_EMOJI
-from game.utils.types import PlayerDict, PlayerDictOptional, PlayerId
+from utils.emoji_groups import COLORED_CIRCLE_EMOJI, NO_YES_EMOJI
+from utils.types import PlayerDict, PlayerDictOptional, PlayerId
 
 
 class Basic_Secret_Message_Base(Game):

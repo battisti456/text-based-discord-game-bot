@@ -9,8 +9,8 @@ from config.config import config
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
 from game.game_bases import Chess_Base, Elimination_Base
-from game.utils.chess_tools import get_game_over_text, get_move_text
-from game.utils.types import PlayerId
+from utils.chess_tools import get_game_over_text, get_move_text
+from utils.types import PlayerId
 
 CONFIG = games_config['chess_puzzle_elimination']
 

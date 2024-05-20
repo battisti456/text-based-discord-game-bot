@@ -5,9 +5,9 @@ from game.components.message import Message
 from game.components.player_input import Player_Text_Input
 from game.components.response_validator import text_validator_maker
 from game.game_bases import Rounds_With_Points_Base
-from game.utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
-from game.utils.grammer import s
-from game.utils.types import PlayerDict
+from utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
+from utils.grammer import s
+from utils.types import PlayerDict
 
 validator = text_validator_maker(
     is_digit=True

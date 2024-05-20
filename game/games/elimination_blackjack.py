@@ -6,7 +6,7 @@ from config.games_config import games_config
 from game.components.game_interface import Game_Interface
 from game.components.message import Message
 from game.game_bases import Card_Base, Elimination_Base
-from game.utils.types import PlayerDict, PlayerId
+from utils.types import PlayerDict, PlayerId
 
 HAND_LIMIT = games_config['elimination_blackjack']["hand_limit"]
 NUM_PLAYERS_PER_DECK = games_config['elimination_blackjack']['num_players_per_deck']

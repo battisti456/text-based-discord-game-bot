@@ -11,8 +11,8 @@ from game.components.game_interface import (
 )
 from game.components.interaction import Interaction
 from game.components.message import Add_Bullet_Points_To_Content_Alias_Message, Message
-from game.utils.grammer import wordify_iterable
-from game.utils.types import ChannelId, MessageId, PlayerId
+from utils.grammer import wordify_iterable
+from utils.types import ChannelId, MessageId, PlayerId
 
 
 type AsyncCallback = Callable[[],Awaitable[None]]

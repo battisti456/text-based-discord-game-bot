@@ -4,7 +4,7 @@ from game import get_logger
 from game.components.interaction import INTERACTION_TYPES, Interaction, InteractionType
 from game.components.message import Message, Reroute_Message
 from game.components.sender import Sender
-from game.utils.types import ChannelId, Grouping, MessageId, PlayerId
+from utils.types import ChannelId, Grouping, MessageId, PlayerId
 
 logger = get_logger(__name__)
 

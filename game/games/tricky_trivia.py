@@ -11,7 +11,7 @@ from game.game_bases import (
     Trivia_Base,
 )
 from game.game_bases.trivia_base import TriviaDict
-from game.utils.types import PlayerDict
+from utils.types import PlayerDict
 
 CONFIG = games_config['tricky_trivia']
 

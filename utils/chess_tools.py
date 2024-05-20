@@ -1,11 +1,11 @@
-from typing import Optional
+from typing import Optional, TypedDict, NotRequired, Literal, get_args
 
 import chess
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
 
-from game.utils.pillow_tools import Color, Font
+from utils.pillow_tools import Color, Font
 
 BOARD_SIZE = 8
 FONT_START_SIZE = 1000
@@ -99,6 +99,60 @@ def get_game_over_text(board:chess.Board) -> str:
         return "a draw due to insufficient material for either side to checkmate"
     return ""
 #endregion
+class _RenderChessOptions(TypedDict,total=False):
+    p_white_color:Color
+    p_black_color:Color
+    p_white_hollow:bool
+    p_black_hollow:bool
+    b_white_color:Color
+    b_black_color:Color
+    image_size:int
+    border_width:int
+    back_grnd_color:Color
+    text_color:Color
+    p_size:float
+    p_font:Optional[str]
+    t_size:float
+    t_font:Optional[str]
+    white_perspective:bool
+    p_white_outline:int
+    p_black_outline:int
+    p_white_outline_color:Color
+    p_black_outline_color:Color
+    last_move_color:Optional[Color]
+    check_color:Optional[Color]
+    other_highlights:Optional[dict[chess.Square,Color]]
+class RenderChessAll(_RenderChessOptions):
+    board:chess.Board
+class RenderChessOptional(_RenderChessOptions):
+    board:NotRequired[chess.Board]
+RenderChessOptions = Literal[
+    'board',
+    'p_white_color',
+    'p_black_color',
+    'p_white_hollow',
+    'p_black_hollow',
+    'b_white_color',
+    'b_black_color',
+    'image_size',
+    'border_width',
+    'back_grnd_color',
+    'text_color',
+    'p_size',
+    'p_font',
+    't_size',
+    't_font',
+    'white_perspective',
+    'p_white_outline',
+    'p_black_outline',
+    'p_white_outline_color',
+    'p_black_outline_color',
+    'last_move_color',
+    'check_color',
+    'other_highlights'
+]
+RENDERCHESSOPTIONS:tuple[RenderChessOptions,...] = get_args(RenderChessOptions)
+
 def render_chess(
         board:chess.Board,
         p_white_color:Color = 'seashell',
@@ -121,7 +175,8 @@ def render_chess(
         p_white_outline_color:Color = 'black',
         p_black_outline_color:Color = 'black',
         last_move_color:Optional[Color] = '#eedc00d0',
-        check_color:Optional[Color] = '#ff000066'
+        check_color:Optional[Color] = '#ff000066',
+        other_highlights:Optional[dict[chess.Square,Color]] = None
         ) -> PIL.Image.Image:
     """
     creates an image of the current state of a chess.Board as a PIL Image
@@ -206,6 +261,14 @@ def render_chess(
                 square_to_xy(king_square),
                 check_square
             )
+    if other_highlights is not None:
+        for square in other_highlights:
+            image_square = PIL.Image.new('RGBA',square_size,other_highlights[square])
+            board_image.paste(
+                image_square,
+                square_to_xy(square),
+                image_square
+            )
     #endregion
     #region place pieces
     draw = PIL.ImageDraw.ImageDraw(board_image,'RGBA')
@@ -213,7 +276,7 @@ def render_chess(
         if path is None:
             return PIL.ImageFont.load_default(size)
         else:
-            return PIL.ImageFont.truetype(font=p_font,size=int(size))
+            return PIL.ImageFont.truetype(font=path,size=int(size))
     test_font = get_font(FONT_START_SIZE,p_font)
     max_size:int = 0
     for key in chess.UNICODE_PIECE_SYMBOLS:

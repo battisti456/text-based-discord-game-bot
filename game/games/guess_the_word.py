@@ -8,9 +8,9 @@ from game.game_bases import (
     Game_Word_Base,
     Rounds_With_Points_Base,
 )
-from game.utils.grammer import wordify_iterable
-from game.utils.types import PlayerDict, PlayerId
-from game.utils.word_tools import (
+from utils.grammer import wordify_iterable
+from utils.types import PlayerDict, PlayerId
+from utils.word_tools import (
     DefinitionList,
     SimplePartOfSpeach,
     definition_dict_to_list,

@@ -6,9 +6,9 @@ from game import score_to_placement
 from game.components.game_interface import Game_Interface
 from game.game_bases.round_base import Rounds_Base
 from game.game_bases.participant_base import Participant_Base
-from game.utils.common import arg_fix_grouping, arg_fix_map
-from game.utils.grammer import s
-from game.utils.types import (
+from utils.common import arg_fix_grouping, arg_fix_map
+from utils.grammer import s
+from utils.types import (
     Grouping,
     Number,
     Participant,
@@ -30,26 +30,26 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Participant_Ba
             self.round_word:str = "round"
             self.reverse_points:bool = False
     @override
-    def configure_participants(self):
+    def _configure_participants(self):
         self.point_totals:dict[Participant,PointType] = {
-            participant:self.zero_score for participant in self.participants
+            participant:self.zero_score for participant in self._participants
         }
     async def announce_score(
             self,
             who:Optional[Participant|Grouping[Participant]] = None,
             amount:Optional[PointType|Mapping[Participant,PointType]] = None
             ):
-        w = arg_fix_grouping(self.participants,who)
+        w = arg_fix_grouping(self._participants,who)
         a:Mapping[Participant,PointType] = arg_fix_map(w,self.zero_score,amount)
         participant_lines:list[str]
         if amount is None:
             participant_lines = list(
-                f"{self.part_str(participant)} has {self.point_frmt(self.point_totals[participant])}" 
+                f"{self._part_str(participant)} has {self.point_frmt(self.point_totals[participant])}" 
                 for participant in w
             )
         else:
             participant_lines = list(
-                f"{self.part_str(participant)} received {self.point_frmt(a[participant])} bringing them to " + 
+                f"{self._part_str(participant)} received {self.point_frmt(a[participant])} bringing them to " + 
                 self.point_frmt(self.point_totals[participant] + a[participant])
                 for participant in w
         )
@@ -61,7 +61,7 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Participant_Ba
             who:Optional[Participant|Grouping[Participant]] = None,
             amount:Optional[PointType|Mapping[Participant,PointType]] = None
             ):
-        w = arg_fix_grouping(self.participants,who)
+        w = arg_fix_grouping(self._participants,who)
         a:Mapping[Participant,PointType] = arg_fix_map(w,self.zero_score,amount)
         for participant in w:
             self.point_totals[participant] += a[participant]#type: ignore
@@ -76,8 +76,8 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Participant_Ba
     async def end_round(self):
         await self.announce_score()
     @override
-    def generate_participant_placements(self) -> Placement[Participant]:
-        return score_to_placement(self.point_totals,self.participants,not self.reverse_points)
+    def _generate_participant_placements(self) -> Placement[Participant]:
+        return score_to_placement(self.point_totals,self._participants,not self.reverse_points)
 
 
 class Rounds_With_Points_Base(Rounds_With_Points_Framework[PlayerId,int]):
@@ -85,11 +85,11 @@ class Rounds_With_Points_Base(Rounds_With_Points_Framework[PlayerId,int]):
         Rounds_With_Points_Framework.__init__(self,gi)
         if Rounds_With_Points_Base not in self.initialized_bases:
             self.initialized_bases.append(Rounds_With_Points_Base)
-            self.participants = self.all_players
-            self.part_str = lambda player: self.format_players([player])
+            self._participants = self.all_players
+            self._part_str = lambda player: self.format_players([player])
     @override
     def generate_placements(self) -> PlayerPlacement:
-        return self.generate_participant_placements()
+        return self._generate_participant_placements()
     async def score(self,who:Optional[PlayerId|Grouping[PlayerId]] = None,
             amount:Optional[int|Mapping[PlayerId,int]] = None,
             mute:bool = False):
