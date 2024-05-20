@@ -45,13 +45,13 @@ def chess_move_validator_maker(
                     f"given move '{move.uci()}' ends at '{get_square_name(move.to_square)}', but needs to end at " + 
                     f"{wordify_iterable((get_square_name(square) for square in to_squares),operator='or')}")
         if not_from_squares is not None:
-            if move.from_square not in not_from_squares:
+            if move.from_square in not_from_squares:
                 return (
                     False,
                     f"given move '{move.uci()}' starts from '{get_square_name(move.from_square)}', but needs to not start from " + 
                     f"{wordify_iterable((get_square_name(square) for square in not_from_squares),operator='or')}")
         if not_to_squares is not None:
-            if move.to_square not in not_to_squares:
+            if move.to_square in not_to_squares:
                 return (
                     False,
                     f"given move '{move.uci()}' ends at '{get_square_name(move.to_square)}', but needs to not end at " + 

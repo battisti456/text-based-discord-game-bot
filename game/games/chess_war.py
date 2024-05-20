@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import chess
 import json
 
+from game import get_logger
 from game.components.game_interface import Game_Interface
 from game.components.player_input import Player_Text_Input, run_inputs, OnUpdate
 from game.components.message import Message, Alias_Message
@@ -13,6 +14,8 @@ from utils.types import Team, PlayerDict, PlayerId, Grouping, TeamDict
 from utils.chess_tools import get_square_and_piece, get_move
 from utils.pillow_tools import Color
 
+
+logger = get_logger(__name__)
 
 CHESS_PIECE_SHARING_PATH = 'data/chess_piece_sharing.json'
 YOUR_PIECES_HIGHLIGHT:Color = '#4ea8f255'
@@ -29,6 +32,7 @@ class Chess_War(Team_Base, Chess_Base):
         self.last_to_squares:TeamDict[set[chess.Square]]
         self.team_board:TeamDict[Message]
         self.current_inputs:dict[Player_Text_Input,tuple[PlayerId,Team,chess.Square]]
+        self.validate_boards:dict[Team,chess.Board] = {}
         with open(CHESS_PIECE_SHARING_PATH,'r') as file:
             self.chess_piece_sharing_data:dict[str,dict[str,list[list[chess.Square]]]] = json.load(file)
             "str(bool)/str(int)/list[list[square]]"
@@ -66,6 +70,9 @@ class Chess_War(Team_Base, Chess_Base):
                 })]
             )
             await self.sender(self.team_board[team])
+            board = self.board.copy()
+            board.turn = self.get_color(team)
+            self.validate_boards[team] = board
     def on_update_maker(self,inpt:Player_Text_Input) -> OnUpdate:
         player,team,square =  self.current_inputs[inpt]
         async def on_update():
@@ -90,6 +97,9 @@ class Chess_War(Team_Base, Chess_Base):
         return on_update
     def move_from_input(self,inpt:Player_Text_Input) -> Optional[chess.Move]:
         player, team, square = self.current_inputs[inpt]
+        if player not in inpt.responses:
+            logger.error(f"player missing from their own input: input = {inpt}, player = {player}")
+            return None
         text:str|None = inpt.responses[player]
         if text is None:
             return None
@@ -115,28 +125,28 @@ class Chess_War(Team_Base, Chess_Base):
             piece = self.board.piece_at(square)
             assert piece is not None
             pieces[square] = piece
-        inpt:list[Player_Text_Input] = []
+        inputs:list[Player_Text_Input] = []
         for square, piece in pieces.items():
             message = Message(
                 content=f"Where would you like to move {get_square_and_piece(square,piece)}?",
                 players_who_can_see=[player]
             )
-            input = Player_Text_Input(
+            inpt = Player_Text_Input(
                 get_square_and_piece(square,piece),
                 self.gi,
                 self.sender,
                 [player],
                 chess_move_validator_maker(
                     from_squares=[square],
-                    is_legal_on_any=[self.board],
+                    is_legal_on_any=[self.validate_boards[team]],
                     not_to_squares=self.to_squares[team]
                     ),
                 who_can_see=[player],message=message
             )
-            self.current_inputs[input] = (player,team,square)
-            input.on_update(self.on_update_maker(input))
-            inpt.append(input)
-        await run_inputs(inpt)
+            self.current_inputs[inpt] = (player,team,square)
+            inpt.on_update(self.on_update_maker(inpt))
+            inputs.append(inpt)
+        await run_inputs(inputs)
     @override
     async def end_round(self):
         players_to_kick:set[PlayerId] = set()
@@ -219,9 +229,10 @@ class To_Squares(Grouping[chess.Square]):
     def __iter__(self) -> Iterator[chess.Square]:
         for inpt,(player,team,square) in self.game.current_inputs.items():
             if team == self.team:
-                move = self.game.move_from_input(inpt)
-                if move is not None:
-                    yield move.to_square
+                if player in inpt.responses:#should always be, methinks
+                    move = self.game.move_from_input(inpt)
+                    if move is not None:
+                        yield move.to_square
     @override
     def __contains__(self,key:chess.Square, /) -> bool:
         return key in self.__iter__()

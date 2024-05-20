@@ -17,7 +17,6 @@ from game.components.sender import Sender
 from utils.grammer import nice_time, ordinate
 from utils.types import (
     GS,
-    Grouping,
     PlayerDict,
     PlayerDictOptional,
     PlayerId,
@@ -39,16 +38,16 @@ class Player_Input[T](GS):
     def __init__(
             self,name:str, gi:Game_Interface,sender:Sender,players:PlayersIds,
             response_validator:ResponseValidator[T] = not_none, 
-            who_can_see:Optional[Grouping[PlayerId]] = None, 
+            who_can_see:Optional[PlayersIds] = None, 
             timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings']):
-        self.timeout = timeout
-        self.warnings = warnings
-        self.name = name
-        self.gi = gi
-        self.sender = sender
-        self.who_can_see = who_can_see
+        self.timeout:Optional[int] = timeout
+        self.warnings:list[int] = warnings
+        self.name:str = name
+        self.gi:Game_Interface = gi
+        self.sender:Sender = sender
+        self.who_can_see:Optional[PlayersIds] = who_can_see
         self.players:PlayersIds = players
-        self.responses:PlayerDictOptional[T] = make_player_dict(self.players,None)
+        self.responses:PlayerDictOptional[T] = {player:None for player in self.players}
         self._receive_inputs = False
         self._response_validator:ResponseValidator[T] = response_validator
         self.status_message = Alias_Message(
@@ -245,7 +244,10 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
     async def _setup(self):
         if not self.message.is_sent():
             await self.sender(self.message)
-        
+    @override
+    async def _unsetup(self):
+        await super()._unsetup()
+        self.gi.purge_actions(self)
 class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
     """
     player input class for collecting text interactions to a message
@@ -273,9 +275,6 @@ class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
                 assert interaction.player_id is not None
                 self.responses[interaction.player_id] = None
                 await self._update()
-    @override
-    async def _unsetup(self):
-        self.gi.purge_actions(self)
 
 class Player_Single_Selection_Input(Player_Input_In_Response_To_Message[int]):
     """
@@ -305,9 +304,6 @@ class Player_Single_Selection_Input(Player_Input_In_Response_To_Message[int]):
                 if self.responses[interaction.player_id] == interaction.choice_index:
                     self.responses[interaction.player_id] = None
                     await self._update()
-    @override
-    async def _unsetup(self):
-        self.gi.purge_actions(self)
 class Player_Multiple_Selection_Input(Player_Input_In_Response_To_Message[set[int]]):
     """
     player input class for collecting multiple choice selection interactions to a message
@@ -342,9 +338,6 @@ class Player_Multiple_Selection_Input(Player_Input_In_Response_To_Message[set[in
                     if interaction.choice_index in proxy:
                         proxy.remove(interaction.choice_index)
                         await self._update()
-    @override
-    async def _unsetup(self):
-        self.gi.purge_actions(self)
 def multi_bind_message(message:Message,*player_inputs:Player_Input_In_Response_To_Message):
     """
     binds a single message to multiple inputs correctly
@@ -377,7 +370,7 @@ async def run_inputs(
 
     basic_feedback: sets whether the feedback, if it exists, should be limited to only whether an input is complete or not; True for limited, False for unlimited
     """
-    logger.info(f"run_inputs starting with inputs = f{inputs}")
+    logger.info(f"setting up run_inputs starting with inputs = {inputs}")
     if completion_sets is None:
         completion_sets = [set(inputs)]
     def check_is_completion() -> bool:
@@ -416,9 +409,13 @@ async def run_inputs(
     """timeout_mins = list(min(
         (pinput.timeout if not pinput.timeout is None else float('inf'))
         for pinput in group) for group in completion_sets)"""
+    logger.info(f"waiting until criteria are met with inputs = {inputs}")
     await asyncio.wait(all_tasks)
-    """for task in all_tasks:
-        task.cancel()"""
+    logger.info(f"all criteria are met with inputs = {inputs}")
+    await asyncio.sleep(5)#give tasks some time to finish
+    for task in all_tasks:
+        if not task.done():
+            task.cancel()
     #make sure feedback is correct when we exit
     if sender is not None:
         await sender(feedback_message)
