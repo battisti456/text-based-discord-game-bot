@@ -284,7 +284,10 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
             if name is None:
                 name = ""
             await self.client.wait_until_ready()
-            thread = await main_channel.create_thread(name = name)
+            thread = await main_channel.create_thread(
+                name = name,
+                auto_archive_duration=10080#waits 7 days until it hides the thread
+                )
         if who_can_see is not None:
             for player in who_can_see:
                 assert isinstance(player,int)
