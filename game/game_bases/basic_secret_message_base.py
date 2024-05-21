@@ -11,7 +11,7 @@ from game.components.player_input import (
 from game.components.response_validator import ResponseValidator, not_none
 from game.game import Game
 from game.utils.emoji_groups import COLORED_CIRCLE_EMOJI, NO_YES_EMOJI
-from game.utils.types import PlayerDict, PlayerDictOptional, PlayerId
+from game.utils.types import PlayerDict, PlayerDictOptional, PlayerId, Grouping
 
 
 class Basic_Secret_Message_Base(Game):
@@ -62,7 +62,7 @@ class Basic_Secret_Message_Base(Game):
         if players is None:
             p = self.unkicked_players
         elif isinstance(players,Iterable):
-            p = players
+            p = list(players)
         else:
             p = [players]
         c:PlayerDict[str] = {}
@@ -90,13 +90,14 @@ class Basic_Secret_Message_Base(Game):
         await run_inputs(
             list(inputs[player] for player in p),
             sender = self.sender,
-            basic_feedback=True)
+            basic_feedback=True,
+            completion_sets=[set(inputs.values())])
         raw_responses:PlayerDictOptional[str] = {
             player:inputs[player].responses[player] for player in p
         }
         await self.kick_none_response(raw_responses)
         responses:PlayerDict[str] = self.clean_player_dict(raw_responses)
-        if players is None or isinstance(players,list):
+        if players is None or isinstance(players,Grouping):
             return responses
         else:
             if players in responses:

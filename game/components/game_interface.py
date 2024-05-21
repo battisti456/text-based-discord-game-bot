@@ -171,7 +171,7 @@ class Channel_Limited_Game_Interface(Game_Interface):
                 players
             )
             self.who_can_see_dict[fr_players] = channel_id
-        logger.info(f"channel limited game interface changing channel t o id = {channel_id} so player_ids = {players} can see")
+        logger.info(f"channel limited game interface changing channel to id = {channel_id} so player_ids = {players} can see")
         return channel_id
 
 

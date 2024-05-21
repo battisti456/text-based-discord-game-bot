@@ -1,6 +1,7 @@
 import asyncio
 from time import time
 from typing import Any, Awaitable, Callable, Optional, override
+from uuid import uuid4
 
 from config.config import config
 from game import correct_str, get_logger, make_player_dict
@@ -40,13 +41,14 @@ class Player_Input[T](GS):
             response_validator:ResponseValidator[T] = not_none, 
             who_can_see:Optional[Grouping[PlayerId]] = None, 
             timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings']):
+        self.id = str(uuid4())
         self.timeout = timeout
         self.warnings = warnings
         self.name = name
         self.gi = gi
         self.sender = sender
-        self.who_can_see = who_can_see
-        self.players:PlayersIds = players
+        self.who_can_see = None if who_can_see is None else tuple(who_can_see)
+        self.players:PlayersIds = tuple(players)
         self.responses:PlayerDictOptional[T] = make_player_dict(self.players,None)
         self._receive_inputs = False
         self._response_validator:ResponseValidator[T] = response_validator
@@ -182,6 +184,9 @@ class Player_Input[T](GS):
         await_task = asyncio.create_task(self.wait_until_received_all())
         await self._run(await_task)
         return self.responses
+    @override
+    def __hash__(self) -> int:#it is very bad that I need this
+        return hash((self.name,self.players,self.who_can_see,self.id))
 class Player_Input_In_Response_To_Message[T](Player_Input[T]):
     """
     base player input class for reacting to interactions sent by the game_interface in response to a message
@@ -375,16 +380,21 @@ async def run_inputs(
 
     basic_feedback: sets whether the feedback, if it exists, should be limited to only whether an input is complete or not; True for limited, False for unlimited
     """
-    logger.info(f"run_inputs starting with inputs = f{inputs}")
+    run_input_id = str(uuid4())[:6]
+    logger.info(f"RUN_INPUTS({run_input_id}): starting with inputs = f{inputs}")
     if completion_sets is None:
         completion_sets = [set(inputs)]
+    logger.info(f"RUN_INPUTS({run_input_id}): waiting on completion_sets = {completion_sets}")
     def check_is_completion() -> bool:
         completed_inputs = set(input for input in inputs if input.has_recieved_all_responses())
-        return any(completed_inputs == sub_set for sub_set in completion_sets)
+        completed:bool = any(completed_inputs == sub_set for sub_set in completion_sets)
+        logger.debug(f"RUN_INPUTS({run_input_id}): completed = {completed} with completed_inputs = {completed_inputs}")
+        return completed
     async def wait_until_completion():
         while not check_is_completion():
             await asyncio.sleep(SLEEP_TIME)
     if sender is not None:
+        logger.info(f"RUN_INPUTS({run_input_id}): setting up feedback")
         def feedback_text() -> str:
             feedback_list = []
             for input in (input for input in inputs if not input.has_recieved_all_responses()):
@@ -401,22 +411,27 @@ async def run_inputs(
         for input in inputs:
             input.on_update(on_update)
     else:
-        logger.info("run_inputs supressing feedback")
+        logger.info(f"RUN_INPUTS({run_input_id}): supressing feedback")
     if codependant:
+        logger.info(f"RUN_INPUTS({run_input_id}): setting up codependencies")
         for input1 in inputs:
             for input2 in inputs:
                 if input1 != input2:
                     input1.on_update(input2.update_response_status)#didn't work!!!!!!!
+    logger.info(f"RUN_INPUTS({run_input_id}): creating the wait task")
     wait_task = asyncio.create_task(wait_until_completion())
+    logger.info(f"RUN_INPUTS({run_input_id}): creating the input tasks")
     _runs = list(asyncio.create_task(input._run(wait_task)) for input in inputs)
     all_tasks = [wait_task]+_runs
     #determine cumulitive timout
     """timeout_mins = list(min(
         (pinput.timeout if not pinput.timeout is None else float('inf'))
         for pinput in group) for group in completion_sets)"""
+    logger.info(f"RUN_INPUTS({run_input_id}): waiting for all tasks to be done")
     await asyncio.wait(all_tasks)
     """for task in all_tasks:
         task.cancel()"""
     #make sure feedback is correct when we exit
     if sender is not None:
         await sender(feedback_message)
+    logger.info(f"RUN_INPUTS({run_input_id}): waiting is over")
