@@ -72,7 +72,7 @@ class Elimination_Framework(Generic[Participant],Game):
         except EliminationGameEnd:
             ...
     def generate_participant_placements(self) -> Placement[Participant]:
-        return self.elimination_order
+        return tuple(reversed(self.elimination_order))
         
 class Elimination_Base(Elimination_Framework[PlayerId]):
     def __init__(self,gi:Game_Interface):

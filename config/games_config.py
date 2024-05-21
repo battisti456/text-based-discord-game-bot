@@ -10,7 +10,7 @@ games_config:GamesConfigDict = {
         'puzzle_rating_cap_escalation':200
     },
     "altered_image_guess" : {
-        "num_rounds" : 5,
+        "num_rounds" : 10,
         "min_image_size" : (300,300),
         "num_choices" : 5,
         "zoom_crop_box_size" : (30,30),
