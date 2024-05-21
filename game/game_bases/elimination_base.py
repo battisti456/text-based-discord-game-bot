@@ -64,7 +64,7 @@ class Elimination_Framework(Participant_Base[Participant],Rounds_Base):
             raise EliminationGameEnd(f"all but one {self._participant_name} being eliminated")
     @override
     def _generate_participant_placements(self) -> Placement[Participant]:
-        return self.elimination_order
+        return tuple(reversed(self.elimination_order))
         
 class Elimination_Base(Elimination_Framework[PlayerId]):
     def __init__(self,gi:Game_Interface):
@@ -77,6 +77,7 @@ class Elimination_Base(Elimination_Framework[PlayerId]):
         players = arg_fix_grouping(self.unkicked_players,players)
         await self.announce_eliminate(players)
         self.eliminate_participants(players)
+        await super().kick_players(players, 'eliminated')
     @override
     async def kick_players(self, players: Grouping[PlayerId], reason: KickReason = 'unspecified', priority:Optional[int] = None):
         players = tuple(players)

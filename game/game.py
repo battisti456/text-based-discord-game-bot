@@ -1,8 +1,8 @@
 import functools
-from typing import Awaitable, Callable, Optional, ParamSpec, TypeVar, overload
+from typing import Awaitable, Callable, Optional, ParamSpec, TypeVar, overload, override
 
 import utils.emoji_groups
-from game import kick_text, score_to_placement
+from game import kick_text, score_to_placement, get_logger
 from game.components.game_interface import Game_Interface
 from game.components.interface_component import Interface_Component
 from game.components.message import Message
@@ -26,6 +26,8 @@ from utils.types import (
     PlayerPlacement,
     PlayersIds,
 )
+
+logger = get_logger(__name__)
 
 MULTIPLE_CHOICE_LINE_THRESHOLD = 30
 
@@ -70,15 +72,26 @@ class Game(Interface_Component):
         """
         intended function to run the selected game
         """
+        logger.info(f"Setting up {self}.")
         await self.game_setup()
+        logger.info(f"Playing intro of {self}.")
         await self.game_intro()
         try:
+            logger.info(f"Starting to run {self}.")
             await self._run()
+            logger.info(f"Gracefully finished running {self}.")
         except GameEndException as e:
+            logger.warning(f"Game {self} ended due to {e}.")
             self.game_end_exception = e
             await self.basic_send(e.explanation)
+        except Exception as e:
+            logger.error(f"Game failed due to unexpected error {e}.")
+            await self.basic_send("The game has experienced an unforseen exception and will attempt to close itself...")
+        logger.info(f"Un-setting up {self}.")
         await self.game_unsetup()
+        logger.info(f"Playing outro for {self}.")
         await self.game_outro()
+        logger.info(f"Done running {self}.")
     def generate_placements(self) -> PlayerPlacement:
         return tuple()
     def generate_kicked_placements(self) -> PlayerPlacement:
@@ -304,9 +317,10 @@ class Game(Interface_Component):
                 if responses[player] is not None:
                     clean_responses[player] = responses[player]
         return clean_responses
+    @override
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}()"
     
-    
-
 def police_game_callable(func:Callable[P,Awaitable[R]]) -> Callable[P,Awaitable[R]]:
     """
     a wrapper for enabling a function to be policed;

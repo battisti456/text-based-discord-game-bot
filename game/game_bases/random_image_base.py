@@ -8,7 +8,7 @@ from game.components.game_interface import Game_Interface
 from game.game import Game
 from utils.grammer import temp_file_path
 
-BASE_URL = "https://source.unsplash.com"
+BASE_URL = "https://source.unsplash.com"#seems to be broken, look into this: https://pixabay.com/api/docs/
 
 
 class Random_Image_Base(Game):
