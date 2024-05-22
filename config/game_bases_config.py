@@ -23,6 +23,9 @@ game_bases_config:GameBasesConfigDict = {
         'p_black_outline_color': 'black',
         'last_move_color': '#eedc00d0',
         'check_color': '#ff000066'
+    },
+    'random_image_base' : {
+        'pixabay_token' : None
     }
 }
 

@@ -1,5 +1,5 @@
 from math import ceil, floor
-from typing import Optional
+from typing import Any, Optional
 
 import PIL.Image
 import PIL.ImageDraw
@@ -9,6 +9,45 @@ type Font = PIL.ImageFont.ImageFont|PIL.ImageFont.FreeTypeFont|PIL.ImageFont.Tra
 "all PIL.ImageFont font objects (as they do not inherit from a common class)"
 type Color = tuple[int,int,int]|tuple[int,int,int,int]|str
 "(R,G,B) or (R,G,B,A) or '#rrggbb' or '#rrggbbaa or 'color'"
+
+FONT_START_SIZE = 1000
+
+def _get_font(font_path:Optional[str] = None,size:Optional[float] = None) -> Font:
+    if font_path is None:
+        return PIL.ImageFont.load_default(size)
+    else:
+        if size is None:
+            return PIL.ImageFont.truetype(font=font_path)
+        else:
+            return PIL.ImageFont.truetype(font=font_path,size=int(size))
+
+def get_font(
+        font_path:Optional[str] = None,
+        text:Optional[str] = None,
+        draw_text_parameters:dict[str,Any] = {},
+        max_height:Optional[int] = None,
+        max_width:Optional[int] = None,
+        multi_line:bool = False) -> Font:
+    if text is None or (max_width is None and max_width is None):
+        return _get_font(font_path)
+    image = PIL.Image.new('RGBA',(1,1))
+    draw = PIL.ImageDraw.ImageDraw(image)
+    test_font = _get_font(font_path,FONT_START_SIZE)
+    left:int
+    top:int
+    right:int
+    bottom:int 
+    if multi_line:
+        raise NotImplementedError()
+    else:
+        left,top,right,bottom = draw.textbbox((0,0),text,test_font,**draw_text_parameters)
+        height = bottom - top
+        width = right-left
+        h_mult = -1 if max_height is None else max_height/height
+        w_mult = -1 if max_width is None else max_width/width
+        mult = min(mult for mult in (h_mult,w_mult) if mult > 0)
+        return _get_font(font_path,FONT_START_SIZE*mult)
+
 
 class ExtendedImageDraw(PIL.ImageDraw.ImageDraw):
     def text_with_outline(

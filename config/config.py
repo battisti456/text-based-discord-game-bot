@@ -12,7 +12,8 @@ config:ConfigDict = {
     "profanity_threshold" : 0.5,#to disable set >1
     "python_cmd" : 'python',
     "main" : "main.py",
-    "logging_level" : "WARNING"
+    "logging_level" : "WARNING",
+    "font" : None
 }
 
 merge_local('config',config) #type: ignore

@@ -36,6 +36,7 @@ class ConfigDict(TypedDict):
     python_cmd:str
     main:str
     logging_level:str|int
+    font:None|str
 #region game specific configs
 class AlteredImageGuessConfig(TypedDict):
     num_rounds:int
@@ -130,9 +131,12 @@ class GamesConfigDict(TypedDict):
 #region game base specific settings
 class ChessBaseConfig(_RenderChessOptions):
     ...
+class RandomImageBaseConfig(TypedDict):
+    pixabay_token:None|str
 #endregion
 class GameBasesConfigDict(TypedDict):
     chess_base:ChessBaseConfig
+    random_image_base:RandomImageBaseConfig
 CONFIG_TYPES:dict[ConfigName,_TypedDictMeta] = {
     'config' : ConfigDict,
     'games_config' : GamesConfigDict,

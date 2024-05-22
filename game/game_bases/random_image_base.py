@@ -1,28 +1,25 @@
 import io
-from typing import Optional, NewType, Callable, Sequence
+from typing import Optional, Sequence
 
 import PIL.Image
+import PIL.ImageDraw
 import requests
 
+from config.game_bases_config import game_bases_config
 from game.components.game_interface import Game_Interface
 from game.game import Game
 from utils.grammer import temp_file_path
+from utils.image_search import (
+    Image_Search,
+    Pixabay_API,
+    SearchResult,
+    SearchTerms,
+    Unsplash_No_API,
+)
+from utils.pillow_tools import get_font
 
-BASE_URL = "https://source.unsplash.com"#seems to be broken, look into this: https://pixabay.com/api/docs/
+ATTRIBUTION_HEIGHT = 10
 
-ImageUrl = NewType("ImageUrl",str)
-type ImageFinder = Callable[[Sequence[str],tuple[int,int]],ImageUrl]
-
-def source_unsplash_image_finder(search_terms:Sequence[str],size:tuple[int,int]) -> ImageUrl:
-    #the api seems to no longer function
-    source_text = "/random"
-    size_text = ""
-    if size is not None:
-        size_text = f"/{size[0]}x{size[1]}"
-    search_text = ""
-    if search_terms is not None:
-        search_text = f"/?{','.join(search_terms)}"
-    return f"https://source.unsplash.com{source_text}{size_text}{search_text}"#type:ignore
 
 class Random_Image_Base(Game):
     """
@@ -32,11 +29,15 @@ class Random_Image_Base(Game):
         Game.__init__(self,gh)
         if Random_Image_Base not in self.initialized_bases:
             self.initialized_bases.append(Random_Image_Base)
+            self.search:Image_Search
+            if game_bases_config['random_image_base']['pixabay_token'] is not None:
+                self.search = Pixabay_API(game_bases_config['random_image_base']['pixabay_token'])
+            else:
+                self.search = Unsplash_No_API()
     def random_image_url(
             self,
-            author:Optional[str] = None, 
-            size:Optional[tuple[int,int]] = None,
-            search_terms:Optional[list[str]] = None) -> str:
+            search_terms:Sequence[str],
+            size:Optional[tuple[int,int]] = None) -> SearchResult:
         """
         returns a contructed url for finding a random image
         
@@ -46,26 +47,31 @@ class Random_Image_Base(Game):
         
         search_terms: what keywords to include in the random search
         """
-        source_text = "/random"
-        if author is not None:
-            source_text = f"/user/{author}"
-        size_text = ""
-        if size is not None:
-            size_text = f"/{size[0]}x{size[1]}"
-        search_text = ""
-        if search_terms is not None:
-            search_text = f"/?{','.join(search_terms)}"
-        return f"{BASE_URL}{source_text}{size_text}{search_text}"
-    def get_image_from_url(self,url:str) -> PIL.Image.Image:
+        s = SearchTerms(
+            search_words=list(search_terms),
+            sort_option='random',
+            width=None if size is None else size[0],
+            height=None if size is None else size[1]
+        )
+        results = self.search(s)
+        if len(results) == 0:
+            raise Exception("No items found.")
+        return results[0]
+    def get_image_from_url(self,image_response:SearchResult) -> PIL.Image.Image:
         """
         fetches an image from a url
         """
+        url, data = image_response
         request = requests.get(url,stream=True)
         if request.status_code == 200:
-            return PIL.Image.open(io.BytesIO(request.content))
+            image = PIL.Image.open(io.BytesIO(request.content))
+            font = get_font(None,data,{},ATTRIBUTION_HEIGHT,image.width)
+            draw = PIL.ImageDraw.ImageDraw(image)
+            draw.text((0,image.height-ATTRIBUTION_HEIGHT),data,font=font,anchor='lt')
+            return image
         else:
             raise Exception(f"Unable to get image at {url}.")
-    def random_image(self,author:Optional[str] = None, size:Optional[tuple[int,int]] = None,search_terms:Optional[list[str]] = None) -> PIL.Image.Image:
+    def random_image(self,size:Optional[tuple[int,int]] = None,search_terms:list[str] = []) -> PIL.Image.Image:
         """
         fetches a random image based on the given search terms
         
@@ -75,14 +81,11 @@ class Random_Image_Base(Game):
         
         search_terms: what keywords to include in the random search
         """
-        url = self.random_image_url(author,size,search_terms)
+        url = self.random_image_url(search_terms,size)
         image = self.get_image_from_url(url)
-        if image is not None:
-            return image
-        else:
-            return self.random_image(author,size,search_terms)
-    def temp_random_image(self,author:Optional[str] = None, size:Optional[tuple[int,int]] = None,search_terms:Optional[list[str]]=None) -> str:
-        image:PIL.Image.Image = self.random_image(author,size,search_terms)
+        return image
+    def temp_random_image(self,size:Optional[tuple[int,int]] = None,search_terms:list[str]=[]) -> str:
+        image:PIL.Image.Image = self.random_image(size,search_terms)
         path = temp_file_path(".png")
         image.save(path)
         return path
