@@ -88,11 +88,11 @@ class Chess_Base(Game):
             }
             for key,item in CONFIG.items():
                 if key in RENDERCHESSOPTIONS:
-                    self.default_render[key] = item
+                    self.default_render[key] = item #type: ignore
     def make_board_image(self,render_args:RenderChessOptional = {}) -> str:
-        args:RenderChessAll = self.default_render|render_args
+        args:RenderChessAll = self.default_render|render_args #type:ignore
         image = render_chess(
-            **args
+            **args #type: ignore
         )
         file_path = temp_file_path('.png')
         image.save(file_path)

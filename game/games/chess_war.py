@@ -23,13 +23,12 @@ MOVE_TO_HIGHLIGHT:Color = '#599f4355'
 
 class Chess_War(Team_Base, Chess_Base):
     def __init__(self,gi:Game_Interface):
+        raise NotImplementedError()
         Chess_Base.__init__(self,gi)
         Team_Base.__init__(self,gi)
         self.num_teams = 2
         self.num_rounds = None
-        self.player_pieces:PlayerDict[set[chess.Square]]
-        self.to_squares:TeamDict[To_Squares]
-        self.last_to_squares:TeamDict[set[chess.Square]]
+        self.player_piece_squares:PlayerDict[set[chess.Square]]
         self.team_board:TeamDict[Message]
         self.current_inputs:dict[Player_Text_Input,tuple[PlayerId,Team,chess.Square]]
         self.validate_boards:dict[Team,chess.Board] = {}
@@ -46,13 +45,12 @@ class Chess_War(Team_Base, Chess_Base):
     @override
     async def game_setup(self):
         await super().game_setup()
-        self.player_pieces = {}
+        self.player_piece_squares = {}
         for team in self.all_teams:
             color = self.get_color(team)
             split = self.chess_piece_sharing_data[str(color).lower()][str(len(self.team_players[team]))]
             for i, player in enumerate(self.team_players[team]):
-                self.player_pieces[player] = set(split[i])
-        self.to_squares = {team:To_Squares(self,team) for team in self.all_teams}
+                self.player_piece_squares[player] = set(split[i])
     @override
     async def start_round(self):
         await super().start_round()
@@ -65,7 +63,6 @@ class Chess_War(Team_Base, Chess_Base):
                 attach_paths_modifier=lambda _: [self.make_board_image({
                     'white_perspective' : self.get_color(team),
                     'other_highlights' : {
-                        square:MOVE_TO_HIGHLIGHT for square in self.to_squares[team]
                     }
                 })]
             )
@@ -89,11 +86,11 @@ class Chess_War(Team_Base, Chess_Base):
                 if square_to == square_i_to and square != square_i:
                     await input_i.update_response_status()
             #change board image if something has changed
-            current_team_squares = set(self.to_squares[team])
+            """current_team_squares = set(self.to_squares[team])
             if not self.last_to_squares[team] == set():
                 if current_team_squares != self.last_to_squares[team]:
                     await self.sender(self.team_board[team])
-            self.last_to_squares[team] = current_team_squares
+            self.last_to_squares[team] = current_team_squares"""
         return on_update
     def move_from_input(self,inpt:Player_Text_Input) -> Optional[chess.Move]:
         player, team, square = self.current_inputs[inpt]
@@ -113,7 +110,7 @@ class Chess_War(Team_Base, Chess_Base):
                 self.make_board_image({
                     'white_perspective' : self.get_color(team),
                     'other_highlights' : {
-                        square:YOUR_PIECES_HIGHLIGHT for square in self.player_pieces[player]
+                        square:YOUR_PIECES_HIGHLIGHT for square in self.player_piece_squares[player]
                     }
                 })
             ],
@@ -121,7 +118,7 @@ class Chess_War(Team_Base, Chess_Base):
         )
         await self.sender(board_message)
         pieces:dict[chess.Square,chess.Piece] = {}
-        for square in self.player_pieces[player]:
+        for square in self.player_piece_squares[player]:
             piece = self.board.piece_at(square)
             assert piece is not None
             pieces[square] = piece
@@ -136,13 +133,13 @@ class Chess_War(Team_Base, Chess_Base):
                 self.gi,
                 self.sender,
                 [player],
-                chess_move_validator_maker(
-                    from_squares=[square],
-                    is_legal_on_any=[self.validate_boards[team]],
-                    not_to_squares=self.to_squares[team]
-                    ),
                 who_can_see=[player],message=message
             )
+            inpt._response_validator = chess_move_validator_maker(
+                from_squares=[square],
+                is_legal_on_any=[self.validate_boards[team]],
+                not_to_squares=To_Squares(self,team,inpt)
+                )
             self.current_inputs[inpt] = (player,team,square)
             inpt.on_update(self.on_update_maker(inpt))
             inputs.append(inpt)
@@ -182,14 +179,14 @@ class Chess_War(Team_Base, Chess_Base):
                 eliminated.add(square)
         #remove all eliminated pieces
         for player in self.unkicked_players:
-            self.player_pieces[player] -= eliminated
+            self.player_piece_squares[player] -= eliminated
         #move pieces
         for inpt,(player,team,square) in self.current_inputs.items():
-            if square in self.player_pieces[player]:#not eliminated
+            if square in self.player_piece_squares[player]:#not eliminated
                 move = self.move_from_input(inpt)
                 assert move is not None
-                self.player_pieces[player].remove(square)
-                self.player_pieces[player].add(move.to_square)
+                self.player_piece_squares[player].remove(square)
+                self.player_piece_squares[player].add(move.to_square)
                 piece = self.board.remove_piece_at(square)
                 assert piece is not None
                 self.board.set_piece_at(move.to_square,piece)
@@ -204,19 +201,19 @@ class Chess_War(Team_Base, Chess_Base):
                 if player in self.team_players[_team]:
                     team = _team
                     break
-            give_away[team].update(self.player_pieces[player])
+            give_away[team].update(self.player_piece_squares[player])
         #redistrube extra pieces from players who responded None
         for team in self.unkicked_teams:
             for square in give_away[team]:
-                min_number = min(len(self.player_pieces[player]) for player in self.team_players[team])
+                min_number = min(len(self.player_piece_squares[player]) for player in self.team_players[team])
                 player:PlayerId
                 for _player in self.team_players[team]:
-                    if len(self.player_pieces[_player]) == min_number:
+                    if len(self.player_piece_squares[_player]) == min_number:
                         player = _player
                         break
-                self.player_pieces[player].add(square)
+                self.player_piece_squares[player].add(square)
         #add any player with zero pieces to the list to kick
-        no_pieces_players = set(player for player in self.unkicked_players if len(self.player_pieces[player]) == 0)
+        no_pieces_players = set(player for player in self.unkicked_players if len(self.player_piece_squares[player]) == 0)
         await self.kick_players(players_to_kick,'timeout')
         await self.kick_players(no_pieces_players,'eliminated')
         await super().end_round()
@@ -225,14 +222,21 @@ class Chess_War(Team_Base, Chess_Base):
 class To_Squares(Grouping[chess.Square]):
     game:Chess_War
     team:Team
+    inpt:Player_Text_Input
     @override
     def __iter__(self) -> Iterator[chess.Square]:
         for inpt,(player,team,square) in self.game.current_inputs.items():
+            if inpt == self.inpt:
+                continue
             if team == self.team:
                 if player in inpt.responses:#should always be, methinks
                     move = self.game.move_from_input(inpt)
                     if move is not None:
                         yield move.to_square
+        #might not be nessesary. legal move detection probably prevents this from being nessesary
+        for player in self.game.team_players[self.team]:
+            for square in self.game.player_piece_squares[player]:
+                yield square
     @override
     def __contains__(self,key:chess.Square, /) -> bool:
         return key in self.__iter__()

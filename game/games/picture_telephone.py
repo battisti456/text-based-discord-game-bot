@@ -19,6 +19,7 @@ validator = text_validator_maker(
 
 class Picture_Telephone(Rounds_With_Points_Base, Random_Image_Base):
     def __init__(self,gi:Game_Interface):
+        raise NotImplementedError()
         Rounds_With_Points_Base.__init__(self,gi)
         Random_Image_Base.__init__(self,gi)
         self.num_rounds = NUM_ROUNDS

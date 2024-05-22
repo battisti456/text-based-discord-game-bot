@@ -1,5 +1,5 @@
 import io
-from typing import Optional
+from typing import Optional, NewType, Callable, Sequence
 
 import PIL.Image
 import requests
@@ -10,6 +10,19 @@ from utils.grammer import temp_file_path
 
 BASE_URL = "https://source.unsplash.com"#seems to be broken, look into this: https://pixabay.com/api/docs/
 
+ImageUrl = NewType("ImageUrl",str)
+type ImageFinder = Callable[[Sequence[str],tuple[int,int]],ImageUrl]
+
+def source_unsplash_image_finder(search_terms:Sequence[str],size:tuple[int,int]) -> ImageUrl:
+    #the api seems to no longer function
+    source_text = "/random"
+    size_text = ""
+    if size is not None:
+        size_text = f"/{size[0]}x{size[1]}"
+    search_text = ""
+    if search_terms is not None:
+        search_text = f"/?{','.join(search_terms)}"
+    return f"https://source.unsplash.com{source_text}{size_text}{search_text}"#type:ignore
 
 class Random_Image_Base(Game):
     """
