@@ -40,6 +40,8 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Participant_Ba
             amount:Optional[PointType|Mapping[Participant,PointType]] = None
             ):
         w = arg_fix_grouping(self._participants,who)
+        if len(w) == 0:
+            return
         a:Mapping[Participant,PointType] = arg_fix_map(w,self.zero_score,amount)
         participant_lines:list[str]
         if amount is None:

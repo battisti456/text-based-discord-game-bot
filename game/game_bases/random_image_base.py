@@ -83,6 +83,7 @@ class Random_Image_Base(Game):
         """
         url = self.random_image_url(search_terms,size)
         image = self.get_image_from_url(url)
+        image = image.convert('RGBA')
         return image
     def temp_random_image(self,size:Optional[tuple[int,int]] = None,search_terms:list[str]=[]) -> str:
         image:PIL.Image.Image = self.random_image(size,search_terms)

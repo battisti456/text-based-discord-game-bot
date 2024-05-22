@@ -84,8 +84,8 @@ class Game(Interface_Component):
             logger.warning(f"Game {self} ended due to {e}.")
             self.game_end_exception = e
             await self.basic_send(e.explanation)
-        except Exception as e:
-            logger.error(f"Game failed due to unexpected error {e.__class__.__name__}({e}).")
+        except:  # noqa: E722
+            logger.exception("Game failed due to unexpected error.")
             await self.basic_send("The game has experienced an unforseen exception and will attempt to close itself...")
         logger.info(f"Un-setting up {self}.")
         await self.game_unsetup()

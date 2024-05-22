@@ -282,8 +282,8 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
             image = self.random_image(search_terms=[actual_search])
         alter_method = random.choice(list(ALTER_METHODS))
         altered_image = ALTER_METHODS[alter_method](image)
-        image_path = temp_file_path(".jpg")
-        altered_path = temp_file_path(".jpg")
+        image_path = temp_file_path(".png")
+        altered_path = temp_file_path(".png")
         image.save(image_path)
         altered_image.save(altered_path)
 
