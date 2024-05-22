@@ -12,7 +12,7 @@ games_config:GamesConfigDict = {
     "altered_image_guess" : {
         "num_rounds" : 10,
         "min_image_size" : (300,300),
-        "num_choices" : 5,
+        "num_choices" : 8,
         "zoom_crop_box_size" : (30,30),
         "zoom_crop_box_display_size": (400,400),
         "zoom_crop_no_edge_portion" : 0.2,
