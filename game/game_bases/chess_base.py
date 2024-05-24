@@ -20,14 +20,15 @@ def chess_move_validator_maker(
         not_to_squares:Optional[Grouping[chess.Square]] = None,
         move_in:Optional[Sequence[chess.Move]] = None,
         move_not_in:Optional[Sequence[chess.Move]] = None,
-        is_legal_on_any:Optional[Sequence[chess.Board]] = None) -> ResponseValidator[str]:
+        is_legal_on_any:Optional[Sequence[chess.Board]] = None,
+        allow_implicit_assignment:bool = True) -> ResponseValidator[str]:
     def validator(player:PlayerId,content:str|None) -> Validation:
         if content is None:
             return (False,None)
         move:chess.Move|None = get_move(
             content,
-            None if not from_squares else get_first(from_squares),
-            None if not to_squares else get_first(to_squares))
+            None if (not from_squares) or (not allow_implicit_assignment) else get_first(from_squares),
+            None if (not to_squares) or (not allow_implicit_assignment) else get_first(to_squares))
         if move is None:
             return (
                 False,

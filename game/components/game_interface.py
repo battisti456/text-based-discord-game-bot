@@ -1,10 +1,12 @@
 from typing import Any, Awaitable, Callable, Hashable, Optional, override
+import os
 
 from game import get_logger
 from game.components.interaction import INTERACTION_TYPES, Interaction, InteractionType
 from game.components.message import Message, Reroute_Message
 from game.components.sender import Sender
 from utils.types import ChannelId, Grouping, MessageId, PlayerId
+from config.config import config
 
 logger = get_logger(__name__)
 
@@ -42,6 +44,13 @@ class Game_Interface(object):
         logger.warning("resetting game interface")
         self.purge_tracked_messages()
         self.clear_actions()
+    def empty_temp(self):
+        """
+        empties the temp folder of all files
+        """
+        for file in os.listdir(config['temp_path']):
+            logger.debug(f"deleting '{config['temp_path']}/{file}'")
+            os.unlink(f"{config['temp_path']}/{file}")
     def track_message(self,message:Message):
         """
         adds a message to the interfaces tracked messages list

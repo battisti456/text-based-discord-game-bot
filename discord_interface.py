@@ -169,9 +169,11 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 payload.cached_message is not None and
                 (self.client.user is None or 
                 payload.cached_message.author.id != self.client.user.id)):
-                interaction = Interaction('send_message')
+                interaction = Interaction('delete_message')
                 discord_message_populate_interaction(
                     payload.cached_message,interaction)
+                await self._trigger_action(interaction)
+                interaction.interaction_type = 'send_message'
                 if 'content' in payload.data: #sometimes it isn't aparently?
                     interaction.content = payload.data['content']
                 interaction.interaction_id = payload.message_id#type:ignore

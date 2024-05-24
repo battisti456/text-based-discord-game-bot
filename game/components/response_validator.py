@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Literal
 
 from profanity_check import predict_prob
 
@@ -19,6 +19,29 @@ type ResponseValidator[DataType] = Callable[[PlayerId,DataType|None],Validation]
 def not_none(player:PlayerId,data:Any) -> Validation:
     return data is not None , None
 
+def make_set_validator[T](
+        individual_validator:ResponseValidator[T],
+        mode:Literal['any','all','always','never'] = 'all') -> ResponseValidator[set[T]]:
+    def validator(player:PlayerId,value:Optional[set[T]]) -> Validation:
+        if value is None:
+            return (False,None)
+        valid:bool = True
+        feedback:str = ""
+        validations = list(individual_validator(player,v) for v in value)
+        feedback = '\n'.join(feedback for _,feedback in validations if feedback is not None)
+        match(mode):
+            case 'any':
+                valid = any(valid for valid,_ in validations)
+            case 'all':
+                valid = all(valid for valid,_ in validations)
+            case 'always':
+                valid = True
+            case 'never':
+                valid = False
+        if feedback == "":
+            return (valid,None)
+        return (valid,feedback)
+    return validator
 
 def text_validator_maker(
         is_substr_of:Optional[str] = None,

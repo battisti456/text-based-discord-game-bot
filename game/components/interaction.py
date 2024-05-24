@@ -7,7 +7,8 @@ InteractionType = Literal[
     'send_message',
     'delete_message',
     'select_option',
-    'deselect_option']
+    'deselect_option',
+    ]
 INTERACTION_TYPES = get_args(InteractionType)
 
 class Interaction(object):

@@ -22,6 +22,7 @@ from utils.types import (
     PlayerDictOptional,
     PlayerId,
     PlayersIds,
+    IDType
 )
 
 type Condition = dict[Player_Input,bool]
@@ -280,7 +281,42 @@ class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
                 assert interaction.player_id is not None
                 self.responses[interaction.player_id] = None
                 await self._update()
-
+class Player_Multi_Text_Input(Player_Input_In_Response_To_Message[set[str]]):
+    def __init__(
+            self, 
+            name: str, 
+            gi: Game_Interface, 
+            sender: Sender, 
+            players: PlayersIds, 
+            response_validator: Callable[[PlayerId, set[str] | None], tuple[bool, str | None]] = not_none, 
+            who_can_see: list[PlayerId] | None = None, 
+            timeout: int | None = config['default_timeout'], 
+            warnings: list[int] = config['default_warnings'], 
+            message: Message | str | None = None, 
+            allow_edits: bool = True):
+        Player_Input_In_Response_To_Message.__init__(self,name, gi, sender, players, response_validator, who_can_see, timeout, warnings, message, allow_edits)
+    @override
+    async def _setup(self):
+        await Player_Input_In_Response_To_Message._setup(self)
+        @self.gi.on_action('send_message',self)
+        async def on_message_action(interaction:Interaction):
+            if self.allow_interaction(interaction) and interaction.content is not None:
+                assert interaction.player_id is not None
+                response = self.responses[interaction.player_id]
+                if response is None:
+                    response = set()
+                    self.responses[interaction.player_id] = response
+                response.add(interaction.content)
+                await self._update()
+        @self.gi.on_action('delete_message',self)
+        async def on_delete_action(interaction:Interaction):
+            if self.allow_interaction(interaction) and interaction.content is not None:
+                assert interaction.player_id is not None
+                response = self.responses[interaction.player_id]
+                if response is None:
+                    return
+                response.remove(interaction.content)
+                await self._update()
 class Player_Single_Selection_Input(Player_Input_In_Response_To_Message[int]):
     """
     player input class for collecting single choice selection interactions to a message
@@ -357,9 +393,14 @@ def multi_bind_message(message:Message,*player_inputs:Player_Input_In_Response_T
     for player_input in player_inputs:
         player_input.message = _message
 async def run_inputs(
-        inputs:Sequence[Player_Input[Any]],completion_sets:Optional[list[set[Player_Input[Any]]]] = None,
-        sender:Optional[Sender] = None,who_can_see:Optional[PlayersIds] = None,
-        codependant:bool = False, basic_feedback:bool = False):
+        inputs:Sequence[Player_Input[Any]],
+        completion_sets:Optional[list[set[Player_Input[Any]]]] = None,
+        sender:Optional[Sender] = None,
+        who_can_see:Optional[PlayersIds] = None,
+        codependant:bool = False, 
+        basic_feedback:bool = False, 
+        id:Optional[IDType] = None, 
+        sync_call:Callable[[IDType,bool],bool]|None = None):
     """
     runs inputs simultaniously until completion criteria are met
 
@@ -375,7 +416,11 @@ async def run_inputs(
 
     basic_feedback: sets whether the feedback, if it exists, should be limited to only whether an input is complete or not; True for limited, False for unlimited
     """
-    run_input_id = str(uuid4())[:6]
+    run_input_id:IDType
+    if id is None:
+        run_input_id = str(uuid4())#type:ignore
+    else:
+        run_input_id = id
     logger.info(f"RUN_INPUTS({run_input_id}): starting with inputs = f{inputs}")
     if completion_sets is None:
         completion_sets = [set(inputs)]
@@ -383,6 +428,8 @@ async def run_inputs(
     def check_is_completion() -> bool:
         completed_inputs = set(input for input in inputs if input.has_recieved_all_responses())
         completed:bool = any(completed_inputs == sub_set for sub_set in completion_sets)
+        if sync_call is not None:
+            completed = sync_call(run_input_id,completed)
         logger.debug(f"RUN_INPUTS({run_input_id}): completed = {completed} with completed_inputs = {completed_inputs}")
         return completed
     async def wait_until_completion():

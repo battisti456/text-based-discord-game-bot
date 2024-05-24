@@ -16,6 +16,9 @@ CASTLE_UCI_DICT = {
     'e1b1': "white castles queenside",
     'e8g8': "black castles kingside"
 }
+
+def capture_text(killer_square:chess.Square,killer:chess.Piece,killed_square:chess.Square,killed:chess.Piece) -> str:
+    return ""
 def get_raw_move(text:str) -> chess.Move:
     return chess.Move.from_uci(text)
 def get_move(text:str,from_square:Optional[chess.Square] = None,to_square:Optional[chess.Square] = None) -> Optional[chess.Move]:
@@ -69,10 +72,13 @@ def get_move_text(board:chess.Board,move_uci:chess.Move|str) -> str:
         if piece.color == chess.BLACK:
             capture_symbol = 'P'
         capture = chess.Piece.from_symbol(capture_symbol)
-    test = board.copy()
-    test.push_uci(move_uci)
-    if test.is_check():
-        check_text = " resulting in a check"
+    try:
+        test = board.copy()
+        test.push_uci(move_uci)
+        if test.is_check():
+            check_text = " resulting in a check"
+    except chess.IllegalMoveError:
+        ...
 
     if capture is not None:#capturing
         moves_to = f'captures {get_piece_name(capture.symbol())} {capture.unicode_symbol()} on'
@@ -122,6 +128,7 @@ class _RenderChessOptions(TypedDict,total=False):
     last_move_color:Optional[Color]
     check_color:Optional[Color]
     other_highlights:Optional[dict[chess.Square,Color]]
+    other_colors:Optional[dict[chess.Square,Color]]
 class RenderChessAll(_RenderChessOptions):
     board:chess.Board
 class RenderChessOptional(_RenderChessOptions):
@@ -149,7 +156,8 @@ RenderChessOptions = Literal[
     'p_black_outline_color',
     'last_move_color',
     'check_color',
-    'other_highlights'
+    'other_highlights',
+    'other_colors'
 ]
 RENDERCHESSOPTIONS:tuple[RenderChessOptions,...] = get_args(RenderChessOptions)
 
@@ -176,7 +184,8 @@ def render_chess(
         p_black_outline_color:Color = 'black',
         last_move_color:Optional[Color] = '#eedc00d0',
         check_color:Optional[Color] = '#ff000066',
-        other_highlights:Optional[dict[chess.Square,Color]] = None
+        other_highlights:Optional[dict[chess.Square,Color]] = None,
+        other_colors:Optional[dict[chess.Square,Color]] = None
         ) -> PIL.Image.Image:
     """
     creates an image of the current state of a chess.Board as a PIL Image
@@ -296,6 +305,10 @@ def render_chess(
             val:chess.Piece|None = board.piece_at(square)
             if val is None:
                 continue
+            piece_color:Color = p_white_color if val.color else p_black_color
+            if other_colors is not None:
+                if square in other_colors:
+                    piece_color = other_colors[square]
             invert_unicode:bool
             if val.color == chess.WHITE:
                 invert_unicode = not p_white_hollow
@@ -310,7 +323,7 @@ def render_chess(
                 text=unicode,
                 font = font,
                 anchor='mm',
-                fill=p_white_color if val.color else p_black_color,
+                fill=piece_color,
                 stroke_width=p_white_outline if val.color else p_black_outline,
                 stroke_fill=p_white_outline_color if val.color else p_black_outline_color
             )

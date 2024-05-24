@@ -12,6 +12,10 @@ type Color = tuple[int,int,int]|tuple[int,int,int,int]|str
 
 FONT_START_SIZE = 1000
 
+def get_color_name(color:Color) -> str:
+    """not fully implemented"""
+    return str(color)
+
 def _get_font(font_path:Optional[str] = None,size:Optional[float] = None) -> Font:
     if font_path is None:
         return PIL.ImageFont.load_default(size)

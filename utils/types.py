@@ -7,7 +7,8 @@ from typing import (
     Optional,
     Protocol,
     runtime_checkable,
-    override
+    override,
+    Hashable
 )
 
 from typing_extensions import TypeVar
@@ -50,7 +51,7 @@ type TeamDict[R] = dict[Team,R]
 
 
 Participant = TypeVar('Participant',bound=Team|PlayerId,default=PlayerId)
-
+IDType = TypeVar('IDType',bound=Hashable,default = str)
 
 GroupingSafe = int|float|GS#strings cannot be grouping safe, unfortunately
 GroupingSafeVar = TypeVar('GroupingSafeVar',bound = GroupingSafe)

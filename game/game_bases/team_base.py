@@ -71,12 +71,16 @@ class Team_Base(Rounds_Base):
             self.all_teams[i]:frozenset(self.unkicked_players[i::self.num_teams])
             for i in range(self.num_teams)
         }
-        self.team_channeld:TeamDict[ChannelId] = {
+        self.team_channel_id:TeamDict[ChannelId] = {
             team:await self.gi.new_channel(
                 f"{str(team)}'s Team Channel",
                 self.team_players[team]
             ) for team in self.all_teams
         }
+        for team in self.all_teams:
+            await self.basic_send(
+                f"On team '{team}' we have {self.sender.format_players(self.team_players[team])}!"
+            )
     async def basic_send_team(
             self,
             teams:Grouping[Team]|Team|None,
@@ -96,7 +100,7 @@ class Team_Base(Rounds_Base):
             await self.sender(Message(
                 content=content,
                 attach_paths=attatchements_data,
-                channel_id=self.team_channeld[team]
+                channel_id=self.team_channel_id[team]
             ))
     async def kick_teams(
             self,
