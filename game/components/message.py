@@ -178,6 +178,9 @@ class Message(object):
             channel_id=self.channel_id,
             reply_to_id=self.message_id
         )
+    @override
+    def __hash__(self) -> int:
+        return hash((self.message_id,self.channel_id))
 
 def make_bullet_points(contents:list[str],emojis:Sequence[str]) -> list[Bullet_Point]:
     """turns lists of texts and emojis into a list of bullet_points with the corresponding values"""
