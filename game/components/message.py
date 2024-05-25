@@ -2,7 +2,7 @@ from math import ceil
 from typing import TYPE_CHECKING, Callable, Literal, Optional, Sequence, TypeVar, override
 
 from utils.emoji_groups import NO_YES_EMOJI
-from utils.grammer import wordify_iterable
+from utils.grammar import wordify_iterable
 from utils.types import ChannelId, InteractionId, MessageId, PlayersIds
 
 if TYPE_CHECKING:

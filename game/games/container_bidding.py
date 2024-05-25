@@ -7,7 +7,7 @@ from config.games_config import games_config
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
 from game.game_bases import Basic_Secret_Message_Base, Rounds_With_Points_Base
-from utils.grammer import wordify_iterable
+from utils.grammar import wordify_iterable
 from utils.types import Number, PlayerDict, PlayerId
 
 CONFIG = games_config['container_bidding']

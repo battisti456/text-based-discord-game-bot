@@ -8,7 +8,7 @@ from game.game_bases import (
     Game_Word_Base,
     Rounds_With_Points_Base,
 )
-from utils.grammer import wordify_iterable
+from utils.grammar import wordify_iterable
 from utils.types import PlayerDict, PlayerId
 from utils.word_tools import (
     DefinitionList,

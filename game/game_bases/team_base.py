@@ -9,7 +9,7 @@ from game.game_bases.round_base import Rounds_Base
 from game.game_bases.rounds_with_points_base import Rounds_With_Points_Framework
 from utils.common import arg_fix_grouping
 from utils.exceptions import GameEndInsufficientTeams
-from utils.grammer import wordify_iterable
+from utils.grammar import wordify_iterable
 from utils.types import (
     ChannelId,
     Grouping,

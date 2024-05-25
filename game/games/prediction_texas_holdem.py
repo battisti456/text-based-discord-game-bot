@@ -11,7 +11,7 @@ from game.game_bases.card_base import (
     name_poker_hand_by_rank,
 )
 from utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
-from utils.grammer import ordinate
+from utils.grammar import ordinate
 from utils.types import PlayerDict, PlayerId
 
 CONFIG = games_config['prediction_texas_holdem']

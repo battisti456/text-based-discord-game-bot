@@ -13,7 +13,7 @@ from game.components.player_input import (
     Player_Multi_Text_Input
 )
 from game.game_bases import Chess_Base, Team_Base
-from utils.grammer import wordify_iterable
+from utils.grammar import wordify_iterable
 from utils.common import get_first
 from utils.chess_tools import RenderChessOptional, get_move, get_move_text, capture_text, get_piece_name
 from utils.emoji_groups import NO_YES_EMOJI

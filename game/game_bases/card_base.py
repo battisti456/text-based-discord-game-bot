@@ -13,7 +13,7 @@ from game.components.game_interface import Game_Interface
 from game.components.message import Message
 from game.game import Game, police_game_callable
 from utils.common import arg_fix_grouping
-from utils.grammer import temp_file_path, wordify_iterable
+from utils.grammar import temp_file_path, wordify_iterable
 from utils.types import GS, ChannelId, Grouping, PlayerDict, PlayerId
 
 POKER_HAND_NAMES = ["high card","pair","two pair","three of a kind","straight","flush","full house","four of a kind","straight flush","royal flush"]

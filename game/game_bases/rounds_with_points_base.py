@@ -7,7 +7,7 @@ from game.components.game_interface import Game_Interface
 from game.game_bases.round_base import Rounds_Base
 from game.game_bases.participant_base import Participant_Base
 from utils.common import arg_fix_grouping, arg_fix_map
-from utils.grammer import s
+from utils.grammar import s
 from utils.types import (
     Grouping,
     Number,

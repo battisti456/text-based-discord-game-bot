@@ -10,7 +10,7 @@ from game.game_bases import (
     Game_Word_Base,
     Rounds_With_Points_Base,
 )
-from utils.grammer import nice_sentence
+from utils.grammar import nice_sentence
 from utils.types import PlayerDict, PlayerId
 from utils.word_tools import find_random_related_scentences
 

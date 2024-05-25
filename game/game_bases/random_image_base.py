@@ -8,7 +8,7 @@ import requests
 from config.game_bases_config import game_bases_config
 from game.components.game_interface import Game_Interface
 from game.game import Game
-from utils.grammer import temp_file_path
+from utils.grammar import temp_file_path
 from utils.image_search import (
     Image_Search,
     Pixabay_API,
