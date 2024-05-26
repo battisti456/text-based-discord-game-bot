@@ -43,7 +43,15 @@ class Chess_War(Team_Base,Chess_Base):
         self.team_board_player_messages:TeamDict[set[Message]]
     @override
     async def game_intro(self):
-        ...#ADD GAME INTRO--------------------------------
+        await self.basic_send(
+            "# Welcome to a game of chess war!\n" + 
+            "In this game we have two teams, one playing for white and the other playing for black.\n" +
+            "Everyone is given a fair portion of their team's chess pieces and plays simultaneously\n" +
+            "Except, unlike chess, the objective is just to capture all of the enemy teams pieces, kings have no more value than as a normal piece.\n" +
+            "On your turn you can move each of the pieces you have control over, and press the check mark when you are done.\n" +
+            "If you capture an opponent's piece, their piece is eliminated, but if your piece is captured on its starting square on their team board, your piece is also eliminated." +
+            "If two pieces try to move to the same square they are both eliminated i a collision."
+        )
     @override
     async def game_setup(self):
         await super().game_setup()
@@ -120,6 +128,9 @@ class Chess_War(Team_Base,Chess_Base):
                 if move is None:
                     feedback[text] = f"'{text}' could not be interpreted"
                     continue
+                if move.from_square not in self.player_owned_squares[player]:
+                    feedback[text] = f"starting square '{chess.SQUARE_NAMES[move.from_square]}' is not owned by you"
+                    continue
                 self.board.turn = self.get_color(team)#set turn for is_legal check
                 if not self.board.is_pseudo_legal(move):#is legal letting King get in check
                     feedback[text] = f"'{text}:{get_move_text(self.board,move)}' is not pseudo-legal in this position."
@@ -134,8 +145,8 @@ class Chess_War(Team_Base,Chess_Base):
                     if move in self.team_moves[team]:
                         continue
                     other_from_square = self.team_moves[team].get_move_to(move.to_square)
-                    player = get_first(player for player,owned in self.player_owned_squares.items() if other_from_square in owned)
-                    feedback[text] = f"'{text}:{get_move_text(self.board,move)}' is not allowed because another piece from your team has already been moved to this position by {self.sender.format_players([player])}."
+                    other_player = get_first(player for player,owned in self.player_owned_squares.items() if other_from_square in owned)
+                    feedback[text] = f"'{text}:{get_move_text(self.board,move)}' is not allowed because another piece from your team has already been moved to this position by {self.sender.format_players([other_player])}."
                     continue
                 if move.to_square in list(square for player,square in self.player_owned_squares.items() if player in self.team_players[team]):
                     feedback[text] = f"'{text}:{get_move_text(self.board,move)}' is not allowed because your team started this turn with a piece on the destination square."

@@ -37,6 +37,7 @@ def get_move(
     to_square: Optional[chess.Square] = None,
 ) -> Optional[chess.Move]:
     move: Optional[chess.Move] = None
+    text = text.lower()
     try:
         move = get_raw_move(text)
     except chess.InvalidMoveError:
