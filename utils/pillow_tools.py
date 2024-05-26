@@ -32,7 +32,7 @@ def get_font(
         max_height:Optional[int] = None,
         max_width:Optional[int] = None,
         multi_line:bool = False) -> Font:
-    if text is None or (max_width is None and max_width is None):
+    if text == "" or text is None or (max_width is None and max_width is None):
         return _get_font(font_path)
     image = PIL.Image.new('RGBA',(1,1))
     draw = PIL.ImageDraw.ImageDraw(image)
