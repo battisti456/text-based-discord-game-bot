@@ -83,8 +83,8 @@ class Random_Image_Base(Game):
         search_terms: what keywords to include in the random search
         """
         tries = 0
-        url = None
-        while url is None:
+        image = None
+        while image is None:
             try:
                 url = self.random_image_url(search_terms,size)
                 image = self.get_image_from_url(url)
