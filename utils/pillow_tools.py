@@ -1,20 +1,21 @@
 from math import ceil, floor
 from typing import Any, Optional
 
+from color_tools_battisti456.color_names import color_name
+from color_tools_battisti456.types import Color
+
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
 
 type Font = PIL.ImageFont.ImageFont|PIL.ImageFont.FreeTypeFont|PIL.ImageFont.TransposedFont
 "all PIL.ImageFont font objects (as they do not inherit from a common class)"
-type Color = tuple[int,int,int]|tuple[int,int,int,int]|str
-"(R,G,B) or (R,G,B,A) or '#rrggbb' or '#rrggbbaa or 'color'"
 
 FONT_START_SIZE = 1000
 
 def get_color_name(color:Color) -> str:
     """not fully implemented"""
-    return str(color)
+    return color_name(color)
 
 def _get_font(font_path:Optional[str] = None,size:Optional[float] = None) -> Font:
     if font_path is None:
