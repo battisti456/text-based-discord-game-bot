@@ -223,15 +223,15 @@ def tileing(image:PIL.Image.Image) -> PIL.Image.Image:
 #endregion
 
 ALTER_METHODS = {#...altered through ____ the image
-#    "zooming into a random point on" : zoom_crop,
-#    "blurring" : blur,
-#    "applying a poorly implemented conversion to black and white to" : black_and_white,
-#    "applying an edge highlighting filter to" : edge_highlight,
-#    "covering the center of" : remove_center,
+    "zooming into a random point on" : zoom_crop,
+    "blurring" : blur,
+    "applying a poorly implemented conversion to black and white to" : black_and_white,
+    "applying an edge highlighting filter to" : edge_highlight,
+    "covering the center of" : remove_center,
     "adding polka dots to" : polka_dots,
-#    "adding some radial rays to" : pattern_radial_rays,
-#    "scribbling a bit on" : scribble,
-#    "tileing" : tileing
+    "adding some radial rays to" : pattern_radial_rays,
+    "scribbling a bit on" : scribble,
+    "tileing" : tileing
 }
 SEARCH_TOPICS = {
     "dog" : '🐶',
