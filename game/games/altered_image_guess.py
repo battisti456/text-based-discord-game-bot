@@ -7,12 +7,16 @@ import PIL.ImageDraw
 import PIL.ImageFilter
 import numpy as np
 
+from game import get_logger
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
 from game.game_bases import Random_Image_Base, Rounds_With_Points_Base
 from utils.grammar import temp_file_path
 from utils.types import PlayerDict
 from utils.pillow_tools import get_colors
+from utils.image_search import ImageSearchException
+
+logger = get_logger(__name__)
 
 #region unpacking config
 CONFIG = games_config['altered_image_guess']
@@ -298,7 +302,6 @@ SEARCH_TOPICS = {
 
 class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
     def __init__(self,gi:Game_Interface):
-
         Rounds_With_Points_Base.__init__(self,gi)
         Random_Image_Base.__init__(self,gi)
         self.num_rounds = NUM_ROUNDS
@@ -315,9 +318,13 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
     async def core_game(self):
         search_options:list[str] = random.sample(list(SEARCH_TOPICS),NUM_CHOICES)
         actual_search:str = search_options[random.randint(0,NUM_CHOICES-1)]
-        image:PIL.Image.Image = self.random_image(search_terms=[actual_search])
-        while image.size[0] < MIN_IMAGE_SIZE[0] or image.size[1] < MIN_IMAGE_SIZE[1]:
-            image = self.random_image(search_terms=[actual_search])
+        image:PIL.Image.Image|None = None
+        try:
+            image = self.random_image(size=MIN_IMAGE_SIZE,search_terms=[actual_search])
+        except ImageSearchException as e:
+            logger.error(f"Unable to retrieve a random image using search term = {actual_search}\n{repr(e)}")
+            await self.core_game()#start over
+            return
         alter_method = random.choice(list(ALTER_METHODS))
         altered_image = ALTER_METHODS[alter_method](image)
         image_path = temp_file_path(".png")
@@ -345,7 +352,3 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
         )
 
         await self.score(correct_players,1)
-
-
-
-    

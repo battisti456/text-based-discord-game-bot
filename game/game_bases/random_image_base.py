@@ -15,11 +15,12 @@ from utils.image_search import (
     SearchResult,
     SearchTerms,
     Unsplash_No_API,
+    ImageSearchException
 )
 from utils.pillow_tools import get_font
 
 ATTRIBUTION_HEIGHT = 10
-
+NUM_RANDOM_SEARCH_TRIES = 10
 
 class Random_Image_Base(Game):
     """
@@ -55,7 +56,7 @@ class Random_Image_Base(Game):
         )
         results = self.search(s)
         if len(results) == 0:
-            raise Exception("No items found.")
+            raise ImageSearchException("No items found.")
         return results[0]
     def get_image_from_url(self,image_response:SearchResult) -> PIL.Image.Image:
         """
@@ -70,7 +71,7 @@ class Random_Image_Base(Game):
             draw.text((0,image.height-ATTRIBUTION_HEIGHT),data,font=font,anchor='lt')
             return image
         else:
-            raise Exception(f"Unable to get image at {url}.")
+            raise ImageSearchException(f"Unable to get image at {url}.")
     def random_image(self,size:Optional[tuple[int,int]] = None,search_terms:list[str] = []) -> PIL.Image.Image:
         """
         fetches a random image based on the given search terms
@@ -81,8 +82,17 @@ class Random_Image_Base(Game):
         
         search_terms: what keywords to include in the random search
         """
-        url = self.random_image_url(search_terms,size)
-        image = self.get_image_from_url(url)
+        tries = 0
+        url = None
+        while url is None:
+            try:
+                url = self.random_image_url(search_terms,size)
+                image = self.get_image_from_url(url)
+            except ImageSearchException:
+                ...
+            tries += 1
+            if tries > NUM_RANDOM_SEARCH_TRIES:
+                raise ImageSearchException(f"Unable to randomly for image image using size = {size}, search_terms = {search_terms}, num_tries = {NUM_RANDOM_SEARCH_TRIES}")
         image = image.convert('RGBA')
         return image
     def temp_random_image(self,size:Optional[tuple[int,int]] = None,search_terms:list[str]=[]) -> str:
