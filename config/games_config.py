@@ -27,7 +27,8 @@ games_config:GamesConfigDict = {
         "scribble_num_lines" : 40,
         "scribble_points_per_line" : 10,
         "scribble_width" : 20,
-        "tile_ratio" : 0.03
+        "tile_ratio" : 0.03,
+        "num_colors_to_sample" : 16
     },
     "container_bidding" : {
         'num_containers' : 5,

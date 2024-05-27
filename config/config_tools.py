@@ -57,6 +57,7 @@ class AlteredImageGuessConfig(TypedDict):
     scribble_points_per_line:int
     scribble_width:int
     tile_ratio:float
+    num_colors_to_sample:int
 class ChessPuzzleEliminationConfig(TypedDict):
     data_path:str
     rating_range:Optional[tuple[int,int]]

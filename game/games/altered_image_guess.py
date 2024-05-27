@@ -5,12 +5,14 @@ from typing import override
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFilter
+import numpy as np
 
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
 from game.game_bases import Random_Image_Base, Rounds_With_Points_Base
 from utils.grammar import temp_file_path
 from utils.types import PlayerDict
+from utils.pillow_tools import get_colors
 
 #region unpacking config
 CONFIG = games_config['altered_image_guess']
@@ -36,6 +38,8 @@ SCRIBBLE_POINTS_PER_LINE = CONFIG['scribble_points_per_line']
 SCRIBBLE_WIDTH = CONFIG['scribble_width']
 
 TILE_RATIO = CONFIG['tile_ratio']
+
+NUM_COLORS_TO_SAMPLE = CONFIG['num_colors_to_sample']
 #endregion
 #region alter funcs
 def zoom_crop(image:PIL.Image.Image) -> PIL.Image.Image:
@@ -120,7 +124,12 @@ def polka_dots(image:PIL.Image.Image) -> PIL.Image.Image:
     num_dots = int(image.size[0]*image.size[1]/PIXELS_IN_IMAGE_PER_POLKA_DOT)
     image = image.copy()
     draw:PIL.ImageDraw.ImageDraw = PIL.ImageDraw.Draw(image)
-    for i in range(num_dots):
+
+    colors_and_weights = get_colors(image)
+    indexes = np.array(range(len(colors_and_weights)))
+    weights = np.array(list(weight for _,weight in colors_and_weights))
+    weights = weights/sum(weights)
+    for _ in range(num_dots):
         radius = random.randint(polka_dot_size_min,polka_dot_size_max)
         center = (
             random.randint(0,image.size[0]-1),
@@ -132,11 +141,7 @@ def polka_dots(image:PIL.Image.Image) -> PIL.Image.Image:
             center[0]+radius,
             center[1]+radius
         )
-        color = (
-            random.randint(0,255),
-            random.randint(0,255),
-            random.randint(0,255)
-        )
+        color = colors_and_weights[np.random.choice(indexes,p=weights)][0]
         draw.ellipse(box,color)
     return image
 def pattern_radial_rays(image:PIL.Image.Image) -> PIL.Image.Image:
@@ -164,20 +169,20 @@ def pattern_radial_rays(image:PIL.Image.Image) -> PIL.Image.Image:
 def scribble(image:PIL.Image.Image) -> PIL.Image.Image:
     image = image.copy()
     draw = PIL.ImageDraw.Draw(image)
-    for line in range(SCRIBBLE_NUM_LINES):
+    colors_and_weights = get_colors(image)
+    indexes = np.array(range(len(colors_and_weights)))
+    weights = np.array(list(weight for _,weight in colors_and_weights))
+    weights = weights/sum(weights)
+    for _ in range(SCRIBBLE_NUM_LINES):
         points = []
-        for i in range(SCRIBBLE_POINTS_PER_LINE):
+        for _ in range(SCRIBBLE_POINTS_PER_LINE):
             points.append((
                 random.randint(0,image.size[0]),
                 random.randint(0,image.size[1])
             ))
             draw.line(
                 points,
-                fill = (
-                    random.randint(0,255),
-                    random.randint(0,255),
-                    random.randint(0,255)
-                ),
+                fill = colors_and_weights[np.random.choice(indexes,p=weights)][0],
                 joint = 'curve',
                 width = SCRIBBLE_WIDTH
             )
@@ -218,15 +223,15 @@ def tileing(image:PIL.Image.Image) -> PIL.Image.Image:
 #endregion
 
 ALTER_METHODS = {#...altered through ____ the image
-    "zooming into a random point on" : zoom_crop,
-    "blurring" : blur,
-    "applying a poorly implemented conversion to black and white to" : black_and_white,
-    "applying an edge highlighting filter to" : edge_highlight,
-    "covering the center of" : remove_center,
+#    "zooming into a random point on" : zoom_crop,
+#    "blurring" : blur,
+#    "applying a poorly implemented conversion to black and white to" : black_and_white,
+#    "applying an edge highlighting filter to" : edge_highlight,
+#    "covering the center of" : remove_center,
     "adding polka dots to" : polka_dots,
-    "adding some radial rays to" : pattern_radial_rays,
-    "scribbling a bit on" : scribble,
-    "tileing" : tileing
+#    "adding some radial rays to" : pattern_radial_rays,
+#    "scribbling a bit on" : scribble,
+#    "tileing" : tileing
 }
 SEARCH_TOPICS = {
     "dog" : '🐶',

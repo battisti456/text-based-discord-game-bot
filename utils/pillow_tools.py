@@ -75,3 +75,21 @@ class ExtendedImageDraw(PIL.ImageDraw.ImageDraw):
             for offset in offsets:
                 self.text((xy[0]+offset[0],xy[1]+offset[1]),text,outline_color,font,anchor)
         self.text(xy,text,fill,font,anchor)
+
+def get_colors(image:PIL.Image.Image,num:int = 16) -> list[tuple[Color,int]]:
+    raw_colors = image.getcolors(maxcolors=image.size[0]*image.size[1]+1)
+    if raw_colors is None:
+        return []
+    raw_colors.sort(key=lambda item: item[0],reverse=True)
+    raw_colors = raw_colors[:num]
+    if image.palette is not None:
+        assert raw_colors is not None
+        return list(
+            (image.palette.colors[color],count) for count,color in raw_colors
+        )
+    elif raw_colors is not None:
+        return list(
+            (color,count) for count,color in raw_colors
+            )#type:ignore
+    else:
+        return []
