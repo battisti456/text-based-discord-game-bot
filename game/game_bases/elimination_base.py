@@ -5,7 +5,7 @@ from game.game_bases.round_base import Rounds_Base
 from game.game_bases.participant_base import Participant_Base
 from utils.common import arg_fix_grouping
 from utils.exceptions import GameEndException
-from utils.grammer import wordify_iterable
+from utils.grammar import wordify_iterable
 from utils.types import (
     Grouping,
     KickReason,

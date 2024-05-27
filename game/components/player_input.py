@@ -15,7 +15,7 @@ from game.components.response_validator import (
     not_none,
 )
 from game.components.sender import Sender
-from utils.grammer import nice_time, ordinate
+from utils.grammar import nice_time, ordinate
 from utils.types import (
     GS,
     PlayerDict,

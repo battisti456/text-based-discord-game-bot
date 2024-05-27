@@ -8,7 +8,7 @@ from game.components.response_validator import ResponseValidator, Validation
 from game.game import Game
 from utils.chess_tools import get_move, get_square_name, render_chess, RenderChessAll, RenderChessOptional, RENDERCHESSOPTIONS
 from utils.common import get_first
-from utils.grammer import temp_file_path, wordify_iterable
+from utils.grammar import temp_file_path, wordify_iterable
 from utils.types import Grouping, PlayerId
 
 CONFIG = game_bases_config['chess_base']

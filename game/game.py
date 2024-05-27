@@ -14,7 +14,7 @@ from game.components.response_validator import (
 )
 from utils.common import arg_fix_grouping
 from utils.exceptions import GameEndException, GameEndInsufficientPlayers
-from utils.grammer import ordinate, wordify_iterable
+from utils.grammar import ordinate, wordify_iterable
 from utils.types import (
     ChannelId,
     Grouping,

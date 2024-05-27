@@ -2,7 +2,7 @@ from math import ceil
 from typing import TYPE_CHECKING, Callable, Literal, Optional, Sequence, TypeVar, override
 
 from utils.emoji_groups import NO_YES_EMOJI
-from utils.grammer import wordify_iterable
+from utils.grammar import wordify_iterable
 from utils.types import ChannelId, InteractionId, MessageId, PlayersIds
 
 if TYPE_CHECKING:
@@ -178,6 +178,9 @@ class Message(object):
             channel_id=self.channel_id,
             reply_to_id=self.message_id
         )
+    @override
+    def __hash__(self) -> int:
+        return hash((self.message_id,self.channel_id))
 
 def make_bullet_points(contents:list[str],emojis:Sequence[str]) -> list[Bullet_Point]:
     """turns lists of texts and emojis into a list of bullet_points with the corresponding values"""

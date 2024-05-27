@@ -4,7 +4,7 @@ from profanity_check import predict_prob
 
 from config.config import config
 from utils.types import PlayerDict, PlayerId
-from utils.grammer import wordify_iterable
+from utils.grammar import wordify_iterable
 
 type Validation = tuple[bool,str|None]
 """

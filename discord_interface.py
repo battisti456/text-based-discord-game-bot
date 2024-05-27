@@ -11,7 +11,7 @@ from game.components.game_interface import (
 )
 from game.components.interaction import Interaction
 from game.components.message import Add_Bullet_Points_To_Content_Alias_Message, Message
-from utils.grammer import wordify_iterable
+from utils.grammar import wordify_iterable
 from utils.types import ChannelId, MessageId, PlayerId
 
 

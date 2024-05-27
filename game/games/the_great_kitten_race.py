@@ -16,7 +16,7 @@ from game.components.player_input import (
 from game.components.response_validator import Validation
 from game.game import Game
 from utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
-from utils.grammer import ordinate, wordify_iterable
+from utils.grammar import ordinate, wordify_iterable
 from utils.types import PlayerDict, PlayerId, PlayerPlacement
 
 CONFIG = games_config['the_great_kitten_race']

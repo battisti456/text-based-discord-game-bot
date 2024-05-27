@@ -9,7 +9,7 @@ import PIL.ImageFilter
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
 from game.game_bases import Random_Image_Base, Rounds_With_Points_Base
-from utils.grammer import temp_file_path
+from utils.grammar import temp_file_path
 from utils.types import PlayerDict
 
 #region unpacking config

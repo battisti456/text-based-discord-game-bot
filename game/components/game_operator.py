@@ -16,7 +16,7 @@ from game.components.interaction import Interaction
 from game.components.interface_operator import Interface_Operator
 from game.game import Game
 from game.games import games, random_game
-from utils.grammer import wordify_iterable
+from utils.grammar import wordify_iterable
 
 CP = config['command_prefix']
 COMMAND_DOCSTRING= f"""

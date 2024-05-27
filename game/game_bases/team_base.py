@@ -9,7 +9,7 @@ from game.game_bases.round_base import Rounds_Base
 from game.game_bases.rounds_with_points_base import Rounds_With_Points_Framework
 from utils.common import arg_fix_grouping
 from utils.exceptions import GameEndInsufficientTeams
-from utils.grammer import wordify_iterable
+from utils.grammar import wordify_iterable
 from utils.types import (
     ChannelId,
     Grouping,
@@ -145,6 +145,13 @@ class Team_Base(Rounds_Base):
         kick_teams = tuple(team for team in self.unkicked_teams if all(self.is_player_kicked(player) for player in self.team_players[team]))
         if kick_teams:
             await self.kick_teams(kick_teams,reason)
+    def _generate_team_placements(self) -> Placement[Team]:
+        ...
+    @override
+    def generate_placements(self) -> Placement[PlayerId]:
+        return team_to_player_placements(
+            self._generate_team_placements(),self.team_players
+        )
 
 
 
@@ -158,8 +165,8 @@ class Rounds_With_Points_Team_Base(Team_Base,Rounds_With_Points_Framework[Team,i
     def _configure_participants(self):
         self._participants = self.all_teams
     @override
-    def generate_placements(self) -> PlayerPlacement:
-        return team_to_player_placements(self._generate_participant_placements(),self.team_players)
+    def _generate_team_placements(self) -> Placement[Team]:
+        return self._generate_participant_placements()
     @override
     async def _run(self):
         await Rounds_With_Points_Framework._run(self) #type:ignore

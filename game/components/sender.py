@@ -1,7 +1,7 @@
 from typing import Iterable, override
 
 from game.components.message import Message
-from utils.grammer import wordify_iterable
+from utils.grammar import wordify_iterable
 from utils.types import PlayerId
 
 
