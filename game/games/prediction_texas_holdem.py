@@ -48,7 +48,7 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
         attachment = self.ch_to_attachment(shared)
         await self.basic_send(
             "Here are the shared cards:",
-            attatchements_data=[attachment]
+            attachments_data=[attachment]
         )
         responses = await self.basic_multiple_choice(
             "Judging from your own cards and the shared cards, where do you think you will place amongst your fellow players?",

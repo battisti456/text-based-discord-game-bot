@@ -136,7 +136,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
         move_index = 1
         await self.basic_send(
             f"Here is the start of the puzzle! You will be playing for {player_color}.",
-            attatchements_data=[self.make_board_image()]
+            attachments_data=[self.make_board_image()]
         )
 
         def best_move(move_uci:str) -> bool:
@@ -180,7 +180,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
             
             await self.basic_send(
                 f"{move_right_text} {best_move_text}{end_text}",
-                attatchements_data=[self.make_board_image()]
+                attachments_data=[self.make_board_image()]
             )
 
             await self.eliminate(incorrect_players)
@@ -202,7 +202,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
 
             await self.basic_send(
                 f"The opponent, {oppo_color}, {respond_text} {mt}.{end_text}",
-                attatchements_data=[self.make_board_image()]
+                attachments_data=[self.make_board_image()]
             )
             move_index += 1
 
@@ -216,7 +216,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
                 end_text = f" This ends the game in {get_game_over_text(self.board)}."
             await self.basic_send(
                 f"{begin_text}{chess.COLOR_NAMES[self.board.turn]} plays {move_text}.{end_text}",
-                attatchements_data=[self.make_board_image()]
+                attachments_data=[self.make_board_image()]
             )
             begin_text = ""
             move_index += 1

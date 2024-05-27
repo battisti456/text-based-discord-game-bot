@@ -122,20 +122,20 @@ class Interface_Component():
         """
         return self.sender.format_players(user_id)
     async def basic_send(
-            self,content:Optional[str] = None,attatchements_data:list[str] = [],
+            self,content:Optional[str] = None,attachments_data:list[str] = [],
             channel_id:Optional[ChannelId] = None):
         """
         creates a message with the given parameters and sends it with self.sender
         
         content: the text content of the message
         
-        attatchements_data: a list of file paths to attatch to the message
+        attachments_data: a list of file paths to attach to the message
         
         channel_id: what channel to send the message on
         """
         message = Message(
             content = content,
-            attach_paths=attatchements_data,
+            attach_paths=attachments_data,
             channel_id=channel_id
         )
         await self.sender(message)

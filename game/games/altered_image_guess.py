@@ -174,7 +174,7 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
 
         await self.basic_send(
             f"I have found a random image from a search prompt, here is a version I have altered through {alter_method} the image.",
-            attatchements_data=[altered_path]
+            attachments_data=[altered_path]
         )
         
         responses:PlayerDict[int] = await self.basic_multiple_choice(
@@ -188,7 +188,7 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
 
         await self.basic_send(
             f"I actually searched for '{actual_search}'.",
-            attatchements_data=[image_path]
+            attachments_data=[image_path]
         )
 
         await self.score(correct_players,1)
