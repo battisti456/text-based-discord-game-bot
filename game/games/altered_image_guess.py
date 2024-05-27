@@ -1,241 +1,81 @@
-import math
 import random
 from typing import override
 
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFilter
-import numpy as np
 
-from game import get_logger
 from config.games_config import games_config
+from game import get_logger
 from game.components.game_interface import Game_Interface
 from game.game_bases import Random_Image_Base, Rounds_With_Points_Base
 from utils.grammar import temp_file_path
-from utils.types import PlayerDict
-from utils.pillow_tools import get_colors
+from utils.image_modification_functions import (
+    black_and_white,
+    blur,
+    edge_highlight,
+    pattern_radial_rays,
+    polka_dots,
+    remove_center,
+    scribble,
+    tiling,
+    zoom_crop,
+)
 from utils.image_search import ImageSearchException
+from utils.types import PlayerDict
 
 logger = get_logger(__name__)
 
-#region unpacking config
+
 CONFIG = games_config['altered_image_guess']
+NUM_ROUNDS = CONFIG['num_rounds']
+MIN_IMAGE_SIZE = CONFIG['min_image_size']
+NUM_CHOICES = CONFIG['num_choices']
 
-NUM_ROUNDS = games_config["altered_image_guess"]['num_rounds']
-MIN_IMAGE_SIZE = games_config['altered_image_guess']['min_image_size']
-NUM_CHOICES = games_config['altered_image_guess']['num_choices']
-ZOOM_CROP_BOX_SIZE = games_config['altered_image_guess']['zoom_crop_box_size']
-ZOOM_CROP_BOX_DISPLAY_SIZE = games_config['altered_image_guess']['zoom_crop_box_display_size']
-ZOOM_CROP_NO_EDGE_PORTION = games_config['altered_image_guess']['zoom_crop_no_edge_portion']
-BLUR_RADIUS = games_config['altered_image_guess']['blur_radius']
-REMOVAL_COLOR = games_config['altered_image_guess']['removal_color']
-REMOVAL_KEEP_PORTION = games_config['altered_image_guess']['removal_keep_portion']
-BAD_CONVERSION_RESIZE = games_config['altered_image_guess']['bad_conversion_resize']
-
-POLKA_DOT_SIZE_SCALAR = CONFIG['polka_dot_size_scalar']
-PIXELS_IN_IMAGE_PER_POLKA_DOT = CONFIG['pixels_in_image_per_polka_dot']
-PATTERN_RADIAL_PORTION_VISABLE = CONFIG['pattern_radial_portion_visable']
-PATTERN_RADIAL_NUM_RAYS = CONFIG['pattern_radial_num_rays']
-
-SCRIBBLE_NUM_LINES = CONFIG['scribble_num_lines']
-SCRIBBLE_POINTS_PER_LINE = CONFIG['scribble_points_per_line']
-SCRIBBLE_WIDTH = CONFIG['scribble_width']
-
-TILE_RATIO = CONFIG['tile_ratio']
-
-NUM_COLORS_TO_SAMPLE = CONFIG['num_colors_to_sample']
-#endregion
-#region alter funcs
-def zoom_crop(image:PIL.Image.Image) -> PIL.Image.Image:
-    zoom_range:tuple[int,int,int,int] = (
-        int(image.size[0]*ZOOM_CROP_NO_EDGE_PORTION),#tl x
-        int(image.size[1]*ZOOM_CROP_NO_EDGE_PORTION),#tl y
-        int(image.size[0]*(1-ZOOM_CROP_NO_EDGE_PORTION)),#br x
-        int(image.size[1]*(1-ZOOM_CROP_NO_EDGE_PORTION))#br y
-        )
-    zoom_center = (
-        random.randint(zoom_range[0],zoom_range[2]),
-        random.randint(zoom_range[1],zoom_range[3])
-    )
-    zoom_crop = (
-        zoom_center[0] - ZOOM_CROP_BOX_SIZE[0],
-        zoom_center[1] - ZOOM_CROP_BOX_SIZE[1],
-        zoom_center[0] + ZOOM_CROP_BOX_SIZE[0],
-        zoom_center[1] + ZOOM_CROP_BOX_SIZE[1]
-    )
-    return image.crop(zoom_crop).resize(ZOOM_CROP_BOX_DISPLAY_SIZE)
-def blur(image:PIL.Image.Image) -> PIL.Image.Image:
-    return image.filter(PIL.ImageFilter.GaussianBlur(radius = int(BLUR_RADIUS)))
-def black_and_white(image:PIL.Image.Image) -> PIL.Image.Image:
-    image = image.resize((int(image.size[0]*BAD_CONVERSION_RESIZE),int(image.size[1]*BAD_CONVERSION_RESIZE)))
-    sum_all_values:int = 0
-    for i in range(image.size[0]):
-        for j in range(image.size[1]):
-            sum_all_values += sum(image.getpixel((i,j)))
-    avg_color = sum_all_values/image.size[0]/image.size[1]
-    for i in range(image.size[0]):
-        for j in range(image.size[1]):
-            cord = (i,j)
-            pixel = image.getpixel(cord)
-            if sum(pixel)<avg_color:
-                image.putpixel(cord,(0,0,0))
-            else:
-                image.putpixel(cord,(255,255,255))
-    image = image.resize((int(image.size[0]/BAD_CONVERSION_RESIZE),int(image.size[1]/BAD_CONVERSION_RESIZE)))
-    return image
-def remove_center(image:PIL.Image.Image) -> PIL.Image.Image:
-    image = image.copy()
-    draw = PIL.ImageDraw.Draw(image)
-    rectangle = (
-        int(image.size[0]*REMOVAL_KEEP_PORTION),
-        int(image.size[1]*REMOVAL_KEEP_PORTION),
-        int(image.size[0]*(1-REMOVAL_KEEP_PORTION)),
-        int(image.size[1]*(1-REMOVAL_KEEP_PORTION)),
-    )
-    circle = (
-        int(image.size[0]/2),
-        int(image.size[1]/2),
-        min(image.size)/2
-    )
-    edge_rectangle = (
-        0,
-        0,
-        image.size[0],
-        image.size[1]
-    )
-    i = random.randint(0,3)
-    if i == 0:
-        draw.rectangle(rectangle,fill = REMOVAL_COLOR)
-    elif i == 1:
-        draw.rounded_rectangle(rectangle,radius = int(min(image.size)/4),fill = REMOVAL_COLOR)
-    elif i == 2:
-        draw.ellipse(edge_rectangle,fill = REMOVAL_COLOR)
-    elif i == 3:
-        draw.regular_polygon(circle,n_sides=random.randint(3,10),fill=REMOVAL_COLOR)
-
-    return image
-def edge_highlight(image:PIL.Image.Image) -> PIL.Image.Image:
-    return image.filter(
-        PIL.ImageFilter.Kernel(
-            (3,3),
-            (-1, -1, -1, -1, 11, -2, -2, -2, -2),
-            1,0
-        )
-    )
-def polka_dots(image:PIL.Image.Image) -> PIL.Image.Image:
-    polka_dot_size_min:float = int(POLKA_DOT_SIZE_SCALAR[0]*min(image.size))
-    polka_dot_size_max:float = int(POLKA_DOT_SIZE_SCALAR[1]*min(image.size))
-    num_dots = int(image.size[0]*image.size[1]/PIXELS_IN_IMAGE_PER_POLKA_DOT)
-    image = image.copy()
-    draw:PIL.ImageDraw.ImageDraw = PIL.ImageDraw.Draw(image)
-
-    colors_and_weights = get_colors(image)
-    indexes = np.array(range(len(colors_and_weights)))
-    weights = np.array(list(weight for _,weight in colors_and_weights))
-    weights = weights/sum(weights)
-    for _ in range(num_dots):
-        radius = random.randint(polka_dot_size_min,polka_dot_size_max)
-        center = (
-            random.randint(0,image.size[0]-1),
-            random.randint(0,image.size[1]-1)
-        )
-        box = (
-            center[0]-radius,
-            center[1]-radius,
-            center[0]+radius,
-            center[1]+radius
-        )
-        color = colors_and_weights[np.random.choice(indexes,p=weights)][0]
-        draw.ellipse(box,color)
-    return image
-def pattern_radial_rays(image:PIL.Image.Image) -> PIL.Image.Image:
-    image = image.copy()
-    draw = PIL.ImageDraw.Draw(image)
-    center = (
-        random.randint(0,image.size[0]),
-        random.randint(0,image.size[1])
-    )
-    off_angle = math.pi*(1-PATTERN_RADIAL_PORTION_VISABLE)/PATTERN_RADIAL_NUM_RAYS*2
-    on_angle = math.pi*PATTERN_RADIAL_PORTION_VISABLE/PATTERN_RADIAL_NUM_RAYS*2
-    radius = max(image.size)*2#guaranteed to be way to big for the image
-    current_angle = 0
-    for i in range(PATTERN_RADIAL_NUM_RAYS):
-        draw.polygon(
-            (
-                center,
-                (center[0] + math.cos(current_angle)*radius,center[1] + math.sin(current_angle)*radius),
-                (center[0] + math.cos(current_angle+off_angle)*radius, center[1] + math.sin(current_angle+off_angle)*radius)
-            ),
-            fill = REMOVAL_COLOR
-        )
-        current_angle = current_angle + on_angle + off_angle
-    return image
-def scribble(image:PIL.Image.Image) -> PIL.Image.Image:
-    image = image.copy()
-    draw = PIL.ImageDraw.Draw(image)
-    colors_and_weights = get_colors(image)
-    indexes = np.array(range(len(colors_and_weights)))
-    weights = np.array(list(weight for _,weight in colors_and_weights))
-    weights = weights/sum(weights)
-    for _ in range(SCRIBBLE_NUM_LINES):
-        points = []
-        for _ in range(SCRIBBLE_POINTS_PER_LINE):
-            points.append((
-                random.randint(0,image.size[0]),
-                random.randint(0,image.size[1])
-            ))
-            draw.line(
-                points,
-                fill = colors_and_weights[np.random.choice(indexes,p=weights)][0],
-                joint = 'curve',
-                width = SCRIBBLE_WIDTH
-            )
-    return image
-def tileing(image:PIL.Image.Image) -> PIL.Image.Image:
-    tile_size = (
-        int(image.size[0]*TILE_RATIO),
-        int(image.size[1]*TILE_RATIO)
-    )
-    num_tiles = (
-        int(image.size[0]/tile_size[0]),
-        int(image.size[1]/tile_size[1])
-    )
-    new_image = PIL.Image.new(
-        'RGB',
-        (
-            tile_size[0]*num_tiles[0],
-            tile_size[1]*num_tiles[1]
-        )
-    )
-    source_boxes:list[tuple[int,int,int,int]] = []
-    for i in range(num_tiles[0]):
-        for j in range(num_tiles[1]):
-            tile_box = (
-                i*tile_size[0],
-                j*tile_size[1],
-                (i+1)*tile_size[0],
-                (j+1)*tile_size[1]
-            )
-            source_boxes.append(tile_box)
-    dest_boxes = source_boxes.copy()
-    random.shuffle(dest_boxes)
-    for k in range(len(source_boxes)):
-        cropped_image = image.crop(source_boxes[k])
-        new_image.paste(cropped_image,dest_boxes[k][0:2])
-    
-    return new_image
-#endregion
 
 ALTER_METHODS = {#...altered through ____ the image
-    "zooming into a random point on" : zoom_crop,
-    "blurring" : blur,
-    "applying a poorly implemented conversion to black and white to" : black_and_white,
-    "applying an edge highlighting filter to" : edge_highlight,
-    "covering the center of" : remove_center,
-    "adding polka dots to" : polka_dots,
-    "adding some radial rays to" : pattern_radial_rays,
-    "scribbling a bit on" : scribble,
-    "tileing" : tileing
+    "zooming into a random point on" : lambda image: zoom_crop(  # noqa: F405
+        image,
+        CONFIG['zoom_crop_no_edge_portion'],
+        CONFIG['zoom_crop_box_size'],
+        CONFIG['zoom_crop_box_display_size']),
+    "blurring" : lambda image: blur(  # noqa: F405
+        image,
+        CONFIG['blur_radius']
+    ),
+    "applying a poorly implemented conversion to black and white to" : lambda image: black_and_white(  # noqa: F405
+        image,
+        CONFIG['bad_conversion_resize']
+    ),
+    "applying an edge highlighting filter to" : lambda image: edge_highlight(  # noqa: F405
+        image
+    ),
+    "covering the center of" : lambda image: remove_center(  # noqa: F405
+        image,
+        CONFIG['removal_keep_portion'],
+        CONFIG['removal_color']
+    ),
+    "adding polka dots to" : lambda image: polka_dots(  # noqa: F405
+        image,
+        CONFIG['polka_dot_size_scalar'],
+        CONFIG['pixels_in_image_per_polka_dot']
+    ),
+    "adding some radial rays to" : lambda image: pattern_radial_rays(  # noqa: F405
+        image,
+        CONFIG['pattern_radial_portion_visable'],
+        CONFIG['pattern_radial_num_rays'],
+        CONFIG['removal_color']
+    ),
+    "scribbling a bit on" : lambda image: scribble(  # noqa: F405
+        image,
+        CONFIG['scribble_num_lines'],
+        CONFIG['scribble_points_per_line'],
+        CONFIG['scribble_width']
+    ),
+    "tiling" : lambda image: tiling(  # noqa: F405
+        image,
+        CONFIG['tile_ratio']
+    )
 }
 SEARCH_TOPICS = {
     "dog" : '🐶',
