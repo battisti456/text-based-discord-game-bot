@@ -8,7 +8,7 @@ import PIL.ImageFilter
 from config.games_config import games_config
 from game import get_logger
 from game.components.game_interface import Game_Interface
-from game.game_bases import Random_Image_Base, Rounds_With_Points_Base
+from game.game_bases import Image_Search_Base, Rounds_With_Points_Base
 from utils.grammar import temp_file_path
 from utils.image_modification_functions import (
     black_and_white,
@@ -140,10 +140,10 @@ SEARCH_TOPICS = {
     "gem" : '💎'
 }
 
-class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
+class Altered_Image_Guess(Rounds_With_Points_Base,Image_Search_Base):
     def __init__(self,gi:Game_Interface):
         Rounds_With_Points_Base.__init__(self,gi)
-        Random_Image_Base.__init__(self,gi)
+        Image_Search_Base.__init__(self,gi)
         self.num_rounds = NUM_ROUNDS
     @override
     async def game_intro(self):
@@ -167,6 +167,7 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Random_Image_Base):
             return
         alter_method = random.choice(list(ALTER_METHODS))
         altered_image = ALTER_METHODS[alter_method](image)
+
         image_path = temp_file_path(".png")
         altered_path = temp_file_path(".png")
         image.save(image_path)

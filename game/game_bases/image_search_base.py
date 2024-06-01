@@ -1,6 +1,7 @@
 import io
 from typing import Optional, Sequence
 
+import PIL.ExifTags as ExifTags
 import PIL.Image
 import PIL.ImageDraw
 import requests
@@ -11,36 +12,48 @@ from game.game import Game
 from utils.grammar import temp_file_path
 from utils.image_search import (
     Image_Search,
+    ImageSearchException,
     Pixabay_API,
-    SearchResult,
+    Search_Result,
     SearchTerms,
     Unsplash_No_API,
-    ImageSearchException
 )
-from utils.pillow_tools import get_font
+from utils.pillow_tools import Persistent_Exif_Image, add_accreditation
 
 ATTRIBUTION_HEIGHT = 10
 NUM_RANDOM_SEARCH_TRIES = 10
 
-class Random_Image_Base(Game):
+def embed_search_result(image:PIL.Image.Image,result:Search_Result):
+    if image._exif is None:
+        image._exif = PIL.Image.Exif()
+    exif = image._exif
+
+    if result.artist is not None:
+        exif[ExifTags.Base.Artist] = result.artist
+    if result.image_type is not None:
+        exif[ExifTags.Base.MakerNote] = result.image_type
+    #more not implemented
+
+
+class Image_Search_Base(Game):
     """
     a game base for fetching and managing random images
     """
     def __init__(self,gh:Game_Interface):
         Game.__init__(self,gh)
-        if Random_Image_Base not in self.initialized_bases:
-            self.initialized_bases.append(Random_Image_Base)
+        if Image_Search_Base not in self.initialized_bases:
+            self.initialized_bases.append(Image_Search_Base)
             self.search:Image_Search
             if game_bases_config['random_image_base']['pixabay_token'] is not None:
                 self.search = Pixabay_API(game_bases_config['random_image_base']['pixabay_token'])
             else:
                 self.search = Unsplash_No_API()
-    def random_image_url(
+    def random_search(
             self,
             search_terms:Sequence[str],
-            size:Optional[tuple[int,int]] = None) -> SearchResult:
+            size:Optional[tuple[int,int]] = None) -> Search_Result:
         """
-        returns a contructed url for finding a random image
+        returns a constructed url for finding a random image
         
         author: name of an author this image should be by
         
@@ -58,21 +71,21 @@ class Random_Image_Base(Game):
         if len(results) == 0:
             raise ImageSearchException("No items found.")
         return results[0]
-    def get_image_from_url(self,image_response:SearchResult) -> PIL.Image.Image:
+    def get_from_result(self,search_result:Search_Result, auto_accredit:bool = True) -> PIL.Image.Image:
         """
         fetches an image from a url
         """
-        url, data = image_response
+        url = search_result.raw_image_url
         request = requests.get(url,stream=True)
         if request.status_code == 200:
-            image = PIL.Image.open(io.BytesIO(request.content))
-            font = get_font(None,data,{},ATTRIBUTION_HEIGHT,image.width)
-            draw = PIL.ImageDraw.ImageDraw(image)
-            draw.text((0,image.height-ATTRIBUTION_HEIGHT),data,font=font,anchor='lt')
+            image = Persistent_Exif_Image.from_image(PIL.Image.open(io.BytesIO(request.content)))
+            embed_search_result(image,search_result)
+            if auto_accredit:
+                image = add_accreditation(image)
             return image
         else:
             raise ImageSearchException(f"Unable to get image at {url}.")
-    def random_image(self,size:Optional[tuple[int,int]] = None,search_terms:list[str] = []) -> PIL.Image.Image:
+    def random_image(self,size:Optional[tuple[int,int]] = None,search_terms:list[str] = [],auto_accredit:bool = True) -> PIL.Image.Image:
         """
         fetches a random image based on the given search terms
         
@@ -86,8 +99,8 @@ class Random_Image_Base(Game):
         image = None
         while image is None:
             try:
-                url = self.random_image_url(search_terms,size)
-                image = self.get_image_from_url(url)
+                url = self.random_search(search_terms,size)
+                image = self.get_from_result(url,auto_accredit)
             except ImageSearchException:
                 ...
             tries += 1

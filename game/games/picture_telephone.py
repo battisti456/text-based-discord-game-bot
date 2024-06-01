@@ -4,7 +4,7 @@ from game.components.game_interface import Game_Interface
 from game.components.message import Message
 from game.components.player_input import Player_Text_Input, run_inputs
 from game.components.response_validator import text_validator_maker
-from game.game_bases import Random_Image_Base, Rounds_With_Points_Base
+from game.game_bases import Image_Search_Base, Rounds_With_Points_Base
 from utils.types import PlayerDict, PlayerDictOptional, PlayerId
 
 NUM_ROUNDS = 1
@@ -17,11 +17,11 @@ validator = text_validator_maker(
     is_alpha=True
 )
 
-class Picture_Telephone(Rounds_With_Points_Base, Random_Image_Base):
+class Picture_Telephone(Rounds_With_Points_Base, Image_Search_Base):
     def __init__(self,gi:Game_Interface):
         raise NotImplementedError()
         Rounds_With_Points_Base.__init__(self,gi)
-        Random_Image_Base.__init__(self,gi)
+        Image_Search_Base.__init__(self,gi)
         self.num_rounds = NUM_ROUNDS
         self._texts:list[PlayerDict[str]]
         self._images:list[PlayerDict[str]]

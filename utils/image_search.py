@@ -6,10 +6,17 @@ from typing import Literal, Optional, override
 
 import requests
 
-type SearchResult = tuple[str,str]
-"url,accreditation"
 type ImageType = Literal['photo','illustration','vector']
 type SortOption = Literal['popular','latest','random']
+
+@dataclasses.dataclass(frozen=True)
+class Search_Result():
+    raw_image_url:str
+    artist:Optional[str] = None
+    image_url:Optional[str] = None
+    image_type:Optional[ImageType] = None
+    key_words:tuple[str,...]|None = None
+    title:str|None = None
 
 class ImageSearchException(Exception):
     ...
@@ -27,7 +34,7 @@ class SearchTerms():
 
 @dataclasses.dataclass
 class Image_Search():
-    def __call__(self,s:SearchTerms) -> list[SearchResult]:
+    def __call__(self,s:SearchTerms) -> list[Search_Result]:
         ...
 
 
@@ -37,7 +44,7 @@ class Pixabay_API(Image_Search):
     MAX_PAGE_RESULTS = 200
     token:str
     @override
-    def __call__(self, s: SearchTerms, _page:int = 1) -> list[SearchResult]:
+    def __call__(self, s: SearchTerms, _page:int = 1) -> list[Search_Result]:
         parameters:list[str] = []
         parameters.append(f"key={self.token}")
         if s.search_words is not None:
@@ -62,14 +69,16 @@ class Pixabay_API(Image_Search):
             parameters.append(f"per_page={Pixabay_API.MAX_PAGE_RESULTS}")#get max number of hits for random
         else:
             parameters.append(f"per_page={s.max_hits}")
-        
         api_url = f"{Pixabay_API.BASE_URL}/?{'&'.join(parameters)}"
         request = requests.get(api_url,stream=True)
         data = json.load(io.BytesIO(request.content))
         to_return = list(
-            (
-                hit['largeImageURL'],
-                f"Sourced from {hit['pageURL']}"
+            Search_Result(
+                artist=hit['user'],
+                raw_image_url=hit['largeImageURL'],
+                image_url=hit['userImageURL'],
+                image_type=hit['type'],
+                key_words=None if not hit['tags'] else tuple(word.strip() for word in hit['tags'].split(','))
             )
             for hit in data['hits'])
         if len(to_return) == Pixabay_API.MAX_PAGE_RESULTS and s.max_hits > Pixabay_API.MAX_PAGE_RESULTS:
@@ -90,10 +99,10 @@ class Pixabay_API(Image_Search):
 class Unsplash_No_API(Image_Search):
     BASE_URL = "https://source.unsplash.com/random"
     @override
-    def __call__(self, s: SearchTerms) -> list[SearchResult]:
+    def __call__(self, s: SearchTerms) -> list[Search_Result]:
         url_end:str = ""
         if s.width is not None and s.height is not None:
             url_end += f"/{s.width}x{s.height}"
         if s.search_words is not None:
             url_end += f"/?{','.join(s.search_words)}"
-        return [(f"{Unsplash_No_API.BASE_URL}{url_end}","")]
+        return [Search_Result(raw_image_url=f"{Unsplash_No_API.BASE_URL}{url_end}")]

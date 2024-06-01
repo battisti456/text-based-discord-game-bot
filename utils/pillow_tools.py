@@ -1,17 +1,19 @@
-from math import ceil, floor
-from typing import Any, Optional
+from typing import Any, Optional, override
 
-from color_tools_battisti456.color_names import color_name
-from color_tools_battisti456.types import Color
-
+import PIL.ExifTags as ExifTags  # noqa: F401
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
+import PIL.ImageOps
+from color_tools_battisti456 import color_name, invert
+from color_tools_battisti456.types import Color
 
 type Font = PIL.ImageFont.ImageFont|PIL.ImageFont.FreeTypeFont|PIL.ImageFont.TransposedFont
 "all PIL.ImageFont font objects (as they do not inherit from a common class)"
+type DrawTextParameters = dict[str,Any]
 
 FONT_START_SIZE = 1000
+TREAT_TRANSPARENT_AS = (49, 51, 56)
 
 def get_color_name(color:Color) -> str:
     """not fully implemented"""
@@ -29,7 +31,7 @@ def _get_font(font_path:Optional[str] = None,size:Optional[float] = None) -> Fon
 def get_font(
         font_path:Optional[str] = None,
         text:Optional[str] = None,
-        draw_text_parameters:dict[str,Any] = {},
+        draw_text_parameters:DrawTextParameters = {},
         max_height:Optional[int] = None,
         max_width:Optional[int] = None,
         multi_line:bool = False) -> Font:
@@ -54,7 +56,7 @@ def get_font(
         return _get_font(font_path,FONT_START_SIZE*mult)
 
 
-class ExtendedImageDraw(PIL.ImageDraw.ImageDraw):
+"""class ExtendedImageDraw(PIL.ImageDraw.ImageDraw):
     def text_with_outline(
             self,
             xy:tuple[float,float],
@@ -74,7 +76,7 @@ class ExtendedImageDraw(PIL.ImageDraw.ImageDraw):
             )
             for offset in offsets:
                 self.text((xy[0]+offset[0],xy[1]+offset[1]),text,outline_color,font,anchor)
-        self.text(xy,text,fill,font,anchor)
+        self.text(xy,text,fill,font,anchor)"""
 
 def get_colors(image:PIL.Image.Image,num:int = 16) -> list[tuple[Color,int]]:
     raw_colors = image.getcolors(maxcolors=image.size[0]*image.size[1]+1)
@@ -93,3 +95,106 @@ def get_colors(image:PIL.Image.Image,num:int = 16) -> list[tuple[Color,int]]:
             )#type:ignore
     else:
         return []
+    
+class Persistent_Exif_Image(PIL.Image.Image):
+    @classmethod
+    def from_image(cls,image:PIL.Image.Image) -> 'Persistent_Exif_Image':
+        return Persistent_Exif_Image(image)
+    def __init__(self,image:PIL.Image.Image,exif:PIL.Image.Exif|None = None):
+        self.raw_image = image
+        self._exif = exif
+        if exif is not None:
+            self.raw_image._exif = exif
+    @override
+    def __getattribute__(self, name: str) -> Any:
+        if name in ('raw_image','metadata','save','_exif'):
+            return object.__getattribute__(self,name)
+        img:PIL.Image.Image = object.__getattribute__(self,'raw_image')
+        val = getattr(img,name)
+        if callable(val):
+            def wrapper(*args,**kwargs):
+                ret_val = val(*args,**kwargs)
+                if isinstance(ret_val,PIL.Image.Image):
+                    return Persistent_Exif_Image(ret_val,self._exif)
+                else:
+                    return ret_val
+            return wrapper
+        else:
+            return val
+
+def make_accreditation(image:PIL.Image.Image) -> str|None:
+    exif = image._exif
+    if exif is None:
+        return None
+    if ExifTags.Base.Artist in exif:
+        return f"Created by: {exif[ExifTags.Base.Artist]}"
+    if ExifTags.Base.DocumentName in exif:
+        return f"Titled: {exif[ExifTags.Base.DocumentName]}"
+    if ExifTags.Base.UserComment in exif:
+        return exif[ExifTags.Base.UserComment]
+    
+def add_accreditation(
+        image:PIL.Image.Image,
+        font_path:str|None = None,
+        draw_text_parameters:DrawTextParameters = {},
+        height:int|float = 20) -> PIL.Image.Image:
+    accreditation = make_accreditation(image)
+    if accreditation is None:
+        return image
+    
+    if height > 1:
+        height = int(height)
+    else:
+        height = int(height*image.size[1])
+    to_return = image.copy()
+    font = get_font(
+        font_path=font_path,
+        text=accreditation,
+        draw_text_parameters=draw_text_parameters,
+        max_height=height,
+        max_width=image.size[0]
+        )
+    text_color = "black"
+    if image.mode in ('P',):
+        relevant_image = image.crop((0,image.size[1]-height,image.size[0],image.size[1]))
+        color = get_colors(relevant_image)[0][0]
+        text_color = invert(color)
+
+    text_mask = PIL.Image.new(
+        mode = 'RGBA',
+        size = image.size,
+        color = "#00000000")
+    draw = PIL.ImageDraw.Draw(text_mask)
+    draw.text(
+        xy = (0,int(image.size[1] - height/2)),
+        text = accreditation,
+        fill = text_color,
+        font = font,
+        anchor = "lm"#left middle
+    )
+    inverted_image:PIL.Image.Image
+    if image.mode == 'RGBA':
+        r,g,b,a = image.split()
+        for i in range(image.size[0]):
+            for j in range(image.size[1]):
+                if a.getpixel((i,j)) == 0:
+                    r.putpixel((i,j),TREAT_TRANSPARENT_AS[0])
+                    g.putpixel((i,j),TREAT_TRANSPARENT_AS[1])
+                    b.putpixel((i,j),TREAT_TRANSPARENT_AS[2])
+        inverted_image = PIL.ImageOps.invert(
+            PIL.Image.merge('RGB',(r,g,b))
+        )
+        inverted_image = PIL.Image.merge(
+            'RGBA',
+            inverted_image.split()+(PIL.Image.new('L',image.size,255),))
+    else:
+        try:
+            inverted_image = PIL.ImageOps.invert(image)
+        except NotImplementedError:
+            inverted_image = text_mask
+    to_return.paste(
+        im = inverted_image,
+        box = (0,0),
+        mask=text_mask
+        )
+    return to_return
