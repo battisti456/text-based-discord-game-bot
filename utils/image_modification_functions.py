@@ -87,13 +87,15 @@ def black_and_white(
 def remove_center(
         image:PIL.Image.Image,
         portion_keep:float,
-        fill:Color) -> PIL.Image.Image:
+        fill:Color,
+        shape:int) -> PIL.Image.Image:
     """accepts an image and modifies it by removing a center portion
 
     Args:
         image: image to modify
         portion_keep: a value between 0 and 1 representing what portion of the edge is kept
         fill: color to fill the removed portion with
+        shape: which shape to paste in the center of the image (0 - rectangle, 1 - rounded rectangle, 2 - ellipse, 3 - polygon)
 
     Returns:
         the image with the center removed
@@ -117,16 +119,15 @@ def remove_center(
         image.size[0],
         image.size[1]
     )
-    i = random.randint(0,3)
-    if i == 0:
-        draw.rectangle(rectangle,fill = fill)
-    elif i == 1:
-        draw.rounded_rectangle(rectangle,radius = int(min(image.size)/4),fill = fill)
-    elif i == 2:
-        draw.ellipse(edge_rectangle,fill = fill)
-    elif i == 3:
-        draw.regular_polygon(circle,n_sides=random.randint(3,10),fill=fill)
-
+    match(shape):
+        case 0:
+            draw.rectangle(rectangle,fill = fill)
+        case 1:
+            draw.rounded_rectangle(rectangle,radius = int(min(image.size)/4),fill = fill)
+        case 2:
+            draw.ellipse(edge_rectangle,fill = fill)
+        case 3:
+            draw.regular_polygon(circle,n_sides=random.randint(3,10),fill=fill)
     return image
 def edge_highlight(image:PIL.Image.Image) -> PIL.Image.Image:
     return image.filter(
@@ -292,6 +293,67 @@ def tiling(
         new_image.paste(cropped_image,dest_boxes[k][0:2])
     
     return new_image
+def concentric_polygons(
+        image:PIL.Image.Image,
+        on_off_ratio:float,
+        on_ratio:float,
+        on_off_rotation:float,
+        num_sides:int,
+        center:tuple[float,float],
+        fill:Color) -> PIL.Image.Image:
+    """modifies an image by filling it with alternating polygons (on) and polygon cutouts revealing the original image behind (off)
+
+    Args:
+        image: image to modify
+        on_off_ratio: value between 0 and 1 representing what portion of the image's smallest dimension where a single on off cycle will take place
+        on_ratio: value between 0 and 1 representing what portion of the overall image that will be covered (on average)
+        on_off_rotation: the amount (in degrees) to rotate the polygon between operations
+        num_sides: number of sides for the polygon (polygons are all regular)
+        center: center point for the concentricity
+        fill: color to fill the polygons with
+
+    Returns:
+        image modified with concentric polygons
+    """
+    min_dim = min(image.size)
+    on_dist = on_off_ratio*on_ratio*min_dim
+    off_dist = on_off_ratio*(1-on_ratio)*min_dim
+    on_rotation = on_ratio*on_off_rotation
+    off_rotation = (1-on_ratio) *on_off_rotation
+
+    max_inner_radius = max(math.dist(center,point) for point in (
+        (0,0),
+        (0,image.size[1]),
+        image.size,
+        (image.size[0],0)
+    ))
+    angle = math.pi/num_sides
+    max_outer_radius = max_inner_radius/math.cos(angle)
+
+    mask = PIL.Image.new('RGBA',image.size,"#00000000")
+    draw = PIL.ImageDraw.Draw(mask)
+    
+    current_radius = max_outer_radius
+    on = True
+    current_rotation:float = 0
+    while current_radius > 0:
+        draw.regular_polygon(
+            bounding_circle=center + (current_radius,),
+            n_sides=num_sides,
+            rotation=int(current_rotation),
+            fill="#000000ff" if not on else "#00000000",
+            width=0
+        )
+        on = not on
+        current_rotation += on_rotation if on else off_rotation
+        current_radius -= on_dist if on else off_dist
+    to_return  = image.copy()
+    to_return.paste(
+        im = PIL.Image.new("RGBA",image.size,fill),
+        box = (0,0),
+        mask = mask
+    )
+    return to_return
 
 __all__ = [
     'zoom_crop',
@@ -302,5 +364,6 @@ __all__ = [
     'polka_dots',
     'pattern_radial_rays',
     'scribble',
-    'tiling'
+    'tiling',
+    'concentric_polygons'
 ]

@@ -79,6 +79,7 @@ class Image_Search_Base(Game):
         request = requests.get(url,stream=True)
         if request.status_code == 200:
             image = Persistent_Exif_Image.from_image(PIL.Image.open(io.BytesIO(request.content)))
+            image.convert('RGBA')
             embed_search_result(image,search_result)
             if auto_accredit:
                 image = add_accreditation(image)

@@ -16,13 +16,15 @@ from utils.image_modification_functions import (
     edge_highlight,
     pattern_radial_rays,
     polka_dots,
-    remove_center,
     scribble,
     tiling,
     zoom_crop,
+    concentric_polygons,
+    remove_center
 )
 from utils.image_search import ImageSearchException
 from utils.types import PlayerDict
+from utils.common import linear_conversion
 
 logger = get_logger(__name__)
 
@@ -50,10 +52,20 @@ ALTER_METHODS = {#...altered through ____ the image
     "applying an edge highlighting filter to" : lambda image: edge_highlight(  # noqa: F405
         image
     ),
-    "covering the center of" : lambda image: remove_center(  # noqa: F405
-        image,
-        CONFIG['removal_keep_portion'],
-        CONFIG['removal_color']
+    "removing the center of" : lambda image: remove_center(
+        image = image,
+        portion_keep=CONFIG['removal_keep_portion'],
+        fill = CONFIG['removal_color'],
+        shape=random.randint(0,2)#don't use shape 3, not very good
+    ),
+    "adding a few polygons to" : lambda image: concentric_polygons(
+        image = image,
+        on_off_ratio = linear_conversion(random.random(),(0,1),CONFIG['polygons_border_size_range']),
+        on_ratio=CONFIG['polygons_cover_portion'],
+        num_sides=random.randint(3,9),
+        center = (random.random()*image.size[0],random.random()*image.size[1]),
+        on_off_rotation=random.randint(0,10),
+        fill = CONFIG['removal_color']
     ),
     "adding polka dots to" : lambda image: polka_dots(  # noqa: F405
         image,

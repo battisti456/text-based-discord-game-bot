@@ -17,7 +17,7 @@ games_config:GamesConfigDict = {
         "zoom_crop_box_display_size": (400,400),
         "zoom_crop_no_edge_portion" : 0.2,
         "blur_radius" : 50,
-        "removal_color" : (0,0,0),
+        "removal_color" : (0,0,0,0),
         "removal_keep_portion" : 0.05,
         "bad_conversion_resize" : 0.5,
         "polka_dot_size_scalar" : (0.06,0.1),
@@ -28,7 +28,9 @@ games_config:GamesConfigDict = {
         "scribble_points_per_line" : 10,
         "scribble_width" : 20,
         "tile_ratio" : 0.03,
-        "num_colors_to_sample" : 16
+        "num_colors_to_sample" : 16,
+        "polygons_border_size_range" : (0.05,0.2),
+        "polygons_cover_portion" : 0.8
     },
     "container_bidding" : {
         'num_containers' : 5,

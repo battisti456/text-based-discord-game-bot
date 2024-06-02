@@ -46,7 +46,7 @@ class AlteredImageGuessConfig(TypedDict):
     zoom_crop_box_display_size:tuple[int,int]
     zoom_crop_no_edge_portion:float
     blur_radius:float
-    removal_color:tuple[int,int,int]
+    removal_color:tuple[int,int,int,int]
     removal_keep_portion:float
     bad_conversion_resize:float
     polka_dot_size_scalar:tuple[float,float]
@@ -58,6 +58,8 @@ class AlteredImageGuessConfig(TypedDict):
     scribble_width:int
     tile_ratio:float
     num_colors_to_sample:int
+    polygons_cover_portion:float
+    polygons_border_size_range:tuple[float,float]
 class ChessPuzzleEliminationConfig(TypedDict):
     data_path:str
     rating_range:Optional[tuple[int,int]]

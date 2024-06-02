@@ -121,6 +121,9 @@ class Persistent_Exif_Image(PIL.Image.Image):
             return wrapper
         else:
             return val
+    @override
+    def save(self, fp, format=None, **params) -> None:
+        return self.raw_image.save(fp, format, **params)
 
 def make_accreditation(image:PIL.Image.Image) -> str|None:
     exif = image._exif

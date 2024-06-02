@@ -31,7 +31,8 @@ def L[R](lst:list[R|None]|list[None]|list[R]|None) -> list[R]:
         return []
     else:
         return list(item for item in lst if item is not None)
-
+def linear_conversion(val:float,start_range:tuple[float,float],end_range:tuple[float,float]) -> float:
+    return (val-start_range[0])/(start_range[1]-start_range[0])*(end_range[1]-end_range[0])+end_range[0]
 """
 def _list_combine(current:list[R],future_options:list[Sequence[R]]) -> list[list[R]]:
     if len(future_options) == 0:
