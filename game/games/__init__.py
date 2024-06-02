@@ -35,6 +35,27 @@ games:list[type[Game]] = [
 def random_game() -> type[Game]:
     return choice(games)
 
+def search_games(name:str) -> type[Game]:
+    for game_name,value in globals().items():
+        if not name_comparison(game_name,name):
+            continue
+        if value == Game:
+            raise IndexError("The base 'Game' is not meant to be played directly.")
+        elif issubclass(value,Game):
+            return value
+        else:
+            continue
+    raise IndexError(f"Game '{name}' does not exist.")
+
+def name_comparison(game_name:str,name:str) -> bool:
+    game_name = game_name.lower()
+    name = name.lower()
+    if game_name == name:
+        return True
+    letters = "".join(part[0] for part in game_name.split('_'))
+    if letters == name:
+        return True
+    return False
 __all__ = (
     'Elimination_Blackjack',
     'Elimination_Trivia',

@@ -67,4 +67,5 @@ class Grouping(Protocol[GroupingSafeVar]):
     def __len__(self) -> int:
         ...
 
+
 type Number = int|float
