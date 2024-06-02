@@ -24,7 +24,7 @@ from game.components.game_interface import Game_Interface
 from game.components.interaction import Interaction
 from game.components.interface_operator import Interface_Operator
 from game.game import Game
-from game.games import games, random_game, search_games
+from game.games import valid_games, random_game, search_games
 from utils.common import get_first
 from utils.grammar import wordify_iterable
 
@@ -210,7 +210,7 @@ class Game_Operator(Interface_Operator):
         Raises:
             Response: the list of games
         """
-        raise Response(f"The current play-ready games are: {wordify_iterable(games)}.")
+        raise Response(f"The current play-ready games are: {wordify_iterable(valid_games)}.")
     @command
     async def edit_config(self,val:str,mode:Literal['s','a','r'],keys:Sequence[str]):
         """edits the saved local config (it will not necessarily apply without a restart)

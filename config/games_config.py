@@ -30,7 +30,11 @@ games_config:GamesConfigDict = {
         "tile_ratio" : 0.03,
         "num_colors_to_sample" : 16,
         "polygons_border_size_range" : (0.05,0.2),
-        "polygons_cover_portion" : 0.8
+        "polygons_cover_portion" : 0.8,
+        "swirl_side_exclusion_ratio" : 0.25,
+        "swirl_rotation_scale" : 2,
+        "swirl_rotation_offset" : 0.5
+
     },
     "container_bidding" : {
         'num_containers' : 5,

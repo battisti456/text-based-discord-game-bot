@@ -60,6 +60,9 @@ class AlteredImageGuessConfig(TypedDict):
     num_colors_to_sample:int
     polygons_cover_portion:float
     polygons_border_size_range:tuple[float,float]
+    swirl_side_exclusion_ratio:float
+    swirl_rotation_scale:float
+    swirl_rotation_offset:float
 class ChessPuzzleEliminationConfig(TypedDict):
     data_path:str
     rating_range:Optional[tuple[int,int]]

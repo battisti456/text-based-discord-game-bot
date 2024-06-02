@@ -17,7 +17,7 @@ from game.games.the_great_kitten_race import The_Great_Kitten_Race
 from game.games.tricky_trivia import Tricky_Trivia
 from game.games.chess_war import Chess_War
 
-games:list[type[Game]] = [
+valid_games:list[type[Game]] = [
     Elimination_Blackjack,
     Elimination_Trivia,
     Elimination_Letter_Adder,
@@ -33,10 +33,11 @@ games:list[type[Game]] = [
     Emoji_Communication]
 
 def random_game() -> type[Game]:
-    return choice(games)
+    return choice(valid_games)
 
 def search_games(name:str) -> type[Game]:
-    for game_name,value in globals().items():
+    for game_name in __all__:
+        value = eval(game_name)
         if not name_comparison(game_name,name):
             continue
         if value == Game:

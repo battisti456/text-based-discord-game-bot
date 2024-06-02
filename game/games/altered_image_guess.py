@@ -9,22 +9,23 @@ from config.games_config import games_config
 from game import get_logger
 from game.components.game_interface import Game_Interface
 from game.game_bases import Image_Search_Base, Rounds_With_Points_Base
+from utils.common import linear_conversion
 from utils.grammar import temp_file_path
 from utils.image_modification_functions import (
     black_and_white,
     blur,
+    concentric_polygons,
     edge_highlight,
     pattern_radial_rays,
     polka_dots,
+    remove_center,
     scribble,
+    swirl_image,
     tiling,
     zoom_crop,
-    concentric_polygons,
-    remove_center
 )
 from utils.image_search import ImageSearchException
 from utils.types import PlayerDict
-from utils.common import linear_conversion
 
 logger = get_logger(__name__)
 
@@ -87,8 +88,26 @@ ALTER_METHODS = {#...altered through ____ the image
     "tiling" : lambda image: tiling(  # noqa: F405
         image,
         CONFIG['tile_ratio']
+    ),
+    "swirling it" : lambda image: swirl_image(
+        image = image,
+        step = 1,
+        rotation_per_step=(
+            random.choice((-1,1))*(
+                random.random()*CONFIG['swirl_rotation_scale']+
+                CONFIG['swirl_rotation_offset']
+                )
+        ),
+        center=tuple(#type:ignore
+            linear_conversion(random.random(),(0,1),(
+                image.size[i]*CONFIG['swirl_side_exclusion_ratio'],
+                image.size[i]*(1-CONFIG['swirl_side_exclusion_ratio'])))
+            for i in range(2)
+        ),
+        fill=CONFIG['removal_color']
     )
 }
+
 SEARCH_TOPICS = {
     "dog" : '🐶',
     "fruit" : '🍎',

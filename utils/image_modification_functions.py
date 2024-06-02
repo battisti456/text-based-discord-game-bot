@@ -1,13 +1,34 @@
-import random
 import math
+import random
 
 import numpy as np
 import PIL.Image
-import PIL.ImageFilter
 import PIL.ImageDraw
+import PIL.ImageFilter
+import PIL.ImageOps
 from color_tools_battisti456.types import Color
 
 from utils.pillow_tools import get_colors
+
+
+def _get_corners(image:PIL.Image.Image) -> tuple[
+    tuple[int,int],
+    tuple[int,int],
+    tuple[int,int],
+    tuple[int,int]]:
+    return (
+        (0,0),
+        (0,image.size[1]),
+        image.size,
+        (image.size[0],0)
+    )
+def _rect_from_circle(circle:tuple[float,float,float]) -> tuple[float,float,float,float]:
+    return (
+        circle[0]-circle[2],
+        circle[1]-circle[2],
+        circle[0]+circle[2],
+        circle[1]+circle[2]
+    )
 
 def zoom_crop(
         image:PIL.Image.Image,
@@ -321,12 +342,9 @@ def concentric_polygons(
     on_rotation = on_ratio*on_off_rotation
     off_rotation = (1-on_ratio) *on_off_rotation
 
-    max_inner_radius = max(math.dist(center,point) for point in (
-        (0,0),
-        (0,image.size[1]),
-        image.size,
-        (image.size[0],0)
-    ))
+    max_inner_radius = max(
+        math.dist(center,point) 
+        for point in _get_corners(image))
     angle = math.pi/num_sides
     max_outer_radius = max_inner_radius/math.cos(angle)
 
@@ -354,6 +372,72 @@ def concentric_polygons(
         mask = mask
     )
     return to_return
+def swirl_image(
+        image:PIL.Image.Image,
+        step:float,
+        rotation_per_step:float,
+        center:tuple[float,float],
+        fill:Color) -> PIL.Image.Image:
+    """modifies the given image by swirling it around a center point
+
+    Args:
+        image: image to modify
+        step: step in pixels that his operation is done with (1 looks pretty continuous)
+        rotation_per_step: value (in degrees) dictating how quickly the image is swirling
+        center: center point to swirl around
+        fill: color to fill in the edges that rotate in
+
+    Returns:
+        image modified to be swirled
+    """
+    current_rotation = 0
+    max_outer_radius = max(
+        math.dist(center,point) 
+        for point in _get_corners(image))
+    out_image = PIL.Image.new(
+        mode = 'RGBA',
+        size = image.size,
+        color = fill
+    )
+    current_radius = max_outer_radius
+    while current_radius > 0:
+        circle_image = PIL.Image.new(
+            'L',
+            image.size,
+            0
+        )
+        draw = PIL.ImageDraw.Draw(circle_image)
+        draw.ellipse(
+            xy = _rect_from_circle(center + (current_radius,)),
+            fill = 255,
+            width = 0
+        )
+        inner_radius = current_radius-step
+        if inner_radius > 0:
+            draw.ellipse(
+                xy = _rect_from_circle(center + (inner_radius,)),
+                fill = 0,
+                width = 0
+            )
+        rotated_image = image.rotate(
+            angle = current_rotation,
+            center = center,
+            fillcolor=fill
+        )
+        _,_,_,a = rotated_image.split()
+        
+        image_allowed = np.array(a)
+        circle_allowed = np.array(circle_image)
+        
+        allowed = np.minimum(image_allowed,circle_allowed)
+
+        allowed_image = PIL.Image.fromarray(allowed,mode='L')
+
+        out_image.paste(im = rotated_image,mask=allowed_image)
+        current_rotation += rotation_per_step
+        current_radius = inner_radius
+    return out_image
+
 
 __all__ = [
     'zoom_crop',
@@ -365,5 +449,6 @@ __all__ = [
     'pattern_radial_rays',
     'scribble',
     'tiling',
-    'concentric_polygons'
+    'concentric_polygons',
+    'swirl_image'
 ]
