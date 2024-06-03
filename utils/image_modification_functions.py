@@ -1,5 +1,6 @@
 import math
 import random
+from typing import Callable, Optional
 
 import numpy as np
 import PIL.Image
@@ -375,22 +376,22 @@ def concentric_polygons(
 def swirl_image(
         image:PIL.Image.Image,
         step:float,
-        rotation_per_step:float,
+        angle_func:Callable[[float],float],
         center:tuple[float,float],
-        fill:Color) -> PIL.Image.Image:
+        fill:Color,
+        blur_radius:Optional[float] = None) -> PIL.Image.Image:
     """modifies the given image by swirling it around a center point
 
     Args:
         image: image to modify
         step: step in pixels that his operation is done with (1 looks pretty continuous)
-        rotation_per_step: value (in degrees) dictating how quickly the image is swirling
+        angle_func: value (in degrees) as a function of distance from center (in pixels)
         center: center point to swirl around
         fill: color to fill in the edges that rotate in
 
     Returns:
         image modified to be swirled
     """
-    current_rotation = 0
     max_outer_radius = max(
         math.dist(center,point) 
         for point in _get_corners(image))
@@ -420,7 +421,7 @@ def swirl_image(
                 width = 0
             )
         rotated_image = image.rotate(
-            angle = current_rotation,
+            angle = angle_func(current_radius),
             center = center,
             fillcolor=fill
         )
@@ -434,8 +435,9 @@ def swirl_image(
         allowed_image = PIL.Image.fromarray(allowed,mode='L')
 
         out_image.paste(im = rotated_image,mask=allowed_image)
-        current_rotation += rotation_per_step
         current_radius = inner_radius
+    if blur_radius is not None:
+        return blur(out_image,blur_radius)
     return out_image
 
 

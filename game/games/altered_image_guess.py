@@ -9,7 +9,7 @@ from config.games_config import games_config
 from game import get_logger
 from game.components.game_interface import Game_Interface
 from game.game_bases import Image_Search_Base, Rounds_With_Points_Base
-from utils.common import linear_conversion
+from utils.common import random_from, random_in_range
 from utils.grammar import temp_file_path
 from utils.image_modification_functions import (
     black_and_white,
@@ -61,7 +61,7 @@ ALTER_METHODS = {#...altered through ____ the image
     ),
     "adding a few polygons to" : lambda image: concentric_polygons(
         image = image,
-        on_off_ratio = linear_conversion(random.random(),(0,1),CONFIG['polygons_border_size_range']),
+        on_off_ratio = random_in_range(*CONFIG['polygons_border_size_range']),
         on_ratio=CONFIG['polygons_cover_portion'],
         num_sides=random.randint(3,9),
         center = (random.random()*image.size[0],random.random()*image.size[1]),
@@ -89,22 +89,17 @@ ALTER_METHODS = {#...altered through ____ the image
         image,
         CONFIG['tile_ratio']
     ),
-    "swirling it" : lambda image: swirl_image(
+    "swirling" : lambda image: swirl_image(
         image = image,
         step = 1,
-        rotation_per_step=(
-            random.choice((-1,1))*(
-                random.random()*CONFIG['swirl_rotation_scale']+
-                CONFIG['swirl_rotation_offset']
-                )
-        ),
+        angle_func=lambda r:(r/max(image.size)*360*CONFIG['swirl_rotation_scale'])*(random_from(image)+CONFIG['swirl_rotation_offset'])*(-1 if random_from(image,1) > 0.5 else 1),
         center=tuple(#type:ignore
-            linear_conversion(random.random(),(0,1),(
+            random_in_range(
                 image.size[i]*CONFIG['swirl_side_exclusion_ratio'],
-                image.size[i]*(1-CONFIG['swirl_side_exclusion_ratio'])))
-            for i in range(2)
-        ),
-        fill=CONFIG['removal_color']
+                image.size[i]*(1-CONFIG['swirl_side_exclusion_ratio']))
+                for i in range(2)),
+        fill=CONFIG['removal_color'],
+        blur_radius=1
     )
 }
 

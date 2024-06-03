@@ -1,6 +1,8 @@
-from typing import Iterable, Mapping, Optional
+import random
+from typing import Iterable, Mapping, Optional, Any
 
 from utils.types import Grouping, GroupingSafeVar
+
 
 def get_first[T](grouping:Iterable[T]) -> T:
     for item in grouping:
@@ -33,6 +35,19 @@ def L[R](lst:list[R|None]|list[None]|list[R]|None) -> list[R]:
         return list(item for item in lst if item is not None)
 def linear_conversion(val:float,start_range:tuple[float,float],end_range:tuple[float,float]) -> float:
     return (val-start_range[0])/(start_range[1]-start_range[0])*(end_range[1]-end_range[0])+end_range[0]
+def random_in_range(start:float,end:float) -> float:
+    return linear_conversion(
+        random.random(),
+        (0,1),
+        (start,end)
+    )
+def random_from(obj:Any,num:int = 0) -> float:
+    r = random.Random(id(obj))
+    i = 0
+    while i < num:
+        r.random()
+        i += 1
+    return r.random()
 """
 def _list_combine(current:list[R],future_options:list[Sequence[R]]) -> list[list[R]]:
     if len(future_options) == 0:
