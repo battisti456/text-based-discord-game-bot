@@ -4,7 +4,7 @@ from typing import override
 
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
-from game.components.message import Message
+from game.components.message.message import Message
 from game.game_bases import Card_Base, Elimination_Base
 from utils.types import PlayerDict, PlayerId
 

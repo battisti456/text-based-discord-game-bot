@@ -3,7 +3,7 @@ import os
 
 from game import get_logger
 from game.components.interaction import INTERACTION_TYPES, Interaction, InteractionType
-from game.components.message import Message, Reroute_Message
+from game.components.message.message import Message, Reroute_Message
 from game.components.sender import Sender
 from utils.types import ChannelId, Grouping, MessageId, PlayerId
 from config.config import config

@@ -5,7 +5,7 @@ import utils.emoji_groups
 from game import kick_text, score_to_placement, get_logger
 from game.components.game_interface import Game_Interface
 from game.components.interface_component import Interface_Component
-from game.components.message import Message
+from game.components.message.message import Message
 from game.components.player_input import Player_Input
 from game.components.response_validator import (
     ResponseValidator,

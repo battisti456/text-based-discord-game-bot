@@ -10,7 +10,7 @@ from game.components.game_interface import (
     Channel_Limited_Interface_Sender,
 )
 from game.components.interaction import Interaction
-from game.components.message import Add_Bullet_Points_To_Content_Alias_Message, Message
+from game.components.message.message import Add_Bullet_Points_To_Content_Alias_Message, Message
 from utils.grammar import wordify_iterable
 from utils.types import ChannelId, MessageId, PlayerId
 

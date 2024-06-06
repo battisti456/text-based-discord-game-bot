@@ -6,7 +6,7 @@ from config.config import config
 from config.games_config import games_config
 from game import correct_int, make_player_dict, merge_placements, score_to_placement
 from game.components.game_interface import Game_Interface
-from game.components.message import Message, make_bullet_points
+from game.components.message.message import Message, make_bullet_points
 from game.components.player_input import (
     Player_Input,
     Player_Single_Selection_Input,

@@ -7,7 +7,7 @@ from config.config import config
 from game import correct_str, get_logger, make_player_dict
 from game.components.game_interface import Game_Interface
 from game.components.interaction import Interaction
-from game.components.message import Alias_Message, Message
+from game.components.message.message import Alias_Message, Message
 from game.components.response_validator import (
     ResponseValidator,
     Validation,

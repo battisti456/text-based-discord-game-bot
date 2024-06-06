@@ -1,7 +1,7 @@
 from typing import override
 
 from game.components.game_interface import Game_Interface
-from game.components.message import Message
+from game.components.message.message import Message
 from game.components.player_input import Player_Text_Input, run_inputs
 from game.components.response_validator import text_validator_maker
 from game.game_bases import Image_Search_Base, Rounds_With_Points_Base

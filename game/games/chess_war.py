@@ -6,7 +6,7 @@ import chess
 
 from game import get_logger
 from game.components.game_interface import Game_Interface
-from game.components.message import Alias_Message, Bullet_Point, Message
+from game.components.message.message import Alias_Message, Bullet_Point, Message
 from game.components.player_input import (
     Player_Single_Selection_Input,
     run_inputs,

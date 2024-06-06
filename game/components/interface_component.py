@@ -2,7 +2,13 @@ from typing import Optional
 
 import utils.emoji_groups
 from game.components.game_interface import Game_Interface
-from game.components.message import Bullet_Point, Message
+from game.components.message import (
+    Message,
+    Message_Text,
+    Embedded_File,
+    Single_Selectable,
+    make_options,
+)
 from game.components.player_input import (
     Player_Single_Selection_Input,
     Player_Text_Input,
@@ -85,18 +91,14 @@ class Interface_Component():
             emj += utils.emoji_groups.COLORED_CIRCLE_EMOJI
         else:
             emj += emojis
-        bp:list[Bullet_Point] = []
-        for i in range(len(options)):
-            bp.append(
-                Bullet_Point(
-                    text = options[i],
-                    emoji=emj[i]
-                )
-            )
         question = Message(
-            content = content,
-            channel_id=channel_id,
-            bullet_points=bp
+            content = (
+                Message_Text(content),
+                Single_Selectable(
+                    make_options(options,emj)
+                )
+            ),
+            channel_id=channel_id
         )
         await self.sender(question)
         player_input = Player_Single_Selection_Input(
@@ -113,7 +115,7 @@ class Interface_Component():
         return player_input.responses
     def format_players_md(self,players:Grouping[PlayerId]) -> str:
             """
-            returns the senders fomatting of a list of players with markdown
+            returns the senders formatting of a list of players with markdown
             """
             return self.sender.format_players_md(players)
     def format_players(self,user_id:PlayersIds) -> str:
@@ -134,8 +136,10 @@ class Interface_Component():
         channel_id: what channel to send the message on
         """
         message = Message(
-            content = content,
-            attach_paths=attachments_data,
+            content = (
+                Message_Text(content),
+                Embedded_File(attachments_data[0])
+            ),
             channel_id=channel_id
         )
         await self.sender(message)

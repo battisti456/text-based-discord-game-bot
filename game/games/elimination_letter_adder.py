@@ -4,7 +4,7 @@ from typing import override
 
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
-from game.components.message import (
+from game.components.message.message import (
     Message,
     make_bullet_points,
     make_no_yes_bullet_points,

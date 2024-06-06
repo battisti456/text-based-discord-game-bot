@@ -2,7 +2,7 @@ from typing import Iterable, Optional, overload
 
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
-from game.components.message import Message, make_bullet_points
+from game.components.message.message import Message, make_bullet_points
 from game.components.player_input import (
     Player_Single_Selection_Input,
     Player_Text_Input,

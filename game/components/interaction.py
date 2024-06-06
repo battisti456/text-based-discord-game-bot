@@ -1,6 +1,6 @@
 from typing import Literal, Optional, get_args, override
 
-from game.components.message import Message
+from game.components.message.message import Message
 from utils.types import ChannelId, InteractionId, MessageId, PlayerId
 
 InteractionType = Literal[
