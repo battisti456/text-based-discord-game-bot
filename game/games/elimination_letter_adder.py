@@ -19,7 +19,7 @@ from game.components.response_validator import text_validator_maker
 from game.game_bases.elimination_base import Elimination_Base
 from game.game_bases.game_word_base import Game_Word_Base
 from utils.emoji_groups import LEFT_RIGHT_EMOJI
-from utils.types import PlayerId, PlayerPlacement
+from utils.types import PlayerId
 
 NUM_LETTERS = games_config['elimination_letter_adder']['num_letters']
 START_LETTERS = games_config['elimination_letter_adder']['start_letters']
@@ -40,9 +40,6 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
             "If the challenge was made in haste, however, the challenger is eliminated instead.\n" +
             f"To start us off in a round, I will generate {START_LETTERS} letters which are definitely a part of a word."
         )
-    @override
-    async def game_outro(self,order:PlayerPlacement):
-        pass
     @override
     async def core_game(self):
         num_letters_in_starting_word = START_LETTERS + random.randint(1,len(self.unkicked_players))
