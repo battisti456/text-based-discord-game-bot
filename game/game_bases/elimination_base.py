@@ -73,6 +73,7 @@ class Elimination_Base(Elimination_Framework[PlayerId]):
             self.initialized_bases.append(Elimination_Base)
             self._part_str = lambda player: self.sender.format_players((player,))
             self._participant_name = "player"
+            self._participants = self.all_players
     async def eliminate(self,players:PlayerId|Grouping[PlayerId]):
         players = arg_fix_grouping(self.unkicked_players,players)
         await self.announce_eliminate(players)
