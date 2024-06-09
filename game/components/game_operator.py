@@ -20,13 +20,16 @@ from typing_extensions import TypeVar
 from config.config import config
 from config.config_tools import ConfigAction, ConfigError
 from config.config_tools import edit as config_edit
+from game import get_logger
 from game.components.game_interface import Game_Interface
 from game.components.interaction import Interaction
 from game.components.interface_operator import Interface_Operator
 from game.game import Game
-from game.games import valid_games, random_game, search_games
+from game.games import random_game, search_games, valid_games
 from utils.common import get_first
 from utils.grammar import wordify_iterable
+
+logger = get_logger(__name__)
 
 CP = config['command_prefix']
 COMMAND_DOCSTRING= f"""
@@ -183,7 +186,11 @@ class Game_Operator(Interface_Operator):
         self.run_task = asyncio.create_task(self.game.run())
         await asyncio.wait([self.run_task])
         self.run_task = None
-        await self.game.basic_send_placement(self.game.generate_placements())
+        try:
+            await self.game.basic_send_placement(self.game.generate_placements())
+        except Exception as e:
+            await self.basic_send("There has been an error in generating your placements. Many apologies.")
+            logger.error(f"Game '{self.game}' errored trying to generate placements : {e}.")
         await self.gi.reset()
         self.bind()#re-add this function to game_interface's on action list
         self.state = 'idle'

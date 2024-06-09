@@ -96,17 +96,19 @@ def score_to_placement[Participant](
     
     reverse reverses this order
     """
-    participants = list(score)
-    participants.sort(key=lambda player: score[player],reverse=reverse)
-    to_return:list[tuple[Participant,...]] = []
-    for i in range(len(participants)):
-        if i:
-            if score[participants[i]] == score[to_return[i-1][0]]:
-                to_return[i-1] += (participants[i],)
-                continue
-        to_return.append((participants[i],))
-    if all_participants is not None and set(all_participants) != set(participants):
-        to_return.append(tuple(set(all_participants)-set(participants)))
+    _score:dict[Number,set[Participant]] = {}
+    for participant,point in score.items():
+        if point not in _score:
+            _score[point] = set()
+        _score[point].add(participant)
+    points = list(_score)
+    points.sort(reverse=reverse)
+    to_return:list[tuple[Participant,...]] = list(
+        tuple(_score[point]) for point in points
+    )
+
+    if all_participants is not None and set(all_participants) != set(score):
+        to_return.append(tuple(set(all_participants)-set(score)))
     return tuple(to_return)
 def _merge_placements(pl1:PlayerPlacement,pl2:PlayerPlacement):
     i:int = 0
