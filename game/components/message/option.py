@@ -11,12 +11,12 @@ class Option():
 @overload
 def make_options(
         arg1:Mapping[str,str],
-        arg2:None = ...) -> set[Option]:
+        arg2:Sequence[str]|None = ...) -> set[Option]:
     ...
 @overload
 def make_options(
         arg1:Sequence[str],
-        arg2:Sequence[str] = ...) -> set[Option]:
+        arg2:Sequence[str]|None = ...) -> set[Option]:
     ...
 def make_options(
         arg1:Mapping[str,str]|Sequence[str],
