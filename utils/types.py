@@ -20,7 +20,6 @@ class GS():
     ...
 
 PlayerId = NewType('PlayerId',GS)#type: ignore
-MessageId = NewType('MessageId',GS)#type: ignore
 ChannelId = NewType('ChannelId',GS)#type: ignore
 InteractionId = NewType('InteractionId',GS)#type: ignore
 
