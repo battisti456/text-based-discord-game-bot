@@ -21,7 +21,7 @@ from utils.types import PlayerDict, PlayerId, PlayerPlacement
 
 CONFIG = games_config['the_great_kitten_race']
 
-DATA_PATH = config['data_path'] + '\\' + CONFIG['data_path']
+DATA_PATH = config['data_path'] + '/' + CONFIG['data_path']
 NUM_OBSTACLES = CONFIG['num_obstacles']
 
 class Obstacle(TypedDict):
