@@ -397,7 +397,7 @@ async def run_inputs(
         completion_sets:Optional[list[set[Player_Input[Any]]]] = None,
         sender:Optional[Sender] = None,
         who_can_see:Optional[PlayersIds] = None,
-        codependant:bool = False, 
+        codependent:bool = False, 
         basic_feedback:bool = False, 
         id:Optional[IDType] = None, 
         sync_call:Callable[[IDType,bool],bool]|None = None):
@@ -454,7 +454,7 @@ async def run_inputs(
             input.on_update(on_update)
     else:
         logger.info(f"RUN_INPUTS({run_input_id}): supressing feedback")
-    if codependant:
+    if codependent:
         logger.info(f"RUN_INPUTS({run_input_id}): setting up codependencies")
         for input1 in inputs:
             for input2 in inputs:

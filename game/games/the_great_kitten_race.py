@@ -117,7 +117,7 @@ class The_Great_Kitten_Race(Game):
         all_inputs = list(stat_input_dict[stat] for stat in self.kitten_config['stats']) + [name_input]
         
         await run_inputs(
-            all_inputs,codependant=True
+            all_inputs,codependent=True
         )
         
         await self.kick_none_response(*all_inputs)
@@ -143,9 +143,9 @@ class The_Great_Kitten_Race(Game):
             kitten_text_list:list[str] = []
             stat_checks:list[str] = obstacle["stat_checks"]
             for player in self.unkicked_players:
-                stat_treshold:float = sum(kittens[player]['stats'][stat] for stat in stat_checks)/len(stat_checks)/self.kitten_config['stat_limit']
-                if random.random() < stat_treshold:#success
-                    text = f"__*{kittens[player]['name']}*__ fortunately peformed well. They {random.choice(obstacle['win_text'])} and only"
+                stat_threshold:float = sum(kittens[player]['stats'][stat] for stat in stat_checks)/len(stat_checks)/self.kitten_config['stat_limit']
+                if random.random() < stat_threshold:#success
+                    text = f"__*{kittens[player]['name']}*__ fortunately performed well. They {random.choice(obstacle['win_text'])} and only"
                     time_penalty = random.randint(self.kitten_config['win_penalty'][0],self.kitten_config['win_penalty'][1])
                 else:#fail
                     text = f"__*{kittens[player]['name']}*__ unfortunately performed poorly. They {random.choice(obstacle['loss_text'])} and"
