@@ -1,5 +1,5 @@
 import random
-from typing import Iterable, Mapping, Optional, Any
+from typing import Iterable, Mapping, Optional, Any, override
 
 from utils.types import Grouping, GroupingSafeVar
 
@@ -48,6 +48,15 @@ def random_from(obj:Any,num:int = 0) -> float:
         r.random()
         i += 1
     return r.random()
+
+class Singleton(type):
+    "from https://stackoverflow.com/questions/67493491/python-singleton-dataclass"
+    _instances = {}
+    @override
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]
 """
 def _list_combine(current:list[R],future_options:list[Sequence[R]]) -> list[list[R]]:
     if len(future_options) == 0:

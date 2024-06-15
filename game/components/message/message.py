@@ -1,11 +1,12 @@
-from typing import Any, Callable, Iterable, Iterator, Literal, override
+from typing import Any, Callable, Iterable, Iterator, Literal, override, Awaitable
 
-from game.components.message.content_part import Message_Text
+from game.components.message.content_part import Message_Text, Content
 from game.components.message.message_part import Message_Part
 from game.components.message.message_part_manager import Message_Part_Manager
 from game.components.message.utility_part import On_Channel
-from game.components.message.interactable_part import Receive_Command
-from utils.types import ChannelId
+from game.components.message.interactable_part import Interaction
+from game.components.message.option import Option
+from utils.types import ChannelId, SimpleFunc
 
 type MessageSearchStrictness = Literal["original","aliases","children",'sub_aliases','sub_children']
 type OnReadFunc = Callable[['Child_Message'],None]
@@ -14,7 +15,8 @@ type OnReadFunc = Callable[['Child_Message'],None]
 class Message(Message_Part_Manager):
     def __init__(
             self,
-            content:str|Message_Part|Iterable[Message_Part] = []):
+            content:str|Message_Part|Iterable[Message_Part] = [],
+            funcs:Iterable[Callable[[Interaction],None]] = []):
         if isinstance(content,str):
             content = Message_Text(content)
         if isinstance(content,Message_Part):
@@ -22,12 +24,31 @@ class Message(Message_Part_Manager):
         else:
             self.add_all(content)
         self.children:set[Message] = set()
+        self._interact_funcs:list[SimpleFunc[Interaction]] = list(funcs)
+    def is_interactable(self,interaction:Interaction) -> bool:
+        return set(self.keys()).issubset(set(interaction.keys()))
     @override
     def __str__(self) -> str:
         return f"{self.__class__.__name__}{tuple(self.values())}"
     @override
     def __repr__(self) -> str:
         return str(self)
+    def on_interact(self,func:SimpleFunc[Interaction]):
+        self._interact_funcs.append(func)
+    async def interact(self,interaction:Interaction):
+        for func in self._interact_funcs:
+            ret = func(interaction)
+            if isinstance(ret,Awaitable):
+                await ret
+    def options(self) -> Iterable[Option]:
+        for part in self.values():
+            if isinstance(part,Content):
+                if isinstance(part.content,Iterable):
+                    for sub_content in part.content:
+                        if not isinstance(sub_content,Option):
+                            break
+                        yield sub_content
+
 
 class Child_Message(Message):
     def __init__(self,parent_message:'Message'):

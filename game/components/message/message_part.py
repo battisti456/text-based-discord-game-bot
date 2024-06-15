@@ -48,5 +48,4 @@ class Message_Part():
     def __init_subclass__(cls, is_prototype = False) -> None:
         if not is_prototype:
             MESSAGE_TYPES.append(cls)
-
 MESSAGE_TYPES:list[type[Message_Part]] = []

@@ -6,7 +6,7 @@ from game.components.message import (
     Message,
     Message_Text,
     Attach_File,
-    Single_Selectable,
+    ToggleSelection,
     make_options,
 )
 from game.components.player_input import (
@@ -94,7 +94,7 @@ class Interface_Component():
         question = Message(
             content = (
                 Message_Text(content),
-                Single_Selectable(
+                ToggleSelection(
                     make_options(options,emj)
                 )
             ),

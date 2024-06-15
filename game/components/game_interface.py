@@ -3,24 +3,11 @@ from typing import Any, Optional, override
 
 from config.config import config
 from game import get_logger
-from game.components.message import Limit_Viewers, Message, On_Channel, Reroute_Message, Message_Part
-from game.components.sender import Sender
+from game.components.message import Limit_Viewers, Message, On_Channel, Reroute_Message, Message_Part, Interaction
 from utils.types import ChannelId, Grouping, PlayerId, SimpleFunc
 
 logger = get_logger(__name__)
 
-
-class Interface_Sender(Sender):
-    """
-    a sender intrinsically linked to the game interface;
-    it stores all messages that pass by it
-    """
-    def __init__(self,gi:'Game_Interface'):
-        Sender.__init__(self)
-        self.gi = gi
-    @override
-    async def __call__(self,message:Message) -> Any:
-        return await self._send(message)
 
 class Game_Interface(object):
     """
@@ -49,6 +36,10 @@ class Game_Interface(object):
             except IndexError:
                 ...#type not in message
         return equivalent_usable
+    async def interact(self,interaction:Interaction):
+        for message in self.watched_messages.copy():
+            if message.is_interactable(interaction):
+                await message.interact(interaction)
     async def send(self,message:Message):
         logger.info(str(message))
     async def setup(self):
@@ -90,22 +81,7 @@ class Game_Interface(object):
         logger.info(f"created new channel with name = {name}, player_ids = {who_can_see}, channel_id = {channel_id}")
         return channel_id
 
-class Channel_Limited_Interface_Sender(Interface_Sender): 
-    """
-    a subclass of Interface_Sender geared towards Channel_Limited_Game_Interfaces;
-    it reroute's messages based on players_who_can see to make up for an interface which is unable to limit seeing messages to specific viewers directly
-    """
-    def __init__(self,gi:'Channel_Limited_Game_Interface'):
-        Interface_Sender.__init__(self,gi)
-    @override
-    async def __call__(self,message:Message):
-        if message.has(Limit_Viewers) and not message.has(On_Channel):
-            assert isinstance(self.gi,Channel_Limited_Game_Interface)
-            message= Reroute_Message(
-                message,
-                await self.gi.who_can_see_channel(message[Limit_Viewers].players)
-            )
-        return await Interface_Sender.__call__(self,message)
+
 
 class Channel_Limited_Game_Interface(Game_Interface):
     """
@@ -114,7 +90,6 @@ class Channel_Limited_Game_Interface(Game_Interface):
     def __init__(self):
         Game_Interface.__init__(self)
         self.who_can_see_dict:dict[frozenset[PlayerId],ChannelId] = {}
-        self.default_sender = Channel_Limited_Interface_Sender(self)
     async def who_can_see_channel(self,players:Grouping[PlayerId]) -> ChannelId:
         """
         creates a ChannelId that only players can see, or returns one that it already made

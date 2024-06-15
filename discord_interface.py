@@ -1,19 +1,26 @@
 from random import shuffle
-from typing import Iterable, Optional, override, Callable, Awaitable
 from time import sleep
+from typing import Awaitable, Callable, Iterable, Optional, override
 
 import discord
 
 from game import get_logger
 from game.components.game_interface import (
     Channel_Limited_Game_Interface,
-    Channel_Limited_Interface_Sender,
 )
-from game.components.message import Message, Reply_Able, Message_Text, Message_Part, Receive_All_Messages
+from game.components.message import (
+    Interaction,
+    Message,
+    Message_Part,
+    Message_Text,
+    Receive_Text,
+    Replying_To,
+    ToggleSelection,
+    On_Channel
+)
+from game.types import PlayerMessage
 from utils.grammar import wordify_iterable
 from utils.types import ChannelId, PlayerId
-from game.types import PlayerMessage
-
 
 type AsyncCallback = Callable[[],Awaitable[None]]
 DiscordChannel = discord.TextChannel|discord.Thread
@@ -135,8 +142,8 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
 class Discord_Game_Interface(Channel_Limited_Game_Interface):
     SUPPORTED_MESSAGE_PARTS:set[type[Message_Part]] = {
         Message_Text,
-        Reply_Able,
-        Receive_All_Messages
+        Receive_Text,
+        Replying_To
     }
     def __init__(self,channel_id:ChannelId,players:list[PlayerId]):
         Channel_Limited_Game_Interface.__init__(self)
@@ -154,7 +161,7 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
         self.on_start_callbacks:list[AsyncCallback] = []
 
         self.sent_message_ids:dict[int,Message] = {}
-
+        #region discord events
         @self.client.event
         async def on_ready():#triggers when client is logged into discord
             if self.first_initialization:
@@ -163,20 +170,16 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 self.first_initialization = False
             else:
                 await self.reconnect()
-        async def message_event(player_message:PlayerMessage,message_id:int|None):
-            for message in self.watched_messages:
-                for part in self.supported_parts(message):
-                    if isinstance(part,Receive_All_Messages):
-                        await part.interact(player_message)
-                    elif isinstance(part,Reply_Able):
-                        if message_id is None:
-                            continue
-                        if message_id not in self.sent_message_ids.keys():
-                            continue
-                        replied_message = self.sent_message_ids[message_id]
-                        if replied_message != message:
-                            continue
-                        await part.interact(player_message)
+        async def message_interaction(player_message:PlayerMessage,message_id:int|None):
+            interaction = Interaction()
+            interaction[Receive_Text] = player_message
+            try:
+                assert message_id is not None
+                assert message_id in self.sent_message_ids.keys()
+                interaction[Replying_To] = self.sent_message_ids[message_id]
+            except AssertionError:
+                ...
+            await self.interact(interaction)
         @self.client.event
         async def on_message(payload:discord.Message):#triggers when client
             if payload.author.id not in self.players:
@@ -184,7 +187,7 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
             player_message:PlayerMessage = (
                 payload.author.id,#type:ignore
                 payload.content)
-            await message_event(
+            await message_interaction(
                 player_message,
                 None if payload.reference is None else payload.reference.message_id)
         @self.client.event
@@ -202,62 +205,58 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 delete_message[0],
                 payload.data['content']
             )
-            await message_event(delete_message,reply_id)
-            await message_event(new_message,reply_id)
+            await message_interaction(delete_message,reply_id)
+            await message_interaction(new_message,reply_id)
         @self.client.event
         async def on_raw_message_delete(payload:discord.RawMessageDeleteEvent):
             if payload.cached_message is None:
                 return
             if payload.cached_message.author.id not in self.players:
                 return
-            
-            if (
-                payload.cached_message is not None and
-                (self.client.user is None or 
-                payload.cached_message.author.id != self.client.user.id)):
-                interaction = Interaction('delete_message')
-                discord_message_populate_interaction(
-                    payload.cached_message,interaction)
-                interaction.interaction_id = payload.message_id#type:ignore
-                await self._trigger_action(interaction)
+            if payload.cached_message.reference is None:
+                return 
+            delete_message:PlayerMessage = (
+                payload.cached_message.author.id,#type:ignore
+                None
+            )
+            await message_interaction(
+                delete_message,
+                payload.cached_message.reference.message_id)
         @self.client.event
         async def on_raw_reaction_add(payload:discord.RawReactionActionEvent):
-            if (self.client.user is None or payload.user_id != self.client.user.id):
-                emoji:str = str(payload.emoji)
-                interaction = Interaction('select_option')
-                interaction.content = emoji
-                interaction.player_id = payload.user_id#type:ignore
-                interaction.reply_to_message_id = payload.message_id#type:ignore
-                interaction.interaction_id = payload.emoji.id#type:ignore
-                
-                message = self.find_tracked_message(payload.message_id)#type:ignore
-                if message is not None:
-                    if message.bullet_points is not None:
-                        for i in range(len(message.bullet_points)):
-                            if message.bullet_points[i].emoji == emoji:
-                                interaction.choice_index = i
-                                break
-                        if interaction.choice_index is not None:
-                            await self._trigger_action(interaction)
+            if payload.user_id not in self.players:
+                return
+            emoji = str(payload.emoji)
+            message = self.sent_message_ids[payload.message_id]
+            options = list(
+                option for option in message.options()
+                if option.emoji_part == emoji
+            )
+            if len(options) == 0:
+                return
+            if len(options) > 1:
+                logger.error(f"In order for discord interface to use reactions for options, a message's options must each have unique emoji_parts, instead we found '{emoji}' in {options}.")
+            interaction = Interaction()
+            interaction[ToggleSelection] = (options[0],True)
+            await self.interact(interaction)
         @self.client.event
         async def on_raw_reaction_remove(payload:discord.RawReactionActionEvent):
-            if (self.client.user is None or payload.user_id != self.client.user.id):
-                emoji:str = str(payload.emoji)
-                interaction = Interaction('deselect_option')
-                interaction.content = emoji
-                interaction.player_id = payload.user_id#type:ignore
-                interaction.reply_to_message_id = payload.message_id#type:ignore
-                interaction.interaction_id = payload.emoji.id#type:ignore
-                
-                message = self.find_tracked_message(payload.message_id)#type:ignore
-                if message is not None:
-                    if message.bullet_points is not None:
-                        for i in range(len(message.bullet_points)):
-                            if message.bullet_points[i].emoji == emoji:
-                                interaction.choice_index = i
-                                break
-                        if interaction.choice_index is not None:
-                            await self._trigger_action(interaction)
+            if payload.user_id not in self.players:
+                return
+            emoji = str(payload.emoji)
+            message = self.sent_message_ids[payload.message_id]
+            options = list(
+                option for option in message.options()
+                if option.emoji_part == emoji
+            )
+            if len(options) == 0:
+                return
+            if len(options) > 1:
+                logger.error(f"In order for discord interface to use reactions for options, a message's options must each have unique emoji_parts, instead we found '{emoji}' in {options}.")
+            interaction = Interaction()
+            interaction[ToggleSelection] = (options[0],False)
+            await self.interact(interaction)
+#endregion
     @override
     async def reset(self):
         await super().reset()
@@ -270,43 +269,25 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
     async def reconnect(self):
         """this method is called by discord.py when we have gotten on_ready more than once to hopefully ensure the game remains functional"""
         #ISSUE1: after reconnect message.reference seems to sometimes be None when it shouldn't be
-        #POSSIBLE SOLUTION: fetch all currently tracked messages to hopefully pu them in the discord cach or somesuch
+        #POSSIBLE SOLUTION: fetch all currently tracked messages to hopefully pu them in the discord catch or some-such
         logger.warning("reconnecting after discord service reconnect")
         logger.warning("attempting to fetch tracked messages")
-        channels:set[ChannelId|None] = set(message.channel_id for message in self.tracked_messages)
-        for channel in channels:
-            channel_id:ChannelId = channel if channel is not None else self.channel_id
+        for message_id,message in self.sent_message_ids.items():
+            channel_id:ChannelId
+            if On_Channel in message:
+                channel_id = message[On_Channel].channel_id
+            else:
+                channel_id = self.channel_id
             assert channel_id is int
             channel = self.client.get_channel(channel_id)
             assert isinstance(channel,DiscordChannel)
-            for message_id,message in ((message.message_id,message) for message in self.tracked_messages if message.channel_id == channel):
-                if message_id is not None:
-                    assert message_id is int
-                    partial = channel.get_partial_message(message_id)
-                    try:
-                        await partial.fetch()
-                    except discord.NotFound:
-                        logger.error(f"failed to find message {message}")
-                    except discord.HTTPException:
-                        logger.error(f"failed to fetch message {message}")
-
-    async def _infer_option_order(self,channel_id:ChannelId,message_id:MessageId) -> list[str]:#very very slow
-        assert isinstance(channel_id,int)
-        await self.client.wait_until_ready()
-        channel = await self.client.fetch_channel(channel_id)
-        assert isinstance(message_id,int)
-        assert isinstance(channel,(discord.TextChannel,discord.Thread))
-        await self.client.wait_until_ready()
-        message = await channel.fetch_message(message_id)
-
-        assert self.client.user is not None
-        emoji:list[str] = []
-        for reaction in message.reactions:
-            async for user in reaction.users():
-                if user.id == self.client.user.id:
-                    emoji.append(str(reaction.emoji))
-                    break
-        return emoji
+            partial = channel.get_partial_message(message_id)
+            try:
+                await partial.fetch()
+            except discord.NotFound:
+                logger.error(f"failed to find message {message}")
+            except discord.HTTPException:
+                logger.error(f"failed to fetch message {message}")
     @override
     async def _new_channel(self, name: Optional[str], who_can_see: Optional[Iterable[PlayerId]]) -> ChannelId:
         assert isinstance(self.channel_id,int)
@@ -337,6 +318,74 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
     def on_start(self,callback:AsyncCallback) -> AsyncCallback:
         self.on_start_callbacks.append(callback)
         return callback
+    @override
+    def send(self, message: Message):
+        if Message_Text in message:
 
-        
+
+
+    async def raw_send(
+            self,
+            content:str|None = None,
+            channel_id:ChannelId|None = None,
+            ):
+        """
+        if content is not None:
+            if len(content) > MESSAGE_MAX_LENGTH:
+                sub_messages = message.split(
+                    length=MESSAGE_MAX_LENGTH,
+                    add_start="--MESSAGE TOO LONG. WAS SPLIT--\n",
+                    add_end="\n--END MESSAGE--",
+                    add_join_end="\n--SPLIT END--",
+                    add_join_start="\n--SPLIT START--")
+                for sub_message in sub_messages:
+                    await self._send(sub_message)
+                return
+        """
+        if channel_id is None:
+            assert isinstance(self.channel_id,int)
+            channel = self.client.get_channel(self.channel_id)
+        else:
+            assert isinstance(channel_id,int)
+            channel = self.client.get_channel(channel_id)
+        assert isinstance(channel,DiscordChannel)
+        attachments:list[discord.File] = []
+        if message.attach_paths is not None:
+            for path in message.attach_paths:
+                attachments.append(discord.File(path))
+        if message.message_id is None and message.reply_to_id is not None:
+            await self.client.wait_until_ready()
+            assert isinstance(message.reply_to_id,int)
+            to_reply = await channel.fetch_message(message.reply_to_id)
+            discord_message = await to_reply.reply(
+                content=message.content,
+                files=attachments
+            )
+            message.message_id = discord_message.id#type: ignore
+        elif message.message_id is None:#new message
+            await self.client.wait_until_ready()
+            discord_message = await channel.send(
+                content=message.content 
+                if message.content not in (None,'') else "--empty--",
+                files = attachments)
+            message.message_id = discord_message.id#type:ignore
+        else:#edit old message
+            assert isinstance(message.message_id,int)
+            await self.client.wait_until_ready()
+            discord_message:discord.Message = await channel.fetch_message(message.message_id)
+            await discord_message.edit(content=message.content,attachments=attachments)
+            message.message_id = discord_message.id#type:ignore
+        if message.bullet_points:#STILL BREAKS SOMETIMES!!!!!!!!!!!!!!!!!!!!!!!!
+            for bp in message.bullet_points:
+                if bp.emoji is not None:
+                    emoji = discord.PartialEmoji(name = bp.emoji)
+                    success = False
+                    while not success:
+                        try:
+                            await self.client.wait_until_ready()
+                            await discord_message.add_reaction(emoji)
+                            success = True
+                        except Exception as e:#not sure what the actual exceptions are
+                            logger.error(f"failed to add bullet points due to:\n{type(e)}: {e}")
+                            sleep(SLEEP429)
         
