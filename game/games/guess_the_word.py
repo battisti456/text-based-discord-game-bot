@@ -12,7 +12,7 @@ from utils.grammar import wordify_iterable
 from utils.types import PlayerDict, PlayerId
 from utils.word_tools import (
     DefinitionList,
-    SimplePartOfSpeach,
+    SimplePartOfSpeech,
     definition_dict_to_list,
 )
 
@@ -38,7 +38,7 @@ class Guess_The_Word(Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Poin
             "# This is a game of guessing the word!\n" +
             f"I will generate a random secret word of a length from {MIN_WORD_LEN}-{MAX_WORD_LEN}.\n" +
             f"Then I will give you {NUM_DEFINITIONS} different definitions for it.\n" +
-            "After each definintion, you will be given a chance to guess the word being defined.\n" +
+            "After each definition, you will be given a chance to guess the word being defined.\n" +
             "The fewer definitions you need, the more points you will get for a success.\n" +
             f"This will continue across {NUM_ROUNDS} different word(s).\n" + 
             "The highest points at the end is the winner!\n" +
@@ -46,7 +46,7 @@ class Guess_The_Word(Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Poin
     @override
     async def core_game(self):
         definition_list:DefinitionList = []
-        type_set:set[SimplePartOfSpeach] = set()
+        type_set:set[SimplePartOfSpeech] = set()
         secret_word:str= ""
         while len(definition_list) < NUM_DEFINITIONS:
             secret_word = self.random_valid_word(random.randint(MIN_WORD_LEN,MAX_WORD_LEN))
@@ -79,10 +79,13 @@ class Guess_The_Word(Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Poin
                                 feedback += "\\_"
                         await self.basic_secret_send(player,f"Your current feedback is '{feedback}'.")
             responses:PlayerDict[str] = await self.basic_secret_text_response(players_not_guessed,f"**What word{len_text} is this definition for?**\n{def_str}")
-            correct_players:list[PlayerId] = list(player for player in responses if responses[player].lower() == secret_word)
+            if len(responses.keys()) == 0:#no responses, everyone has been kicked
+                await self.basic_send(f"Since no one submitted a response, I will reveal the correct answer was '{secret_word}'.")
+                return
+            correct_players:list[PlayerId] = list(player for player,response in responses.items() if response.lower() == secret_word)
             if GUESS_FEEDBACK:
                 no_success = (len(correct_players) == 0)
-                for player in players_not_guessed:
+                for player in responses.keys():
                     if player not in correct_players:
                         response = responses[player]
                         for j in range(min(len(response),len(secret_word))):
@@ -104,8 +107,7 @@ class Guess_The_Word(Game_Word_Base, Basic_Secret_Message_Base, Rounds_With_Poin
                                     f"Our current public feedback is '{slot_text}'.")
             if any(correct_players):
                 await self.basic_send(f"{self.format_players_md(correct_players)} got it correct!")
-                for player in correct_players:
-                    players_not_guessed.remove(player)
+                players_not_guessed = list(set(responses.keys()) - set(correct_players))
                 await self.announce_and_receive_score(correct_players,NUM_DEFINITIONS-sub_round)
             else:
                 await self.basic_send("No one got it correct.")
