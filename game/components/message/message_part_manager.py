@@ -35,4 +35,3 @@ class Message_Part_Manager(dict[type[Message_Part],Message_Part]):
     def __ror__(self, value: 'Message_Part_Manager') -> 'Message_Part_Manager':
         return Message_Part_Manager(dict.__ror__(self,value))
 
-

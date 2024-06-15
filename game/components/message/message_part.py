@@ -12,7 +12,6 @@ logger = get_logger(__name__)
 
 type MessagePartTypeSet = set[type['Message_Part']]
 
-
 @dataclasses.dataclass(frozen=True)
 class Message_Part():
     def bind(self,message:'Message'):
@@ -46,4 +45,8 @@ class Message_Part():
     @classmethod
     def part_type(cls,message_part:'Message_Part'|type['Message_Part']) -> type['Message_Part']:
         return message_part.__class__ if isinstance(message_part,Message_Part) else message_part
+    def __init_subclass__(cls, is_prototype = False) -> None:
+        if not is_prototype:
+            MESSAGE_TYPES.append(cls)
 
+MESSAGE_TYPES:list[type[Message_Part]] = []

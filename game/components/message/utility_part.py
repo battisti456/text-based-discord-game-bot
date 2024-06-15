@@ -5,7 +5,7 @@ from message_part import Message_Part
 from utils.types import ChannelId, PlayerId
 
 @dataclasses.dataclass(frozen=True)
-class Utility_Part(Message_Part):
+class Utility_Part(Message_Part,is_prototype=True):
     ...
 @dataclasses.dataclass(frozen=True)
 class Player_Utility(Utility_Part):

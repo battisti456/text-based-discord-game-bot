@@ -7,9 +7,8 @@ from game.components.message.message_part_manager import Message_Part_Manager
 from game.components.message.option import Option
 from utils.types import SimpleFunc
 
-
 @dataclasses.dataclass(frozen=True)
-class Base_Interactable[T](Message_Part):
+class Base_Interactable[T](Message_Part,is_prototype=True):
     bound_functions:list[SimpleFunc[T]] = []
     async def interact(self,interaction:T):
         for function in self.bound_functions:

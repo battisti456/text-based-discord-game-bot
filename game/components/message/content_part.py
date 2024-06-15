@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     import PIL.Image
 
 @dataclasses.dataclass(frozen=True)
-class Content[T](Message_Part):
+class Content[T](Message_Part,is_prototype=True):
     content:T
     @override
     def __str__(self) -> str:
