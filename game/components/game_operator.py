@@ -40,7 +40,7 @@ Usage:
     {CP} list_games
     {CP} force_idle
     {CP} edit_config <val> (-s|-a|-r) <keys>...
-    {CP} manual_interaction <keys_and_values>
+    {CP} manual_interaction <keys_and_values>...
 
 Options:
     <command>           command to ask for more information on
