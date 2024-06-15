@@ -10,16 +10,16 @@ from word_forms.word_forms import get_word_forms  #type: ignore
 
 from utils.common import L
 
-type SimplePartOfSpeach = Literal['Noun','Verb','Adjective','Adverb']
+type SimplePartOfSpeech = Literal['Noun','Verb','Adjective','Adverb']
 
-type DefinitionDict = dict[SimplePartOfSpeach,list[str]]
-type DefinitionList = list[tuple[SimplePartOfSpeach,str]]
+type DefinitionDict = dict[SimplePartOfSpeech,list[str]]
+type DefinitionList = list[tuple[SimplePartOfSpeech,str]]
 
 type Word = str
 type Sentence = list[Word]
 
 UNDEFINED_TEXT = "UNDEFINED"
-WORDNET_POS_MAP:dict[str,SimplePartOfSpeach]  = {
+WORDNET_POS_MAP:dict[str,SimplePartOfSpeech]  = {
     'n' : 'Noun',
     's' : 'Adjective',#difference between s and a has someting to do synset clusters, probably not important
     'a' : 'Adjective',
@@ -43,7 +43,7 @@ class Definition():
         examples:list[str]|None = self.synset.examples() 
         return examples if isinstance(examples,list) else []
     @property
-    def pos(self) -> SimplePartOfSpeach:
+    def pos(self) -> SimplePartOfSpeech:
         return WORDNET_POS_MAP[self.synset.pos()]#type:ignore
     def is_definition(self,word:str) -> bool:
         return word in self.synset.lemma_names()
