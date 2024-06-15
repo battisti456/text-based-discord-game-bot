@@ -16,10 +16,10 @@ class Sender(object):
         """lowest level definition of the default Sender's sending capabilities"""
         pass
     def format_players_md(self,players:Iterable[PlayerId]) -> str:
-        """format a list of PlayerIds with markdown; --migtht replace with formatter object"""
+        """format a list of PlayerIds with markdown; --might replace with formatter object"""
         return wordify_iterable(players)
     def format_players(self,players:Iterable[PlayerId]) -> str:
-        """format a list of PlayerIds without markdown; --migtht replace with formatter object"""
+        """format a list of PlayerIds without markdown; --might replace with formatter object"""
         return wordify_iterable(players)
 class Multiple_Sender(Sender):
     def __init__(self,senders:list[Sender]):

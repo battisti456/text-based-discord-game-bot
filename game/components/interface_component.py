@@ -5,7 +5,7 @@ from game.components.game_interface import Game_Interface
 from game.components.message import (
     Message,
     Message_Text,
-    Embedded_File,
+    Attach_File,
     Single_Selectable,
     make_options,
 )
@@ -31,7 +31,7 @@ from utils.types import (
 class Interface_Component():
     def __init__(self,gi:Game_Interface):
         self.gi = gi
-        self.sender = self.gi.get_sender()
+        self.sender = self.gi.send
         self.all_players:tuple[PlayerId,...] = tuple(self.gi.get_players())
     async def _basic_text_response(
             self,content:str,who_chooses:Optional[PlayerId|PlayersIds] = None,
@@ -138,7 +138,7 @@ class Interface_Component():
         message = Message(
             content = (
                 Message_Text(content),
-                Embedded_File(attachments_data[0])
+                Attach_File(attachments_data[0])
             ),
             channel_id=channel_id
         )

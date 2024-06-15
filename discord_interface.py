@@ -9,10 +9,10 @@ from game.components.game_interface import (
     Channel_Limited_Game_Interface,
     Channel_Limited_Interface_Sender,
 )
-from game.components.interaction import Interaction
-from game.components.message.message import Add_Bullet_Points_To_Content_Alias_Message, Message
+from game.components.message import Message, Reply_Able, Message_Text, Message_Part, Receive_All_Messages
 from utils.grammar import wordify_iterable
-from utils.types import ChannelId, MessageId, PlayerId
+from utils.types import ChannelId, PlayerId
+from game.types import PlayerMessage
 
 
 type AsyncCallback = Callable[[],Awaitable[None]]
@@ -133,6 +133,11 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
 
 
 class Discord_Game_Interface(Channel_Limited_Game_Interface):
+    SUPPORTED_MESSAGE_PARTS:set[type[Message_Part]] = {
+        Message_Text,
+        Reply_Able,
+        Receive_All_Messages
+    }
     def __init__(self,channel_id:ChannelId,players:list[PlayerId]):
         Channel_Limited_Game_Interface.__init__(self)
         self.channel_id = channel_id
@@ -145,41 +150,67 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
         self.client = discord.Client(intents = intents)
         self.default_sender = Discord_Sender(self)
 
-        self.first_intialization = True
+        self.first_initialization = True
         self.on_start_callbacks:list[AsyncCallback] = []
+
+        self.sent_message_ids:dict[int,Message] = {}
 
         @self.client.event
         async def on_ready():#triggers when client is logged into discord
-            if self.first_intialization:
+            if self.first_initialization:
                 for callback in self.on_start_callbacks:
                     await callback()
-                self.first_intialization = False
+                self.first_initialization = False
             else:
                 await self.reconnect()
+        async def message_event(player_message:PlayerMessage,message_id:int|None):
+            for message in self.watched_messages:
+                for part in self.supported_parts(message):
+                    if isinstance(part,Receive_All_Messages):
+                        await part.interact(player_message)
+                    elif isinstance(part,Reply_Able):
+                        if message_id is None:
+                            continue
+                        if message_id not in self.sent_message_ids.keys():
+                            continue
+                        replied_message = self.sent_message_ids[message_id]
+                        if replied_message != message:
+                            continue
+                        await part.interact(player_message)
         @self.client.event
         async def on_message(payload:discord.Message):#triggers when client
-            if (self.client.user is None or 
-                payload.author.id != self.client.user.id):
-                interaction = Interaction('send_message')
-                discord_message_populate_interaction(payload,interaction)
-                await self._trigger_action(interaction)
+            if payload.author.id not in self.players:
+                return
+            player_message:PlayerMessage = (
+                payload.author.id,#type:ignore
+                payload.content)
+            await message_event(
+                player_message,
+                None if payload.reference is None else payload.reference.message_id)
         @self.client.event
         async def on_raw_message_edit(payload:discord.RawMessageUpdateEvent):
-            if (
-                payload.cached_message is not None and
-                (self.client.user is None or 
-                payload.cached_message.author.id != self.client.user.id)):
-                interaction = Interaction('delete_message')
-                discord_message_populate_interaction(
-                    payload.cached_message,interaction)
-                await self._trigger_action(interaction)
-                interaction.interaction_type = 'send_message'
-                if 'content' in payload.data: #sometimes it isn't aparently?
-                    interaction.content = payload.data['content']
-                interaction.interaction_id = payload.message_id#type:ignore
-                await self._trigger_action(interaction)
+            if payload.cached_message is None:
+                return
+            reply_id = (
+                None if payload.cached_message.reference is None 
+                else payload.cached_message.reference.message_id)
+            delete_message:PlayerMessage = (
+                payload.cached_message.author.id,#type:ignore
+                None
+            )
+            new_message:PlayerMessage = (
+                delete_message[0],
+                payload.data['content']
+            )
+            await message_event(delete_message,reply_id)
+            await message_event(new_message,reply_id)
         @self.client.event
         async def on_raw_message_delete(payload:discord.RawMessageDeleteEvent):
+            if payload.cached_message is None:
+                return
+            if payload.cached_message.author.id not in self.players:
+                return
+            
             if (
                 payload.cached_message is not None and
                 (self.client.user is None or 

@@ -1,7 +1,8 @@
 import asyncio
 import inspect
 import shlex
-from ast import literal_eval
+
+#from ast import literal_eval
 from typing import (
     Any,
     Callable,
@@ -22,10 +23,17 @@ from config.config_tools import ConfigAction, ConfigError
 from config.config_tools import edit as config_edit
 from game import get_logger
 from game.components.game_interface import Game_Interface
-from game.components.interaction import Interaction
 from game.components.interface_operator import Interface_Operator
+from game.components.message import (
+    Message,
+    Message_Text,
+    Receive_Command,
+    Receive_Command_Message,
+    Reply_To_Player_Message,
+)
 from game.game import Game
 from game.games import random_game, search_games, valid_games
+from game.types import PlayerMessage
 from utils.common import get_first
 from utils.grammar import wordify_iterable
 
@@ -128,7 +136,11 @@ class Game_Operator(Interface_Operator):
         self.state:GameOperatorState = 'idle'
         self.game:Optional[Game] = None
         self.run_task:Optional[asyncio.Task] = None
-        self.bind()
+        self.rcm = Receive_Command_Message(CP)
+        self.rcm[Receive_Command].on_interact(self.receive)
+        @gi.on_setup
+        async def _(_):
+            await self.gi.send(self.rcm)
     @command
     async def help(self,command:Optional[str]):
         """responds with the doc-string of the respective command, or with the overall commands if not command is given
@@ -192,7 +204,7 @@ class Game_Operator(Interface_Operator):
             await self.basic_send("There has been an error in generating your placements. Many apologies.")
             logger.error(f"Game '{self.game}' errored trying to generate placements : {e}.")
         await self.gi.reset()
-        self.bind()#re-add this function to game_interface's on action list
+        #self.bind()#re-add this function to game_interface's on action list
         self.state = 'idle'
     @command
     async def force_idle(self):
@@ -255,6 +267,8 @@ class Game_Operator(Interface_Operator):
             ArgumentError: if any provided keys are not permitted
             ArgumentError: if the command string was included in the interaction
         """
+        ...
+        """
         if len(keys_and_values)%2 != 0:
             raise ArgumentError(f"There must be an even number of keys_and_values, there are {len(keys_and_values)}.")
         types:dict[str,type[Any]] = get_type_hints(Interaction.__init__)
@@ -278,25 +292,25 @@ class Game_Operator(Interface_Operator):
         if interaction.content is not None:
             if CP in interaction.content:
                 raise ArgumentError(f"Containing '{CP}' in your content is not permitted.")
-        await self.gi._trigger_action(interaction)
-    def bind(self):
-        @self.gi.on_action('send_message',self)
-        async def recv_command(interaction:Interaction):
-            if interaction.content is not None:
-                if interaction.content.startswith(config['command_prefix']):
-                    if interaction.reply_to_message_id is None:
-                        async def send(content:str):
-                            await self.send(interaction.reply(content))
-                        try:
-                            command_data = docopt(COMMAND_DOCSTRING,list(shlex.shlex(interaction.content[len(CP):],punctuation_chars=True)),default_help=False)
-                        except DocoptExit as e:
-                            await send(
-                                "Our interpreter was unable to interpret this command of:\n" +
-                                f"'{interaction.content}'\n" +
-                                e.__str__()
-                            )
-                            return
-                        try:
-                            await self.command_structure.launch_commands(command_data)
-                        except CommandExit as e:
-                            await send(e.args[0])
+        await self.gi._trigger_action(interaction)"""
+    async def receive(self,message:PlayerMessage):
+        if message[1] is None:
+            return
+        async def send(content:str):
+            await self.send(Message((
+                Message_Text(content),
+                Reply_To_Player_Message(message)
+            )))
+        try:
+            command_data = docopt(COMMAND_DOCSTRING,list(shlex.shlex(message[1][len(CP):],punctuation_chars=True)),default_help=False)
+        except DocoptExit as e:
+            await send(
+                "Our interpreter was unable to interpret this command of:\n" +
+                f"'{message[1]}'\n" +
+                e.__str__()
+            )
+            return
+        try:
+            await self.command_structure.launch_commands(command_data)
+        except CommandExit as e:
+            await send(e.args[0])
