@@ -116,7 +116,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
         await self.basic_send(
             "# Welcome to a game of elimination chess puzzles!\n" + 
             "In this game you will be presented with chess puzzles.\n" +
-            "" if RATING_RANGE is None else f"These puzzles will start with a chess rating between {RATING_RANGE[0]} and {RATING_RANGE[1]}, but may escalate if y'all do well.\n"+
+            ("" if RATING_RANGE is None else f"These puzzles will start with a chess rating between {RATING_RANGE[0]} and {RATING_RANGE[1]}, but may escalate if y'all do well.\n") +
             f"You must then pick the best move for the position out of {NUM_MOVE_OPTIONS} options that I provide you," +
             "keeping in mind that this puzzle may extend through a multi-move strategy.\n" +
             "If you pick the wrong move, you are eliminated (unless no one gets it right).\n" +
