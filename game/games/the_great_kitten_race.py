@@ -113,7 +113,7 @@ class The_Great_Kitten_Race(Game):
                 content = "**And, what was your kitten's name again?**"
             )
         )
-
+        #TODO #7 make inputs actually update each other or relax restrictions on stat inputs
         all_inputs = list(stat_input_dict[stat] for stat in self.kitten_config['stats']) + [name_input]
         
         await run_inputs(

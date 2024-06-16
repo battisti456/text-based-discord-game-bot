@@ -32,11 +32,11 @@ class ChessPuzzleDict(TypedDict):
     Moves:str#space separated ordered intended moves, first move by bot
     Rating:int#recommended chess rating
     RatingDeviation:int
-    Popularity:int#lichess average popluarity out of 100
+    Popularity:int#lichess average popularity out of 100
     NbPlays:int#number of plays in lichess
-    Themes:str#space seperated theme tags
+    Themes:str#space separated theme tags
     GameUrl:str#lichess puzzle url
-    OpeningTags:str#space seperated opening tags
+    OpeningTags:str#space separated opening tags
 
 def correct_chess_puzzle(value:dict) -> ChessPuzzleDict:
     if isinstance(value['PuzzleId'],dict):
@@ -128,15 +128,19 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
         self.rating_range = (self.rating_range[0],self.rating_range[1]+PUZZLE_RATING_CAP_ESCALATION)
         self.board.set_fen(puzzle['FEN'])
         moves:list[str] = puzzle['Moves'].split(" ")
-        oppo_color:str = chess.COLOR_NAMES[self.board.turn]
+        opponent_color:str = chess.COLOR_NAMES[self.board.turn]
         self.board.push_uci(moves[0])
-        player_color:str = chess.COLOR_NAMES[self.board.turn]
+        player_color:chess.Color = self.board.turn
+        player_color_name:str = chess.COLOR_NAMES[player_color]
         self.white_perspective = self.board.turn
+
+        def get_board() -> str:
+            return self.make_board_image({"white_perspective" : player_color})
 
         move_index = 1
         await self.basic_send(
-            f"Here is the start of the puzzle! You will be playing for {player_color}.",
-            attachments_data=[self.make_board_image()]
+            f"Here is the start of the puzzle! You will be playing for {player_color_name}.",
+            attachments_data=[get_board()]
         )
 
         def best_move(move_uci:str) -> bool:
@@ -159,7 +163,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
             option_text_list:list[str] = list(get_move_text(self.board,move_option) for move_option in move_options)
             
             responses:dict[PlayerId,int] = await self.basic_multiple_choice(
-                f"What is the best move for {player_color} in this position?",
+                f"What is the best move for {player_color_name} in this position?",
                 who_chooses=self.unkicked_players,
                 options = option_text_list
             )
@@ -168,7 +172,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
             incorrect_players = list(player for player in self.unkicked_players if player not in correct_players)
 
             move_right_text = "No one got the move correct."
-            best_move_text = f"The best move in this position for {player_color} is {get_move_text(self.board,moves[move_index])}."
+            best_move_text = f"The best move in this position for {player_color_name} is {get_move_text(self.board,moves[move_index])}."
 
             if correct_players:
                 move_right_text = f"{self.format_players_md(correct_players)} got the move correct!"
@@ -180,7 +184,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
             
             await self.basic_send(
                 f"{move_right_text} {best_move_text}{end_text}",
-                attachments_data=[self.make_board_image()]
+                attachments_data=[get_board()]
             )
 
             await self.eliminate(incorrect_players)
@@ -201,8 +205,8 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
                 end_text = f" This ends the game in {get_game_over_text(self.board)}."
 
             await self.basic_send(
-                f"The opponent, {oppo_color}, {respond_text} {mt}.{end_text}",
-                attachments_data=[self.make_board_image()]
+                f"The opponent, {opponent_color}, {respond_text} {mt}.{end_text}",
+                attachments_data=[get_board()]
             )
             move_index += 1
 
@@ -216,7 +220,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
                 end_text = f" This ends the game in {get_game_over_text(self.board)}."
             await self.basic_send(
                 f"{begin_text}{chess.COLOR_NAMES[self.board.turn]} plays {move_text}.{end_text}",
-                attachments_data=[self.make_board_image()]
+                attachments_data=[get_board()]
             )
             begin_text = ""
             move_index += 1

@@ -81,7 +81,7 @@ class Game(Interface_Component):
             await self._run()
             logger.info(f"Gracefully finished running {self}.")
         except GameEndException as e:
-            logger.warning(f"Game {self} ended due to {e}.")
+            logger.warning(f"{self} ended due to {e}.")
             self.game_end_exception = e
             await self.basic_send(e.explanation)
         except:  # noqa: E722
@@ -235,19 +235,19 @@ class Game(Interface_Component):
         """
         return self.current_class_execution not in self.classes_banned_from_speaking
     async def basic_policed_send(
-            self,content:Optional[str] = None,attatchements_data:list[str] = [],
+            self,content:Optional[str] = None,attachments_data:list[str] = [],
             channel_id:Optional[ChannelId] = None):
         """
         self.basic_send if self.allowed_to_speak
         
         content: the text content of the message
         
-        attatchements_data: a list of file paths to attatch to the message
+        attachments_data: a list of file paths to attach to the message
         
         channel_id: what channel to send the message on
         """
         if self.allowed_to_speak():
-            return await self.basic_send(content,attatchements_data,channel_id)
+            return await self.basic_send(content,attachments_data,channel_id)
     async def basic_send_placement(self,placement:PlayerPlacement):
         """
         takes a placement list and formats it correctly, and sends to the players
@@ -292,11 +292,11 @@ class Game(Interface_Component):
             reason:KickReason = 'unspecified',
             priority:Optional[int] = None) :
         """
-        adds players to the kicked dict with the approprite priority and reason
+        adds players to the kicked dict with the appropriate priority and reason
 
         players: a list of players to eliminate
         reason: one of a set list of reasons which might have further implications elsewhere
-        priority: where should these players be placed in the order of their elimination, if None, assumes after the lastmost eliminated of players so far
+        priority: where should these players be placed in the order of their elimination, if None, assumes after the last-most eliminated of players so far
         """
         if priority is None:
             priority = self.max_kick_priority() + 1
@@ -332,9 +332,9 @@ def police_game_callable(func:Callable[P,Awaitable[R]]) -> Callable[P,Awaitable[
         classes.append(type(args[0].__class__))
         #classes.reverse()
         c = None
-        for clss in classes:
-            if hasattr(clss,func.__name__):
-                c = clss
+        for cls in classes:
+            if hasattr(cls,func.__name__):
+                c = cls
                 break
         assert isinstance(args[0],Game)
         stored = args[0].current_class_execution
