@@ -4,7 +4,7 @@ from game.components.game_interface import Game_Interface
 from game.game_bases.round_base import Rounds_Base
 from game.game_bases.participant_base import Participant_Base
 from utils.common import arg_fix_grouping
-from utils.exceptions import GameEndException
+from utils.exceptions import GameEndElimination
 from utils.grammar import wordify_iterable
 from utils.types import (
     Grouping,
@@ -14,10 +14,6 @@ from utils.types import (
     PlayerId,
     PlayerPlacement,
 )
-
-
-class EliminationGameEnd(GameEndException):
-    ...
 
 class Elimination_Framework(Participant_Base[Participant],Rounds_Base):
     def __init__(self,gi:Game_Interface):
@@ -61,7 +57,7 @@ class Elimination_Framework(Participant_Base[Participant],Rounds_Base):
         if not to_eliminate == set(self.not_eliminated) and len(to_eliminate) > 0:
             self.elimination_order += (tuple(to_eliminate),)
         if len(self.not_eliminated) == 1:
-            raise EliminationGameEnd(f"all but one {self._participant_name} being eliminated")
+            raise GameEndElimination(f"all but one {self._participant_name} being eliminated")
     @override
     def _generate_participant_placements(self) -> Placement[Participant]:
         return tuple(reversed(self.elimination_order))

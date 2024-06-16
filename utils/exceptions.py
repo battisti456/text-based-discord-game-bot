@@ -38,3 +38,8 @@ class GameEndInsufficientPlayers(GameEndException):
 
 class GameEndInsufficientTeams(GameEndInsufficientPlayers):
     ...
+
+class GameEndElimination(GameEndException):
+    def __init__(self, message: str | None = None):
+        super().__init__(message)
+        self._explanation = "one player remaining"
