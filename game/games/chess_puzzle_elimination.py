@@ -14,7 +14,7 @@ from utils.types import PlayerId
 
 CONFIG = games_config['chess_puzzle_elimination']
 
-DATA_PATH = config['data_path'] + "\\" + CONFIG['data_path']
+DATA_PATH = config['data_path'] + "/" + CONFIG['data_path']
 
 RATING_RANGE = CONFIG['rating_range']
 POPULARITY_RANGE = CONFIG['popularity_range']
