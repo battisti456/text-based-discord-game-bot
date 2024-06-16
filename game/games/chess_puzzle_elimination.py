@@ -161,7 +161,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
                 if moves[move_index] not in move_options:
                     move_options[random.randint(0,NUM_MOVE_OPTIONS-1)] = moves[move_index]
             option_text_list:list[str] = list(get_move_text(self.board,move_option) for move_option in move_options)
-            
+            #TODO #8 allowing people to see each other's answers seems to be a particular problem in this game, maybe a candidate for an embedded dropdown?
             responses:dict[PlayerId,int] = await self.basic_multiple_choice(
                 f"What is the best move for {player_color_name} in this position?",
                 who_chooses=self.unkicked_players,
