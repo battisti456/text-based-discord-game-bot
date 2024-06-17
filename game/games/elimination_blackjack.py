@@ -4,7 +4,7 @@ from typing import override
 
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
-from game.components.message import Message
+from game.components.sendable.old_message import Old_Message
 from game.game_bases import Card_Base, Elimination_Base
 from utils.types import PlayerDict, PlayerId
 
@@ -68,9 +68,9 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
             player_score = self.player_points(player)
             hand = self.hands[player]
             assert hand is not None
-            message = Message(
-                content = f"{self.format_players_md([player])} had a hand worth {player_score}.",
-                attach_paths=[self.ch_to_attachment(hand)]
+            message = Old_Message(
+                text = f"{self.format_players_md([player])} had a hand worth {player_score}.",
+                attach_files=[self.ch_to_attachment(hand)]
             )
             await self.sender(message)
             scores[player] = player_score

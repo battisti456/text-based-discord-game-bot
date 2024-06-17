@@ -10,7 +10,7 @@ import PIL.ImageOps
 import utils.emoji_groups
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
-from game.components.message import Message
+from game.components.sendable.old_message import Old_Message, _Old_Message
 from game.game import Game, police_game_callable
 from utils.common import arg_fix_grouping
 from utils.grammar import temp_file_path, wordify_iterable
@@ -282,7 +282,7 @@ class Card_Base(Game):
         if Card_Base not in self.initialized_bases:
             self.initialized_bases.append(Card_Base)
             self.hand_threads:PlayerDict[ChannelId] = {}
-            self.hand_message:PlayerDict[Message] = make_player_dict(self.unkicked_players,Message)
+            self.hand_message:PlayerDict[_Old_Message] = make_player_dict(self.unkicked_players,Old_Message)
     async def setup_cards(self,num_decks:int = 1):
         self.deck:Deck = Deck(num_decks)
         self.discard = Card_Holder()
@@ -313,11 +313,11 @@ class Card_Base(Game):
                 contents += "Your hand is empty."
         message = self.hand_message[player]
         assert message is not None
-        message.players_who_can_see = [player]
-        message.content = contents
+        message.limit_players_who_can_see = [player]
+        message.text = contents
         message.channel_id = self.hand_threads[player]
         ch_to_attachment = self.ch_to_attachment(hand)
-        message.attach_paths = [ch_to_attachment]
+        message.attach_files = [ch_to_attachment]
         await self.sender(message)
     @police_game_callable
     async def player_draw(self,player:PlayerId|Grouping[PlayerId],num:int = 1):

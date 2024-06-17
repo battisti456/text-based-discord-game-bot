@@ -1,7 +1,7 @@
 from typing import override
 
 from game.components.game_interface import Game_Interface
-from game.components.message import Message
+from game.components.sendable.old_message import Old_Message
 from game.components.player_input import Player_Text_Input
 from game.components.response_validator import text_validator_maker
 from game.game_bases import Rounds_With_Points_Base
@@ -24,7 +24,7 @@ class Basic_Game(Rounds_With_Points_Base):
         )
     @override
     async def core_game(self):
-        message = Message("Respond here with how many points you would like!")
+        message = Old_Message("Respond here with how many points you would like!")
         inpt = Player_Text_Input(
             "this point score question",
             self.gi,

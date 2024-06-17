@@ -1,7 +1,7 @@
 from typing import override
 
 from game.components.game_interface import Game_Interface
-from game.components.message import Message
+from game.components.sendable.old_message import Old_Message
 from game.components.player_input import Player_Text_Input, run_inputs
 from game.components.response_validator import text_validator_maker
 from game.game_bases import Image_Search_Base, Rounds_With_Points_Base
@@ -53,7 +53,7 @@ class Picture_Telephone(Rounds_With_Points_Base, Image_Search_Base):
     def i(self,player:PlayerId,add:int = 0) -> int:
         return (self.unkicked_players.index(player)+self.current_offset+add)%len(self.images)
     async def prompt_telephone(self):
-        questions:PlayerDict[Message] = {}
+        questions:PlayerDict[Old_Message] = {}
         inputs:PlayerDict[Player_Text_Input] = {}
         for player in self.unkicked_players:
             content:str =""
@@ -63,10 +63,10 @@ class Picture_Telephone(Rounds_With_Points_Base, Image_Search_Base):
             else:
                 attach_paths = [self.images[self.i(player,-1)][player]]
                 content = f"Please summerize this image in between {MIN_NUM_WORDS} and {MAX_NUM_WORDS} words."
-            questions[player] = Message(
-                content = content,
-                attach_paths=attach_paths,
-                players_who_can_see=[player]
+            questions[player] = Old_Message(
+                text = content,
+                attach_files=attach_paths,
+                limit_players_who_can_see=[player]
             )
             inputs[player] = Player_Text_Input(
                 name = f"{self.sender.format_players_md([player])}",

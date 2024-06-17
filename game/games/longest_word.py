@@ -2,9 +2,10 @@ from typing import override
 
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
-from game.components.message import Alias_Message, Message
+from game.components.message import Alias_Message
 from game.components.player_input import Player_Text_Input, run_inputs
 from game.components.response_validator import text_validator_maker
+from game.components.sendable.old_message import Old_Message
 from game.game_bases import Game_Word_Base, Rounds_With_Points_Base
 from utils.types import PlayerId
 
@@ -37,17 +38,17 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
     async def longest_word_question(self,player:PlayerId) -> str:
         num_letters_can_refresh = NUM_LETTERS_CAN_REFRESH
         change_letter_message = Alias_Message(
-            Message(),
+            Old_Message(),
             lambda _: f"**Which letters in '{self.current_letters}' would you like to swap, if any? You can swap {num_letters_can_refresh} letters.**")
         choose_word_message = Alias_Message(
-            Message(),
+            Old_Message(),
             lambda _: f"**What word will you spell with '{self.current_letters}'?**")
         change_letter_input = Player_Text_Input(
             "change letter",
             self.gi,
             self.sender,
             [player],
-            lambda x,y: text_validator_maker(is_stricly_composed_of=self.current_letters,max_length=num_letters_can_refresh,check_lower_case=True)(x,y),
+            lambda x,y: text_validator_maker(is_strictly_composed_of=self.current_letters,max_length=num_letters_can_refresh,check_lower_case=True)(x,y),
             message=change_letter_message
         )
         choose_word_input = Player_Text_Input(
@@ -55,7 +56,7 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
             self.gi,
             self.sender,
             [player],
-            lambda x,y: text_validator_maker(is_stricly_composed_of=self.current_letters,check_lower_case=True)(x,y),
+            lambda x,y: text_validator_maker(is_strictly_composed_of=self.current_letters,check_lower_case=True)(x,y),
             message=choose_word_message
         )
         chosen_word:None|str = None

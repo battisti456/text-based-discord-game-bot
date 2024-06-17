@@ -5,7 +5,6 @@ from typing import override
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
 from game.components.message import (
-    Message,
     make_bullet_points,
     make_no_yes_bullet_points,
 )
@@ -16,6 +15,7 @@ from game.components.player_input import (
     run_inputs,
 )
 from game.components.response_validator import text_validator_maker
+from game.components.sendable.old_message import Old_Message
 from game.game_bases.elimination_base import Elimination_Base
 from game.game_bases.game_word_base import Game_Word_Base
 from utils.emoji_groups import LEFT_RIGHT_EMOJI
@@ -55,13 +55,13 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
                 if player in self.unkicked_players:
                     break
             await self.basic_send(f"The letters are '{letters}'.")
-            will_challenge_message = Message(
-                content=f"Will you challenge {self.sender.format_players_md([self.last_player])}?",
-                bullet_points=make_no_yes_bullet_points()
+            will_challenge_message = Old_Message(
+                text=f"Will you challenge {self.sender.format_players_md([self.last_player])}?",
+                with_options=make_no_yes_bullet_points()
             )
-            left_right_message = Message(
-                content = "Which side would you like to put your letter on, and which letter would you like to add?",
-                bullet_points=make_bullet_points(['left','right'],LEFT_RIGHT_EMOJI)
+            left_right_message = Old_Message(
+                text = "Which side would you like to put your letter on, and which letter would you like to add?",
+                with_options=make_bullet_points(['left','right'],LEFT_RIGHT_EMOJI)
             )
             challenge_input = Player_Single_Selection_Input(
                 "choice to challenge",
@@ -129,7 +129,7 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
                     self.last_player = player
                     continue 
             else:#challenge
-                message = Message(
+                message = Old_Message(
                     f"{self.format_players_md([player])} has chosen to challenge {self.format_players_md([self.last_player])} on the letters '{letters}'. \n" +
                     "What word do you think you could have spelled?")
                 word_input = Player_Text_Input(

@@ -6,7 +6,7 @@ from config.config import config
 from config.games_config import games_config
 from game import correct_int, make_player_dict, merge_placements, score_to_placement
 from game.components.game_interface import Game_Interface
-from game.components.message import Message, make_bullet_points
+from game.components.message import make_bullet_points
 from game.components.player_input import (
     Player_Input,
     Player_Single_Selection_Input,
@@ -14,6 +14,7 @@ from game.components.player_input import (
     run_inputs,
 )
 from game.components.response_validator import Validation
+from game.components.sendable.old_message import Old_Message
 from game.game import Game
 from utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
 from utils.grammar import ordinate, wordify_iterable
@@ -81,9 +82,9 @@ class The_Great_Kitten_Race(Game):
         )
 
         for stat in self.kitten_config['stats']:
-            message = Message(
-                content = f"How did you train your cat's **{stat}** stat?",
-                bullet_points= bp
+            message = Old_Message(
+                text = f"How did you train your cat's **{stat}** stat?",
+                with_options= bp
             )
             input = Player_Single_Selection_Input(
                 name = f"choice of {stat} stat",
@@ -109,8 +110,8 @@ class The_Great_Kitten_Race(Game):
             players=self.unkicked_players,
             gi = self.gi,
             sender = self.sender,
-            message = Message(
-                content = "**And, what was your kitten's name again?**"
+            message = Old_Message(
+                text = "**And, what was your kitten's name again?**"
             )
         )
         #TODO #7 make inputs actually update each other or relax restrictions on stat inputs

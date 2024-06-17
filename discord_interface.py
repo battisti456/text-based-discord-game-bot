@@ -1,19 +1,28 @@
+from dataclasses import dataclass
 from random import shuffle
-from typing import Iterable, Optional, override, Callable, Awaitable
 from time import sleep
+from typing import Awaitable, Callable, Iterable, Optional, override
 
 import discord
 
 from game import get_logger
 from game.components.game_interface import (
-    Channel_Limited_Game_Interface,
-    Channel_Limited_Interface_Sender,
+    Game_Interface,
 )
 from game.components.interaction import Interaction
-from game.components.message import Add_Bullet_Points_To_Content_Alias_Message, Message
+from game.components.message import Add_Bullet_Points_To_Content_Alias_Message
+from game.components.send import Send_Address, Sendable, Sender
+from game.components.send.old_message import _Old_Message
+from game.components.send.sendable.prototype_sendables import (
+    Attach_Files,
+    Text,
+    With_Options,
+)
+from game.components.send.sendable.sendables import (
+
+)
 from utils.grammar import wordify_iterable
 from utils.types import ChannelId, MessageId, PlayerId
-
 
 type AsyncCallback = Callable[[],Awaitable[None]]
 DiscordChannel = discord.TextChannel|discord.Thread
@@ -22,6 +31,7 @@ logger = get_logger(__name__)
 
 MESSAGE_MAX_LENGTH = 1800#actually 2000, but I leave extra for split indicators
 SLEEP429 = 10
+BLANK_TEXT = " "
 
 def discord_message_populate_interaction(
         payload:discord.Message, interaction:Interaction):
@@ -47,64 +57,56 @@ async def discord_message_emoji_order(
                 emoji.append(str(reaction.emoji))
                 break
     return emoji
+@dataclass(frozen=True)
+class Discord_Message():
+    message_id:int
+    channel_id:int
 
+@dataclass(frozen=True)
+class Discord_Address(Send_Address):
+    messages:tuple[Discord_Message,...]
 
-class Discord_Sender(Channel_Limited_Interface_Sender):
+class Discord_Sender(Sender[Discord_Address]):
     def __init__(self,gi:'Discord_Game_Interface'):
-        Channel_Limited_Interface_Sender.__init__(self,gi)
+        Sender.__init__(self)
+        self.gi = gi
         self.client = gi.client
         self.default_channel = gi.channel_id
-
     @override
-    async def _send(self, message: Message):
-        if message.content is not None:
-            if len(message.content) > MESSAGE_MAX_LENGTH:
-                sub_messages = message.split(
-                    length=MESSAGE_MAX_LENGTH,
-                    add_start="--MESSAGE TOO LONG. WAS SPLIT--\n",
-                    add_end="\n--END MESSAGE--",
-                    add_join_end="\n--SPLIT END--",
-                    add_join_start="\n--SPLIT START--")
-                for sub_message in sub_messages:
-                    await self._send(sub_message)
-                return
-        if message.bullet_points:
-            message = Add_Bullet_Points_To_Content_Alias_Message(message)
-        if message.channel_id is None:
-            assert isinstance(self.default_channel,int)
-            channel = self.client.get_channel(self.default_channel)
+    async def generate_address(self, channel: ChannelId | None = None, length:int = 1) -> Discord_Address:
+        if channel is None:
+            channel = self.default_channel
+        
+    @override
+    async def _send(self, sendable: Sendable, address: Discord_Address|None = None) -> Discord_Address:
+        if isinstance(sendable,_Old_Message):
+            ...
+        else:#unknown type, just go by subtypes
+            if isinstance(sendable,Text):
+                ...
+            if isinstance(sendable,With_Options):
+                ...
+            if isinstance(sendable,Attach_Files):
+                ...
+        if address is None:
+            ...
         else:
-            assert isinstance(message.channel_id,int)
-            channel = self.client.get_channel(message.channel_id)
+            return address
+    async def _old_send(self, sendable: _Old_Message, address:Discord_Address):
+        channel = self.client.get_channel(address.messages[0].channel_id)
         assert isinstance(channel,DiscordChannel)
         attachments:list[discord.File] = []
-        if message.attach_paths is not None:
-            for path in message.attach_paths:
+        if isinstance(sendable,Attach_Files):
+            for path in sendable.attach_files:
                 attachments.append(discord.File(path))
-        if message.message_id is None and message.reply_to_id is not None:
-            await self.client.wait_until_ready()
-            assert isinstance(message.reply_to_id,int)
-            to_reply = await channel.fetch_message(message.reply_to_id)
-            discord_message = await to_reply.reply(
-                content=message.content,
-                files=attachments
+        await self.client.wait_until_ready()
+        discord_message:discord.Message = await channel.fetch_message(address.messages[0].message_id)
+        await discord_message.edit(
+            content=str(BLANK_TEXT if not isinstance(sendable,Text) else sendable.text),
+            attachments=attachments
             )
-            message.message_id = discord_message.id#type: ignore
-        elif message.message_id is None:#new message
-            await self.client.wait_until_ready()
-            discord_message = await channel.send(
-                content=message.content 
-                if message.content not in (None,'') else "--empty--",
-                files = attachments)
-            message.message_id = discord_message.id#type:ignore
-        else:#edit old message
-            assert isinstance(message.message_id,int)
-            await self.client.wait_until_ready()
-            discord_message:discord.Message = await channel.fetch_message(message.message_id)
-            await discord_message.edit(content=message.content,attachments=attachments)
-            message.message_id = discord_message.id#type:ignore
-        if message.bullet_points:#STILL BREAKS SOMETIMES!!!!!!!!!!!!!!!!!!!!!!!!
-            for bp in message.bullet_points:
+        if isinstance(sendable,With_Options):
+            for bp in sendable.with_options:
                 if bp.emoji is not None:
                     emoji = discord.PartialEmoji(name = bp.emoji)
                     success = False
@@ -132,9 +134,9 @@ class Discord_Sender(Channel_Limited_Interface_Sender):
         return wordify_iterable(player_names)
 
 
-class Discord_Game_Interface(Channel_Limited_Game_Interface):
+class Discord_Game_Interface(Game_Interface):
     def __init__(self,channel_id:ChannelId,players:list[PlayerId]):
-        Channel_Limited_Game_Interface.__init__(self)
+        Game_Interface.__init__(self)
         self.channel_id = channel_id
         self.players = players
         
@@ -145,15 +147,15 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
         self.client = discord.Client(intents = intents)
         self.default_sender = Discord_Sender(self)
 
-        self.first_intialization = True
+        self.first_initialization = True
         self.on_start_callbacks:list[AsyncCallback] = []
-
+        #region 
         @self.client.event
         async def on_ready():#triggers when client is logged into discord
-            if self.first_intialization:
+            if self.first_initialization:
                 for callback in self.on_start_callbacks:
                     await callback()
-                self.first_intialization = False
+                self.first_initialization = False
             else:
                 await self.reconnect()
         @self.client.event
@@ -201,9 +203,9 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 
                 message = self.find_tracked_message(payload.message_id)#type:ignore
                 if message is not None:
-                    if message.bullet_points is not None:
-                        for i in range(len(message.bullet_points)):
-                            if message.bullet_points[i].emoji == emoji:
+                    if message.with_options is not None:
+                        for i in range(len(message.with_options)):
+                            if message.with_options[i].emoji == emoji:
                                 interaction.choice_index = i
                                 break
                         if interaction.choice_index is not None:
@@ -220,13 +222,14 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
                 
                 message = self.find_tracked_message(payload.message_id)#type:ignore
                 if message is not None:
-                    if message.bullet_points is not None:
-                        for i in range(len(message.bullet_points)):
-                            if message.bullet_points[i].emoji == emoji:
+                    if message.with_options is not None:
+                        for i in range(len(message.with_options)):
+                            if message.with_options[i].emoji == emoji:
                                 interaction.choice_index = i
                                 break
                         if interaction.choice_index is not None:
                             await self._trigger_action(interaction)
+        #endregion
     @override
     async def reset(self):
         await super().reset()
@@ -239,7 +242,8 @@ class Discord_Game_Interface(Channel_Limited_Game_Interface):
     async def reconnect(self):
         """this method is called by discord.py when we have gotten on_ready more than once to hopefully ensure the game remains functional"""
         #ISSUE1: after reconnect message.reference seems to sometimes be None when it shouldn't be
-        #POSSIBLE SOLUTION: fetch all currently tracked messages to hopefully pu them in the discord cach or somesuch
+        #POSSIBLE SOLUTION: fetch all currently tracked messages to hopefully pu them in the discord catch or some-such
+        return
         logger.warning("reconnecting after discord service reconnect")
         logger.warning("attempting to fetch tracked messages")
         channels:set[ChannelId|None] = set(message.channel_id for message in self.tracked_messages)

@@ -286,7 +286,7 @@ class Game_Operator(Interface_Operator):
                 if interaction.content.startswith(config['command_prefix']):
                     if interaction.reply_to_message_id is None:
                         async def send(content:str):
-                            await self.send(interaction.reply(content))
+                            await self.sender(interaction.reply(content))
                         try:
                             command_data = docopt(COMMAND_DOCSTRING,list(shlex.shlex(interaction.content[len(CP):],punctuation_chars=True)),default_help=False)
                         except DocoptExit as e:

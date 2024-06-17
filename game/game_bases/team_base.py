@@ -3,7 +3,7 @@ from typing import Optional, override
 
 from game import kick_text
 from game.components.game_interface import Game_Interface
-from game.components.message import Message
+from game.components.sendable.old_message import Old_Message
 from game.game_bases.elimination_base import Elimination_Framework
 from game.game_bases.round_base import Rounds_Base
 from game.game_bases.rounds_with_points_base import Rounds_With_Points_Framework
@@ -97,10 +97,10 @@ class Team_Base(Rounds_Base):
         """
         teams = arg_fix_grouping(self.all_teams,teams)
         for team in teams:
-            await self.sender(Message(
-                content=content,
-                attach_paths=attatchements_data,
-                channel_id=self.team_channel_id[team]
+            await self.sender(Old_Message(
+                text=content,
+                attach_files=attatchements_data,
+                on_channel=self.team_channel_id[team]
             ))
     async def kick_teams(
             self,

@@ -55,7 +55,7 @@ def text_validator_maker(
         is_in:Optional[list[str]] = None,
         not_is_in:Optional[list[str]] = None,
         is_composed_of:Optional[str] = None,
-        is_stricly_composed_of:Optional[str] = None,
+        is_strictly_composed_of:Optional[str] = None,
         check_lower_case:bool = False,
         min_num_words:Optional[int] = None,
         max_num_words:Optional[int] = None
@@ -102,13 +102,13 @@ def text_validator_maker(
         if is_composed_of is not None:
             if not all(letter in is_composed_of for letter in value):
                 return (False,f"given value '{value}' contains characters not found in '{is_composed_of}'")
-        if is_stricly_composed_of is not None:
-            list_letters = list(is_stricly_composed_of)
+        if is_strictly_composed_of is not None:
+            list_letters = list(is_strictly_composed_of)
             for letter in value:
                 if letter in list_letters:
                     list_letters.remove(letter)
                 else:
-                    return (False,f"given value '{value}' contains more characters than are found in '{is_stricly_composed_of}'")
+                    return (False,f"given value '{value}' contains more characters than are found in '{is_strictly_composed_of}'")
         num_words =  len(value.split())
         if min_num_words is not None:
             if num_words < min_num_words:

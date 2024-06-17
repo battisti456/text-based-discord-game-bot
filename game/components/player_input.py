@@ -7,14 +7,15 @@ from config.config import config
 from game import correct_str, get_logger, make_player_dict
 from game.components.game_interface import Game_Interface
 from game.components.interaction import Interaction
-from game.components.message import Alias_Message, Message
+from game.components.message import Alias_Message
 from game.components.response_validator import (
     ResponseValidator,
     Validation,
     default_text_validator,
     not_none,
 )
-from game.components.sender import Sender
+from game.components.send.old_message import Old_Message
+from game.components.send.sender import Sender
 from utils.grammar import nice_time, ordinate
 from utils.types import (
     GS,
@@ -54,7 +55,7 @@ class Player_Input[T](GS):
         self._receive_inputs = False
         self._response_validator:ResponseValidator[T] = response_validator
         self.status_message = Alias_Message(
-            Message(players_who_can_see=self.who_can_see),lambda content: self.response_status())
+            Old_Message(limit_players_who_can_see=self.who_can_see),lambda content: self.response_status())
         self.funcs_to_call_on_update:list[Callable[[],Awaitable]] = []
         self._last_response_status:str = ""
         self.timeout_time:int = 0
@@ -141,9 +142,9 @@ class Player_Input[T](GS):
             timeout_text:str = ""
             if self.timeout is not None:
                 timeout_text = f"\nYou have {nice_time(self.timeout_time-int(time()))} to respond before timeout."
-            await self.sender(Message(
-                players_who_can_see=self.who_can_see,
-                content=f"We are still waiting on {self.sender.format_players_md(players_not_responded)} to respond to {self.name}.\n" +
+            await self.sender(Old_Message(
+                limit_players_who_can_see=self.who_can_see,
+                text=f"We are still waiting on {self.sender.format_players_md(players_not_responded)} to respond to {self.name}.\n" +
                 f"This is your {ordinate(i+1)} warning at {nice_time(self.warnings[i])} of failure to respond.\n" + 
                 warning_text + timeout_text
                 ))
@@ -163,9 +164,9 @@ class Player_Input[T](GS):
         try:
             await asyncio.wait_for(await_task,timeout=self.timeout)
         except asyncio.TimeoutError:
-            await self.sender(Message(
-                players_who_can_see=self.who_can_see,
-                content=f"The opportunity to respond to {self.name} has timed out."))
+            await self.sender(Old_Message(
+                limit_players_who_can_see=self.who_can_see,
+                text=f"The opportunity to respond to {self.name} has timed out."))
         _core.cancel()
         _handle_warnings.cancel()
         await self._unsetup()
@@ -200,19 +201,19 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
             players:PlayersIds, response_validator:ResponseValidator[T] = not_none,
             who_can_see:Optional[list[PlayerId]] = None, 
             timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings'],
-            message:Optional[Message|str] = None, allow_edits:bool = True):
+            message:Optional[Old_Message|str] = None, allow_edits:bool = True):
         Player_Input.__init__(self,name,gi,sender,players,response_validator,who_can_see,timeout,warnings)
-        self.message:Message
-        _message:Message
+        self.message:Old_Message
+        _message:Old_Message
         if message is None:
-            _message = Message("Respond here.",players_who_can_see=players)
+            _message = Old_Message("Respond here.",limit_players_who_can_see=players)
         elif isinstance(message,str):
-            _message = Message(message,players_who_can_see=players)
+            _message = Old_Message(message,limit_players_who_can_see=players)
         else:
-            _message:Message = message
+            _message:Old_Message = message
         self.bind_message(_message)
         self.allow_edits:bool = allow_edits
-    def bind_message(self,message:Message) -> Message:
+    def bind_message(self,message:Old_Message) -> Old_Message:
         self.message = Alias_Message(message,lambda content: self.add_response_status(content))
         return self.message
     @override
@@ -263,7 +264,7 @@ class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
             response_validator:ResponseValidator[str] = default_text_validator,
             who_can_see:Optional[list[PlayerId]] = None, 
             timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings'],
-            message:Optional[Message|str] = None,
+            message:Optional[Old_Message|str] = None,
             allow_edits:bool = True):
         Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,timeout,warnings,message,allow_edits)
     @override
@@ -292,7 +293,7 @@ class Player_Multi_Text_Input(Player_Input_In_Response_To_Message[set[str]]):
             who_can_see: list[PlayerId] | None = None, 
             timeout: int | None = config['default_timeout'], 
             warnings: list[int] = config['default_warnings'], 
-            message: Message | str | None = None, 
+            message: Old_Message | str | None = None, 
             allow_edits: bool = True):
         Player_Input_In_Response_To_Message.__init__(self,name, gi, sender, players, response_validator, who_can_see, timeout, warnings, message, allow_edits)
     @override
@@ -326,7 +327,7 @@ class Player_Single_Selection_Input(Player_Input_In_Response_To_Message[int]):
             response_validator:ResponseValidator[int] = not_none, 
             who_can_see:Optional[list[PlayerId]] = None, 
             timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings'],
-            message:Optional[Message|str] = None,
+            message:Optional[Old_Message|str] = None,
             allow_edits:bool = True):
         Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,timeout,warnings,message,allow_edits)
     @override
@@ -353,7 +354,7 @@ class Player_Multiple_Selection_Input(Player_Input_In_Response_To_Message[set[in
             self, name:str, gi:Game_Interface, sender :Sender, players:PlayersIds, 
             response_validator:ResponseValidator[set[int]] = not_none,
             who_can_see:Optional[list[PlayerId]] = None, 
-            timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings'], message:Optional[Message|str] = None):
+            timeout:Optional[int] = config['default_timeout'], warnings:list[int] = config['default_warnings'], message:Optional[Old_Message|str] = None):
         Player_Input_In_Response_To_Message.__init__(self,name,gi,sender,players,response_validator,who_can_see,timeout,warnings,message,True)
     @override
     async def _setup(self):
@@ -379,7 +380,7 @@ class Player_Multiple_Selection_Input(Player_Input_In_Response_To_Message[set[in
                     if interaction.choice_index in proxy:
                         proxy.remove(interaction.choice_index)
                         await self._update()
-def multi_bind_message(message:Message,*player_inputs:Player_Input_In_Response_To_Message):
+def multi_bind_message(message:Old_Message,*player_inputs:Player_Input_In_Response_To_Message):
     """
     binds a single message to multiple inputs correctly
     
@@ -387,7 +388,7 @@ def multi_bind_message(message:Message,*player_inputs:Player_Input_In_Response_T
     
     player_inputs: all the player inputs the message should be bound to
     """
-    _message:Message = message
+    _message:Old_Message = message
     for player_input in player_inputs:
         _message = player_input.bind_message(_message)
     for player_input in player_inputs:
@@ -445,8 +446,8 @@ async def run_inputs(
                 return "*All inputs are satisfied.*"
             else:
                 return "\n".join(feedback_list)
-        feedback_message:Message = Alias_Message(
-            Message(players_who_can_see=who_can_see),content_modifier=lambda content:feedback_text())
+        feedback_message:Old_Message = Alias_Message(
+            Old_Message(limit_players_who_can_see=who_can_see),content_modifier=lambda content:feedback_text())
         await sender(feedback_message)
         async def on_update():
             await sender(feedback_message)

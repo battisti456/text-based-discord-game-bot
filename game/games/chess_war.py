@@ -5,13 +5,15 @@ import dataclasses
 import chess
 
 from game import get_logger
+from game.components.send.option import Option
 from game.components.game_interface import Game_Interface
-from game.components.message import Alias_Message, Bullet_Point, Message
+from game.components.message import Alias_Message
 from game.components.player_input import (
     Player_Single_Selection_Input,
     run_inputs,
     Player_Multi_Text_Input
 )
+from game.components.sendable.old_message import Old_Message
 from game.game_bases import Chess_Base, Team_Base
 from utils.grammar import wordify_iterable
 from utils.common import get_first
@@ -33,14 +35,14 @@ class Chess_War(Team_Base,Chess_Base):
         self.num_rounds = None
         self.player_owned_squares:PlayerDict[set[chess.Square]]
         self.team_boards:TeamDict[chess.Board]
-        self.team_board_messages:TeamDict[Message]
+        self.team_board_messages:TeamDict[Old_Message]
         with open(CHESS_PIECE_SHARING_PATH,'r') as file:
             self.chess_piece_sharing_data:dict[str,dict[str,list[list[chess.Square]]]] = json.load(file)
             "str(bool)/str(int)/list[list[square]]"
         self.team_moves:TeamDict[Move_Library]
         self.player_is_ready:PlayerDict[bool]
         self.all_ready:bool
-        self.team_board_player_messages:TeamDict[set[Message]]
+        self.team_board_player_messages:TeamDict[set[Old_Message]]
     @override
     async def game_intro(self):
         await self.basic_send(
@@ -63,9 +65,9 @@ class Chess_War(Team_Base,Chess_Base):
             for i, player in enumerate(self.team_players[team]):
                 self.player_owned_squares[player] = set(split[i])
             self.team_board_messages[team] = Alias_Message(
-                Message(
-                    content="Your team's board:",
-                    channel_id=self.team_channel_id[team]
+                Old_Message(
+                    text="Your team's board:",
+                    on_channel=self.team_channel_id[team]
                 ),
                 attach_paths_modifier=self.make_team_board_callable(team)
             )
@@ -99,9 +101,9 @@ class Chess_War(Team_Base,Chess_Base):
                 'other_colors' : {square:YOUR_PIECES_COLORS for square in player_squares}
             })]
         start_squares:set[chess.Square] = self.player_owned_squares[player]
-        your_pieces_message:Message = Alias_Message(Message(
-            content=f"Here is your board. The pieces you can move are colored {get_color_name(YOUR_PIECES_COLORS)}:",
-            attach_paths=[
+        your_pieces_message:Old_Message = Alias_Message(Old_Message(
+            text=f"Here is your board. The pieces you can move are colored {get_color_name(YOUR_PIECES_COLORS)}:",
+            attach_files=[
                 self.make_board_image(
                     {
                         'white_perspective' : self.get_color(team),
@@ -109,7 +111,7 @@ class Chess_War(Team_Base,Chess_Base):
                     }
                 )
             ],
-            players_who_can_see=[player]),
+            limit_players_who_can_see=[player]),
             attach_paths_modifier=attach_modifier)
         self.team_board_player_messages[team].add(your_pieces_message)
         await self.sender(your_pieces_message)
@@ -165,9 +167,9 @@ class Chess_War(Team_Base,Chess_Base):
             [player],
             validator,
             [player],
-            message=Message(
-                content="What moves would you like your pieces to perform? Please enter moves in uci notation.",
-                players_who_can_see=[player]
+            message=Old_Message(
+                text="What moves would you like your pieces to perform? Please enter moves in uci notation.",
+                limit_players_who_can_see=[player]
             )
         )
         @move_input.on_update
@@ -196,11 +198,11 @@ class Chess_War(Team_Base,Chess_Base):
             sender = self.sender,
             players= [player],
             who_can_see=[player],
-            message=Message(
-                content="Are you ready to continue?",
-                players_who_can_see=[player],
-                bullet_points=[
-                    Bullet_Point(
+            message=Old_Message(
+                text="Are you ready to continue?",
+                limit_players_who_can_see=[player],
+                with_options=[
+                    Option(
                         "yes",
                         NO_YES_EMOJI[1]
                     )
@@ -275,9 +277,9 @@ class Chess_War(Team_Base,Chess_Base):
                     self.player_owned_squares[player2].add(square)
         for player in self.unkicked_players:
             if feedback_text[player]:
-                await self.sender(Message(
-                    content=f"On this turn your pieces died from: {wordify_iterable(feedback_text[player])}",
-                    players_who_can_see=[player]
+                await self.sender(Old_Message(
+                    text=f"On this turn your pieces died from: {wordify_iterable(feedback_text[player])}",
+                    limit_players_who_can_see=[player]
                 ))
         for team in self.all_teams:
             await self.show_team_board(team)

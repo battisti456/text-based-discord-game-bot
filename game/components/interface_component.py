@@ -1,8 +1,9 @@
 from typing import Optional
 
+from game.components.send.old_message import Old_Message
 import utils.emoji_groups
 from game.components.game_interface import Game_Interface
-from game.components.message import Bullet_Point, Message
+from game.components.send.option import Option
 from game.components.player_input import (
     Player_Single_Selection_Input,
     Player_Text_Input,
@@ -43,9 +44,9 @@ class Interface_Component():
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
         wc:PlayersIds= arg_fix_grouping(self.all_players,who_chooses)
-        question = Message(
-            content = content,
-            channel_id=channel_id
+        question = Old_Message(
+            text = content,
+            on_channel=channel_id
         )
         await self.sender(question)
         player_input = Player_Text_Input(
@@ -85,18 +86,18 @@ class Interface_Component():
             emj += utils.emoji_groups.COLORED_CIRCLE_EMOJI
         else:
             emj += emojis
-        bp:list[Bullet_Point] = []
+        bp:list[Option] = []
         for i in range(len(options)):
             bp.append(
-                Bullet_Point(
+                Option(
                     text = options[i],
                     emoji=emj[i]
                 )
             )
-        question = Message(
-            content = content,
-            channel_id=channel_id,
-            bullet_points=bp
+        question = Old_Message(
+            text = content,
+            on_channel=channel_id,
+            with_options=bp
         )
         await self.sender(question)
         player_input = Player_Single_Selection_Input(
@@ -113,7 +114,7 @@ class Interface_Component():
         return player_input.responses
     def format_players_md(self,players:Grouping[PlayerId]) -> str:
             """
-            returns the senders fomatting of a list of players with markdown
+            returns the senders formatting of a list of players with markdown
             """
             return self.sender.format_players_md(players)
     def format_players(self,user_id:PlayersIds) -> str:
@@ -133,14 +134,9 @@ class Interface_Component():
         
         channel_id: what channel to send the message on
         """
-        message = Message(
-            content = content,
-            attach_paths=attachments_data,
-            channel_id=channel_id
+        message = Old_Message(
+            text = content,
+            attach_files=attachments_data,
+            on_channel=channel_id
         )
-        await self.sender(message)
-    async def send(self,message:Message):
-        """
-        a wrapper of self.sender.__call__, for sending Message objects
-        """
         await self.sender(message)

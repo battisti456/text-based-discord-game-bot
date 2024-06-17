@@ -1,29 +1,16 @@
-from typing import Any, Awaitable, Callable, Hashable, Optional, override
+from typing import Awaitable, Callable, Hashable, Optional
 import os
 
 from game import get_logger
+from game.components.send import Sender
 from game.components.interaction import INTERACTION_TYPES, Interaction, InteractionType
-from game.components.message import Message, Reroute_Message
-from game.components.sender import Sender
-from utils.types import ChannelId, Grouping, MessageId, PlayerId
+from utils.types import ChannelId, Grouping, PlayerId
 from config.config import config
 
 logger = get_logger(__name__)
 
 type Action = Callable[[Interaction],Awaitable]
 
-class Interface_Sender(Sender):
-    """
-    a sender intrinsicly linked to the game interface;
-    it stores all messages that pass by it
-    """
-    def __init__(self,gi:'Game_Interface'):
-        Sender.__init__(self)
-        self.gi = gi
-    @override
-    async def __call__(self,message:Message) -> Any:
-        self.gi.track_message(message)
-        return await self._send(message)
 
 class Game_Interface(object):
     """
@@ -34,15 +21,13 @@ class Game_Interface(object):
         self.actions:dict[InteractionType,list[Action]] = {}
         self.action_owners:dict[Action,Hashable] = {}
         self.clear_actions()
-        self.default_sender = Interface_Sender(self)
-        self.tracked_messages:list[Message] = []
+        self.default_sender = Sender()
 
     async def reset(self):
         """
         clears all stored on_actions and messages
         """
         logger.warning("resetting game interface")
-        self.purge_tracked_messages()
         self.clear_actions()
     def empty_temp(self):
         """
@@ -51,28 +36,6 @@ class Game_Interface(object):
         for file in os.listdir(config['temp_path']):
             logger.debug(f"deleting '{config['temp_path']}/{file}'")
             os.unlink(f"{config['temp_path']}/{file}")
-    def track_message(self,message:Message):
-        """
-        adds a message to the interfaces tracked messages list
-        """
-        logger.info(f"tracking object with message_id = {message.message_id}")
-        self.tracked_messages.append(message)
-    def purge_tracked_messages(self):
-        """
-        empties the interfaces tracked messages list
-        """
-        logger.info(f"untracking all messages; message_id's in {list(message.message_id for message in self.tracked_messages)}")
-        self.tracked_messages.clear()
-    def find_tracked_message(self,message_id:MessageId) -> Message | None:
-        """
-        locates a Message object by the message's message_id if it can;
-        returns None if there are no messages that identify with that MessageId;
-        if there are multiple messages, the interface only returns the first it encounters
-        """
-        for message in self.tracked_messages:
-            if message.is_message(message_id,'original'):
-                return message
-        return None
     def clear_actions(self):
         """
         clears all on_actions
@@ -94,7 +57,7 @@ class Game_Interface(object):
                 while action in self.actions[interaction_type]:
                     self.actions[interaction_type].remove(action)
             del self.action_owners[action]
-    def get_sender(self) -> Interface_Sender:
+    def get_sender(self) -> Sender:
         """
         returns the default sender
         """
@@ -123,12 +86,12 @@ class Game_Interface(object):
         return wrapper
     def get_players(self) -> frozenset[PlayerId]:
         """
-        gets relavant players for Game object, should be randomized in order;
+        gets relevant players for Game object, should be randomized in order;
         should be implemented in child classes
         """
         return frozenset()
     async def _new_channel(self,name:Optional[str],who_can_see:Optional[Grouping[PlayerId]]) -> ChannelId:
-        ...
+        raise NotImplementedError()
     async def new_channel(self,name:Optional[str] = None, who_can_see:Optional[Grouping[PlayerId]] = None) -> ChannelId:
         """
         returns the ChannelId of a channel
@@ -140,47 +103,3 @@ class Game_Interface(object):
         channel_id:ChannelId = await self._new_channel(name,who_can_see)
         logger.info(f"created new channel with name = {name}, player_ids = {who_can_see}, channel_id = {channel_id}")
         return channel_id
-
-class Channel_Limited_Interface_Sender(Interface_Sender): 
-    """
-    a subclass of Iterface_Sender geared towards Channel_Limited_Game_Interfaces;
-    it reroute's messages based on players_who_can see to make up for an interface which is unable to limit seeing messions to specific viewers directly
-    """
-    def __init__(self,gi:'Channel_Limited_Game_Interface'):
-        Interface_Sender.__init__(self,gi)
-    @override
-    async def __call__(self,message:Message):
-        if (message.players_who_can_see is not None) and message.channel_id is None:
-            assert isinstance(self.gi,Channel_Limited_Game_Interface)
-            message= Reroute_Message(
-                message,
-                await self.gi.who_can_see_channel(message.players_who_can_see)
-            )
-        return await Interface_Sender.__call__(self,message)
-
-class Channel_Limited_Game_Interface(Game_Interface):
-    """
-    a subclass of Game_Interface that creates channels and reroputes messages for complying to Message.who_can_see
-    """
-    def __init__(self):
-        Game_Interface.__init__(self)
-        self.who_can_see_dict:dict[frozenset[PlayerId],ChannelId] = {}
-        self.default_sender = Channel_Limited_Interface_Sender(self)
-    async def who_can_see_channel(self,players:Grouping[PlayerId]) -> ChannelId:
-        """
-        creates a ChannelId that only players can see, or returns one that it already made
-        """
-        fr_players = frozenset(players)
-        channel_id:ChannelId
-        if fr_players in self.who_can_see_dict:
-            channel_id = self.who_can_see_dict[fr_players]
-        else:
-            channel_id = await self.new_channel(
-                f"{self.default_sender.format_players(players)}'s Private Channel",
-                players
-            )
-            self.who_can_see_dict[fr_players] = channel_id
-        logger.info(f"channel limited game interface changing channel to id = {channel_id} so player_ids = {players} can see")
-        return channel_id
-
-
