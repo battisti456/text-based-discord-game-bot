@@ -18,6 +18,7 @@ class Color_Filter(logging.Filter):
     start_red = "\x1b[31;20m"
     start_bold_red = "\x1b[31;1m"
     color = {
+        logging.DEBUG : start_grey,
         logging.INFO : start_grey,
         logging.WARNING : start_yellow,
         logging.ERROR : start_red,
