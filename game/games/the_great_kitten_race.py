@@ -6,7 +6,6 @@ from config.config import config
 from config.games_config import games_config
 from game import correct_int, make_player_dict, merge_placements, score_to_placement
 from game.components.game_interface import Game_Interface
-from game.components.message import make_bullet_points
 from game.components.player_input import (
     Player_Input,
     Player_Single_Selection_Input,
@@ -14,7 +13,7 @@ from game.components.player_input import (
     run_inputs,
 )
 from game.components.response_validator import Validation
-from game.components.sendable.old_message import Old_Message
+from game.components.send.old_message import Old_Message
 from game.game import Game
 from utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
 from utils.grammar import ordinate, wordify_iterable

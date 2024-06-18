@@ -4,18 +4,13 @@ from typing import override
 
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
-from game.components.message import (
-    make_bullet_points,
-    make_no_yes_bullet_points,
-)
 from game.components.player_input import (
     Player_Single_Selection_Input,
     Player_Text_Input,
-    multi_bind_message,
     run_inputs,
 )
 from game.components.response_validator import text_validator_maker
-from game.components.sendable.old_message import Old_Message
+from game.components.send.old_message import Old_Message
 from game.game_bases.elimination_base import Elimination_Base
 from game.game_bases.game_word_base import Game_Word_Base
 from utils.emoji_groups import LEFT_RIGHT_EMOJI

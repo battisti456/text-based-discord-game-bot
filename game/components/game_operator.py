@@ -22,8 +22,10 @@ from config.config_tools import ConfigAction, ConfigError
 from config.config_tools import edit as config_edit
 from game import get_logger
 from game.components.game_interface import Game_Interface
-from game.components.interaction import Interaction
 from game.components.interface_operator import Interface_Operator
+from game.components.send import Interaction
+from game.components.send.interaction import Send_Text
+from game.components.send.sendable.sendables import Text_Only
 from game.game import Game
 from game.games import random_game, search_games, valid_games
 from utils.common import get_first
@@ -255,6 +257,7 @@ class Game_Operator(Interface_Operator):
             ArgumentError: if any provided keys are not permitted
             ArgumentError: if the command string was included in the interaction
         """
+        return
         if len(keys_and_values)%2 != 0:
             raise ArgumentError(f"There must be an even number of keys_and_values, there are {len(keys_and_values)}.")
         types:dict[str,type[Any]] = get_type_hints(Interaction.__init__)
@@ -280,23 +283,23 @@ class Game_Operator(Interface_Operator):
                 raise ArgumentError(f"Containing '{CP}' in your content is not permitted.")
         await self.gi._trigger_action(interaction)
     def bind(self):
-        @self.gi.on_action('send_message',self)
+        @self.gi.watch(filter=lambda interaction: isinstance(interaction.content,Send_Text),owner = self)
         async def recv_command(interaction:Interaction):
-            if interaction.content is not None:
-                if interaction.content.startswith(config['command_prefix']):
-                    if interaction.reply_to_message_id is None:
-                        async def send(content:str):
-                            await self.sender(interaction.reply(content))
-                        try:
-                            command_data = docopt(COMMAND_DOCSTRING,list(shlex.shlex(interaction.content[len(CP):],punctuation_chars=True)),default_help=False)
-                        except DocoptExit as e:
-                            await send(
-                                "Our interpreter was unable to interpret this command of:\n" +
-                                f"'{interaction.content}'\n" +
-                                e.__str__()
-                            )
-                            return
-                        try:
-                            await self.command_structure.launch_commands(command_data)
-                        except CommandExit as e:
-                            await send(e.args[0])
+            assert isinstance(interaction.content,Send_Text)
+            if interaction.content.text.startswith(config['command_prefix']):
+                if interaction.at_address is None:
+                    async def send(content:str):
+                        await self.sender(Text_Only(text=content))
+                    try:
+                        command_data = docopt(COMMAND_DOCSTRING,list(shlex.shlex(interaction.content.text[len(CP):],punctuation_chars=True)),default_help=False)
+                    except DocoptExit as e:
+                        await send(
+                            "Our interpreter was unable to interpret this command of:\n" +
+                            f"'{interaction.content.text}'\n" +
+                            e.__str__()
+                        )
+                        return
+                    try:
+                        await self.command_structure.launch_commands(command_data)
+                    except CommandExit as e:
+                        await send(e.args[0])

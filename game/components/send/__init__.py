@@ -1,7 +1,7 @@
 from game.components.send.interaction import Interaction, Interaction_Content
 from game.components.send.option import Option
 from game.components.send.response import Response
-from game.components.send.send_address import Send_Address
+from game.components.send.address import Address
 from game.components.send.sendable import Sendable
 from game.components.send.sender import Sender
 

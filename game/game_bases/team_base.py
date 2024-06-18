@@ -3,7 +3,7 @@ from typing import Optional, override
 
 from game import kick_text
 from game.components.game_interface import Game_Interface
-from game.components.sendable.old_message import Old_Message
+from game.components.send.old_message import Old_Message
 from game.game_bases.elimination_base import Elimination_Framework
 from game.game_bases.round_base import Rounds_Base
 from game.game_bases.rounds_with_points_base import Rounds_With_Points_Framework

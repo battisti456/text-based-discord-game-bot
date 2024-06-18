@@ -14,5 +14,5 @@ class Response():
             if text is None:
                 text = value.text
             else:
-                text += '\n' + value.text
+                text += '\n' + value.text#type:ignore
         return Response(text, self.reject_interaction or value.reject_interaction)

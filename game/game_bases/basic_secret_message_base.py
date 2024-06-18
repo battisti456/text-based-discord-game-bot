@@ -2,14 +2,13 @@ from typing import Iterable, Optional, overload
 
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
-from game.components.message import make_bullet_points
 from game.components.player_input import (
     Player_Single_Selection_Input,
     Player_Text_Input,
     run_inputs,
 )
 from game.components.response_validator import ResponseValidator, not_none
-from game.components.sendable.old_message import Old_Message
+from game.components.send.old_message import Old_Message
 from game.game import Game
 from utils.emoji_groups import COLORED_CIRCLE_EMOJI, NO_YES_EMOJI
 from utils.types import PlayerDict, PlayerDictOptional, PlayerId, Grouping

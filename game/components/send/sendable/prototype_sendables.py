@@ -6,7 +6,7 @@ from game.components.send.sendable.sendable import Sendable
 if TYPE_CHECKING:
     from game.components.send.option import Option
     from smart_text import TextLike
-    from game.components.send.send_address import Send_Address
+    from game.components.send.address import Address
 
 @dataclass(frozen=True)
 class Text(Sendable, is_prototype = True):
@@ -26,4 +26,4 @@ class With_Text_Field(Sendable, is_prototype = True):
     hint_text:Optional['TextLike'] = field(default=None,kw_only=True)
 @dataclass(frozen=True)
 class Reference_Message(Sendable, is_prototype = True):
-    reference_message:'Send_Address' = field(kw_only=True)
+    reference_message:'Address' = field(kw_only=True)

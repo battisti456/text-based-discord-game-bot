@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 @dataclass(frozen=True)
-class _Old_Message(Sendable):
+class _Old_Message(Sendable, is_prototype = True):
     ...
 
 def Old_Message(

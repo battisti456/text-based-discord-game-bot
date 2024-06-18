@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Generic, Iterable
 from typing_extensions import TypeVar
 
 from game import get_logger
-from game.components.send.send_address import Send_Address
+from game.components.send.address import Address
 from utils.grammar import wordify_iterable
 from utils.types import PlayerId
 
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-SenderSendAddress = TypeVar('SenderSendAddress',bound=Send_Address)
+SenderSendAddress = TypeVar('SenderSendAddress',bound=Address)
 
 class Sender(Generic[SenderSendAddress]):
     """a callable object whose responsibility it is to interpret Messages and display them"""
@@ -26,7 +26,7 @@ class Sender(Generic[SenderSendAddress]):
         """lowest level definition of the default Sender's sending capabilities"""
         logger.info(f"Sent {sendable} at {address}.")
         return await self.generate_address()
-    async def generate_address(self,channel:'ChannelId|None' = None) -> SenderSendAddress:
+    async def generate_address(self,channel:'ChannelId|None'|SenderSendAddress = None) -> SenderSendAddress:
         raise NotImplementedError()
     def format_players_md(self,players:Iterable[PlayerId]) -> str:
         """format a list of PlayerIds with markdown; --might replace with formatter object"""

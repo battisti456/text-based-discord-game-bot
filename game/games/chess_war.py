@@ -7,13 +7,11 @@ import chess
 from game import get_logger
 from game.components.send.option import Option
 from game.components.game_interface import Game_Interface
-from game.components.message import Alias_Message
 from game.components.player_input import (
     Player_Single_Selection_Input,
     run_inputs,
-    Player_Multi_Text_Input
 )
-from game.components.sendable.old_message import Old_Message
+from game.components.send.old_message import Old_Message, _Old_Message
 from game.game_bases import Chess_Base, Team_Base
 from utils.grammar import wordify_iterable
 from utils.common import get_first
@@ -35,14 +33,14 @@ class Chess_War(Team_Base,Chess_Base):
         self.num_rounds = None
         self.player_owned_squares:PlayerDict[set[chess.Square]]
         self.team_boards:TeamDict[chess.Board]
-        self.team_board_messages:TeamDict[Old_Message]
+        self.team_board_messages:TeamDict[_Old_Message]
         with open(CHESS_PIECE_SHARING_PATH,'r') as file:
             self.chess_piece_sharing_data:dict[str,dict[str,list[list[chess.Square]]]] = json.load(file)
             "str(bool)/str(int)/list[list[square]]"
         self.team_moves:TeamDict[Move_Library]
         self.player_is_ready:PlayerDict[bool]
         self.all_ready:bool
-        self.team_board_player_messages:TeamDict[set[Old_Message]]
+        self.team_board_player_messages:TeamDict[set[_Old_Message]]
     @override
     async def game_intro(self):
         await self.basic_send(

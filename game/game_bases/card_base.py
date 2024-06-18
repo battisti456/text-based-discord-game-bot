@@ -10,7 +10,7 @@ import PIL.ImageOps
 import utils.emoji_groups
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
-from game.components.sendable.old_message import Old_Message, _Old_Message
+from game.components.send.old_message import Old_Message, _Old_Message
 from game.game import Game, police_game_callable
 from utils.common import arg_fix_grouping
 from utils.grammar import temp_file_path, wordify_iterable

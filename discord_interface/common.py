@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 import discord
 
-from game.components.send import Send_Address
+from game.components.send import Address
 
 from smart_text import TextLike
 
@@ -27,7 +27,7 @@ class Discord_Message():
     channel_id:int
 
 @dataclass(frozen=True)
-class Discord_Address(Send_Address):
+class Discord_Address(Address):
     messages:list[Discord_Message]
 
 def f(text:TextLike) -> str:

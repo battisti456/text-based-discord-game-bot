@@ -1,7 +1,7 @@
 from typing import override
 
 from game.components.game_interface import Game_Interface
-from game.components.sendable.old_message import Old_Message
+from game.components.send.old_message import Old_Message, _Old_Message
 from game.components.player_input import Player_Text_Input, run_inputs
 from game.components.response_validator import text_validator_maker
 from game.game_bases import Image_Search_Base, Rounds_With_Points_Base
@@ -53,7 +53,7 @@ class Picture_Telephone(Rounds_With_Points_Base, Image_Search_Base):
     def i(self,player:PlayerId,add:int = 0) -> int:
         return (self.unkicked_players.index(player)+self.current_offset+add)%len(self.images)
     async def prompt_telephone(self):
-        questions:PlayerDict[Old_Message] = {}
+        questions:PlayerDict[_Old_Message] = {}
         inputs:PlayerDict[Player_Text_Input] = {}
         for player in self.unkicked_players:
             content:str =""

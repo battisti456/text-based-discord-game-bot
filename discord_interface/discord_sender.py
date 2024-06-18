@@ -1,11 +1,9 @@
-from time import sleep, time
 from typing import TYPE_CHECKING, override, Iterable
 
 import discord
 
 from discord_interface.common import (
     BLANK_TEXT,
-    SLEEP429,
     CompatibleChannels,
     Discord_Address,
     Discord_Message,
@@ -14,13 +12,11 @@ from discord_interface.common import (
 )
 from discord_interface.custom_views import One_Selectable_View, One_Text_Field_View
 from game import get_logger
-from game.components.send import Interaction, Interaction_Content, Sendable, Sender
-from game.components.send.interaction import Select_Options
-from game.components.send.old_message import _Old_Message
+from game.components.send import Sendable, Sender
 from game.components.send.sendable.prototype_sendables import (
-    Attach_Files,
     Text,
     With_Options,
+    With_Text_Field
 )
 from game.components.send.sendable.sendables import Text_Only, Text_With_Options, Text_With_Text_Field
 from utils.grammar import wordify_iterable
@@ -37,10 +33,14 @@ class Discord_Sender(Sender[Discord_Address]):
         self.gi = gi
         self.client = gi.client
         self.default_channel = gi.channel_id
+
+        self.cached_addresses:dict[Discord_Message,Discord_Address] = {}
     @override
-    async def generate_address(self, channel_id: 'ChannelId | None' = None, length:int = 1) -> 'Discord_Address':
-        if channel_id is None:
+    async def generate_address(self, channel_id: 'ChannelId | None|Discord_Address' = None, length:int = 1) -> 'Discord_Address':
+        if channel_id is None or (isinstance(channel_id,Discord_Address) and len(channel_id.messages) == 0):
             channel_id = self.default_channel
+        if isinstance(channel_id,Discord_Address):
+            channel_id = channel_id.messages[-1].channel_id#type:ignore
         assert isinstance(channel_id,int)
         channel = await self.client.fetch_channel(channel_id)
         assert isinstance(channel,CompatibleChannels)
@@ -52,21 +52,21 @@ class Discord_Sender(Sender[Discord_Address]):
                 message_id=discord_message.id,
                 channel_id=channel_id
             ))
-        return Discord_Address(messages)
-    async def extend_address(self,address:Discord_Address, num:int) -> Discord_Address:
+        address = Discord_Address(messages)
+        for message in messages:
+            self.cached_addresses[message] = address
+        return address
+    async def extend_address(self,address:Discord_Address, num:int):
         to_add = await self.generate_address(
-            address.messages[-1].channel_id,#type:ignore
+            None if len(address.messages) == 0 else address.messages[-1].channel_id,#type:ignore
             num)
         for message in to_add.messages:
+            self.cached_addresses[message] = address
             address.messages.append(message)
-        return address
     @override
     async def _send(self, sendable: Sendable, address: Discord_Address|None = None) -> Discord_Address:
         edit_kwargs:list[DiscordEditArgs] = []
-        reactions:dict[int,list[discord.Emoji|discord.PartialEmoji|discord.Reaction]] = {}
-        if isinstance(sendable,_Old_Message):
-            ...
-        elif isinstance(sendable,Text_Only):
+        if isinstance(sendable,Text_Only):
             edit_kwargs.append({
                 'content' : f(sendable.text)
             })
@@ -85,17 +85,39 @@ class Discord_Sender(Sender[Discord_Address]):
                 'view' : One_Text_Field_View(self.gi,address,sendable)
             })
         else:#unknown type, just go by subtypes
+            logger.warning(f"Type of {sendable} not supported by {self}, attempting to send primitives.")
+            num_views:int = sum(int(isinstance(sendable,prototype)) for prototype in (
+                With_Text_Field,
+                With_Options
+            ))
+            if address is None:
+                address = await self.generate_address(length=num_views)
+            elif len(address.messages) < num_views:
+                await self.extend_address(address,len(address.messages) - num_views)
+            text = BLANK_TEXT
             if isinstance(sendable,Text):
-                ...
+                text = f(sendable.text)
             if isinstance(sendable,With_Options):
-                ...
-            if isinstance(sendable,Attach_Files):
-                ...
+                edit_kwargs.append({
+                    'content' : text,
+                    'view' : One_Selectable_View(self.gi,address,sendable)
+                })
+            if isinstance(sendable,With_Text_Field):
+                edit_kwargs.append({
+                    'content' : text,
+                    'view' : One_Text_Field_View(self.gi,address,sendable)
+                })
+            if len(edit_kwargs) == 0:
+                edit_kwargs.append({
+                    'content' : text
+                })
+            
         num_to_extend:int = len(edit_kwargs) - (0 if address is None else len(address.messages))
         if address is None:
             address = await self.generate_address(length=num_to_extend)
         elif num_to_extend > 0:
-            address = await self.extend_address(address,num_to_extend)
+            await self.extend_address(address,num_to_extend)
+        assert address is not None
         for i,message in enumerate(address.messages):
             kwargs:DiscordEditArgs
             if i >= len(edit_kwargs):
@@ -107,47 +129,7 @@ class Discord_Sender(Sender[Discord_Address]):
             partial_message = channel.get_partial_message(message.message_id)
             discord_message = await partial_message.fetch()
             await discord_message.edit(**kwargs)
-            if i in reactions.keys():
-                react = reactions[i]
-                for emoji in react:
-                    j:bool = False
-                    while not j:
-                        try:
-                            await self.client.wait_until_ready()
-                            await discord_message.add_reaction(emoji)
-                            j = True
-                        except Exception as e:
-                            logger.error(f"failed to add bullet points due to:\n{type(e)}: {e}")
-                            sleep(SLEEP429)
-            
-
         return address
-    async def _old_send(self, sendable: _Old_Message, address:Discord_Address):
-        channel = self.client.get_channel(address.messages[0].channel_id)
-        assert isinstance(channel,CompatibleChannels)
-        attachments:list[discord.File] = []
-        if isinstance(sendable,Attach_Files):
-            for path in sendable.attach_files:
-                attachments.append(discord.File(path))
-        await self.client.wait_until_ready()
-        discord_message:discord.Message = await channel.fetch_message(address.messages[0].message_id)
-        await discord_message.edit(
-            content=str(BLANK_TEXT if not isinstance(sendable,Text) else sendable.text),
-            attachments=attachments
-            )
-        if isinstance(sendable,With_Options):
-            for bp in sendable.with_options:
-                if bp.emoji is not None:
-                    emoji = discord.PartialEmoji(name = bp.emoji)
-                    success = False
-                    while not success:
-                        try:
-                            await self.client.wait_until_ready()
-                            await discord_message.add_reaction(emoji)
-                            success = True
-                        except Exception as e:#not sure what the actual exceptions are
-                            logger.error(f"failed to add bullet points due to:\n{type(e)}: {e}")
-                            sleep(SLEEP429)
     @override
     def format_players_md(self, players: 'Iterable[PlayerId]') -> str:
         return wordify_iterable(f"<@{player}>" for player in players)

@@ -48,13 +48,13 @@ class Interface_Component():
             text = content,
             on_channel=channel_id
         )
-        await self.sender(question)
+        question_address = await self.sender(question)
         player_input = Player_Text_Input(
             name = "this text question",
             gi = self.gi,
             sender = self.sender,
             players=wc,
-            message = question,
+            question_address=question_address,
             allow_edits=allow_answer_change,
             response_validator=response_validator
         )
@@ -91,7 +91,8 @@ class Interface_Component():
             bp.append(
                 Option(
                     text = options[i],
-                    emoji=emj[i]
+                    emoji=emj[i],
+                    long_text=options[i]
                 )
             )
         question = Old_Message(
@@ -99,13 +100,13 @@ class Interface_Component():
             on_channel=channel_id,
             with_options=bp
         )
-        await self.sender(question)
+        question_address = await self.sender(question)
         player_input = Player_Single_Selection_Input(
             name = "this single selection multiple choice question",
             gi = self.gi,
             sender = self.sender,
             players=wc,
-            message = question,
+            question_address=question_address,
             allow_edits=allow_answer_change,
             response_validator=response_validator
         )

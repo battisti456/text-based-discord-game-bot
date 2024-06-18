@@ -42,9 +42,12 @@ class Game_Interface(object):
         return decorator
     async def interact(self,interaction:Interaction) -> Response|None:
         response:Response|None = None
-        for action_set in self.actions.values():
+        for action_set in tuple(self.actions.values()):
             for action in action_set:
-                val = action(interaction)
+                if iscoroutinefunction(action):
+                    val = await action(interaction)
+                else:
+                    val = action(interaction)
                 if isinstance(val,Awaitable):
                     val = await val
                 if val is not None:

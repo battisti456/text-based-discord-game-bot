@@ -71,11 +71,16 @@ class Select(discord.ui.Select,Interaction_Handler):
     @override
     async def callback(self, discord_interaction: 'discord.Interaction'):
         assert isinstance(self.sendable,With_Options)
+        options:tuple[Option,...] = tuple(
+            get_first(option for option in self.sendable.with_options if option.text == value) for 
+            value in discord_interaction.data['values']#type:ignore
+        )
+        indices:tuple[int,...] = tuple(
+            self.sendable.with_options.index(option) for option in options
+        )
         await self.handle_interaction(discord_interaction,Select_Options(
-                tuple(
-                    get_first(option for option in self.sendable.with_options if option.text == value) for 
-                    value in discord_interaction.data['values']#type:ignore
-                )
+                options,
+                indices
             ))
 def hint_text(sendable:'With_Text_Field') -> str:
     return "Input your response here!" if sendable.hint_text is None else f(sendable.hint_text)
