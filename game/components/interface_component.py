@@ -92,6 +92,8 @@ class Interface_Component():
             split = options[i].split('-')
             if len(split) == 2:
                 text, long_text = split
+                text = text.strip()
+                long_text = long_text.strip()
             else:
                 text = options[i]
                 long_text = options[1]

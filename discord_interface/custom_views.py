@@ -71,6 +71,7 @@ class Select(discord.ui.Select,Interaction_Handler):
     @override
     async def callback(self, discord_interaction: 'discord.Interaction'):
         assert isinstance(self.sendable,With_Options)
+        print(discord_interaction.data)
         options:tuple[Option,...] = tuple(
             get_first(option for option in self.sendable.with_options if option.text == value) for 
             value in discord_interaction.data['values']#type:ignore
