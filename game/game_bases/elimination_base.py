@@ -54,7 +54,7 @@ class Elimination_Framework(Participant_Base[Participant],Rounds_Base):
         """
         participants = arg_fix_grouping(self._participants,participants)
         to_eliminate:frozenset[Participant] = frozenset(participants) - frozenset(self.eliminated)
-        if not to_eliminate == set(self.not_eliminated) and len(to_eliminate) > 0:
+        if to_eliminate != set(self.not_eliminated) and len(to_eliminate) > 0:
             self.elimination_order += (tuple(to_eliminate),)
         if len(self.not_eliminated) == 1:
             raise GameEndElimination(f"all but one {self._participant_name} being eliminated")
@@ -73,8 +73,9 @@ class Elimination_Base(Elimination_Framework[PlayerId]):
     async def eliminate(self,players:PlayerId|Grouping[PlayerId]):
         players = arg_fix_grouping(self.unkicked_players,players)
         await self.announce_eliminate(players)
-        self.eliminate_participants(players)
-        await super().kick_players(players, 'eliminated')
+        if set(players) != set(self.unkicked_players):
+            self.eliminate_participants(players)
+            await super().kick_players(players, 'eliminated')
     @override
     async def kick_players(self, players: Grouping[PlayerId], reason: KickReason = 'unspecified', priority:Optional[int] = None):
         players = tuple(players)
