@@ -1,11 +1,11 @@
-from typing import override, Optional
-
-
+from typing import override
+from dataclasses import dataclass
+@dataclass(frozen=True)
 class Option(object):
     """a basic object storing the text and the emoji representations of a bullet point item"""
-    def __init__(self,text:Optional[str] = None, emoji:Optional[str] = None):
-        self.text = text
-        self.emoji = emoji
+    text:str
+    emoji:str
+    long_text:str
     @override
     def __str__(self):
         return f"{self.emoji} (*{self.text}*)"

@@ -1,138 +1,21 @@
-from dataclasses import dataclass
 from random import shuffle
-from time import sleep
 from typing import Awaitable, Callable, Iterable, Optional, override
 
 import discord
+import discord.types
+import discord.types.emoji
+
+from discord_interface.discord_sender import Discord_Sender
 
 from game import get_logger
 from game.components.game_interface import (
     Game_Interface,
 )
-from game.components.interaction import Interaction
-from game.components.message import Add_Bullet_Points_To_Content_Alias_Message
-from game.components.send import Send_Address, Sendable, Sender
-from game.components.send.old_message import _Old_Message
-from game.components.send.sendable.prototype_sendables import (
-    Attach_Files,
-    Text,
-    With_Options,
-)
-from game.components.send.sendable.sendables import (
-
-)
-from utils.grammar import wordify_iterable
 from utils.types import ChannelId, MessageId, PlayerId
 
 type AsyncCallback = Callable[[],Awaitable[None]]
-DiscordChannel = discord.TextChannel|discord.Thread
 
 logger = get_logger(__name__)
-
-MESSAGE_MAX_LENGTH = 1800#actually 2000, but I leave extra for split indicators
-SLEEP429 = 10
-BLANK_TEXT = " "
-
-def discord_message_populate_interaction(
-        payload:discord.Message, interaction:Interaction):
-    interaction.player_id = payload.author.id#type: ignore
-    interaction.channel_id = payload.channel.id#type: ignore
-    interaction.content = payload.content
-    interaction.interaction_id = payload.id#type: ignore
-    if (
-        payload.reference is not None
-        ):
-        reply_id:MessageId|None = payload.reference.message_id#type:ignore
-        if reply_id is None:
-            logger.warning("received a message with a reference but no reference.message_id")
-        else:
-            interaction.reply_to_message_id = reply_id
-    return interaction
-async def discord_message_emoji_order(
-        payload:discord.Message, user_id:int) -> list[str]:
-    emoji:list[str] = []
-    for reaction in payload.reactions:
-        async for user in reaction.users():
-            if user.id == user_id:
-                emoji.append(str(reaction.emoji))
-                break
-    return emoji
-@dataclass(frozen=True)
-class Discord_Message():
-    message_id:int
-    channel_id:int
-
-@dataclass(frozen=True)
-class Discord_Address(Send_Address):
-    messages:tuple[Discord_Message,...]
-
-class Discord_Sender(Sender[Discord_Address]):
-    def __init__(self,gi:'Discord_Game_Interface'):
-        Sender.__init__(self)
-        self.gi = gi
-        self.client = gi.client
-        self.default_channel = gi.channel_id
-    @override
-    async def generate_address(self, channel: ChannelId | None = None, length:int = 1) -> Discord_Address:
-        if channel is None:
-            channel = self.default_channel
-        
-    @override
-    async def _send(self, sendable: Sendable, address: Discord_Address|None = None) -> Discord_Address:
-        if isinstance(sendable,_Old_Message):
-            ...
-        else:#unknown type, just go by subtypes
-            if isinstance(sendable,Text):
-                ...
-            if isinstance(sendable,With_Options):
-                ...
-            if isinstance(sendable,Attach_Files):
-                ...
-        if address is None:
-            ...
-        else:
-            return address
-    async def _old_send(self, sendable: _Old_Message, address:Discord_Address):
-        channel = self.client.get_channel(address.messages[0].channel_id)
-        assert isinstance(channel,DiscordChannel)
-        attachments:list[discord.File] = []
-        if isinstance(sendable,Attach_Files):
-            for path in sendable.attach_files:
-                attachments.append(discord.File(path))
-        await self.client.wait_until_ready()
-        discord_message:discord.Message = await channel.fetch_message(address.messages[0].message_id)
-        await discord_message.edit(
-            content=str(BLANK_TEXT if not isinstance(sendable,Text) else sendable.text),
-            attachments=attachments
-            )
-        if isinstance(sendable,With_Options):
-            for bp in sendable.with_options:
-                if bp.emoji is not None:
-                    emoji = discord.PartialEmoji(name = bp.emoji)
-                    success = False
-                    while not success:
-                        try:
-                            await self.client.wait_until_ready()
-                            await discord_message.add_reaction(emoji)
-                            success = True
-                        except Exception as e:#not sure what the actual exceptions are
-                            logger.error(f"failed to add bullet points due to:\n{type(e)}: {e}")
-                            sleep(SLEEP429)
-    @override
-    def format_players_md(self, players: Iterable[PlayerId]) -> str:
-        return wordify_iterable(f"<@{player}>" for player in players)
-    @override
-    def format_players(self,players:Iterable[PlayerId]) -> str:
-        player_names:list[str] = []
-        for player in players:
-            assert isinstance(player,int)
-            user = self.client.get_user(player)
-            if user is not None:
-                player_names.append(user.display_name)
-            else:
-                player_names.append(str(player))
-        return wordify_iterable(player_names)
-
 
 class Discord_Game_Interface(Game_Interface):
     def __init__(self,channel_id:ChannelId,players:list[PlayerId]):
@@ -251,7 +134,7 @@ class Discord_Game_Interface(Game_Interface):
             channel_id:ChannelId = channel if channel is not None else self.channel_id
             assert channel_id is int
             channel = self.client.get_channel(channel_id)
-            assert isinstance(channel,DiscordChannel)
+            assert isinstance(channel,CompatibleChannels)
             for message_id,message in ((message.message_id,message) for message in self.tracked_messages if message.channel_id == channel):
                 if message_id is not None:
                     assert message_id is int

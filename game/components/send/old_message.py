@@ -21,16 +21,16 @@ class _Old_Message(Sendable):
     ...
 
 def Old_Message(
-    text:Optional[str] = None,
-    attach_files:Optional[list[str]] = None,
-    on_channel:Optional[ChannelId] = None,
-    _1:Optional[MessageId] = None, 
-    limit_players_who_can_see:Optional[PlayersIds] = None,
-    with_options:Optional[list[Option]] = None,
-    reference_message:Optional[MessageId|InteractionId] = None
-) -> _Old_Message:
-    prototypes:list[type[Sendable]] = []
-    kwargs:dict[str,Any] = {}
+    text:'Optional[str]' = None,
+    attach_files:'Optional[list[str]]' = None,
+    on_channel:'Optional[ChannelId]' = None,
+    _1:'Optional[MessageId]' = None, 
+    limit_players_who_can_see:'Optional[PlayersIds]' = None,
+    with_options:'Optional[list[Option]]' = None,
+    reference_message:'Optional[MessageId|InteractionId]' = None
+) -> '_Old_Message':
+    prototypes:'list[type[Sendable]]' = []
+    kwargs:'dict[str,Any]' = {}
     if text is not None:
         prototypes.append(Text)
         kwargs['text'] = text

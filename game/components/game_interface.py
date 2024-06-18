@@ -1,15 +1,14 @@
-from typing import Awaitable, Callable, Hashable, Optional
+from typing import Awaitable, Callable, Hashable, Optional, Any
 import os
+from inspect import iscoroutinefunction
+from functools import wraps
 
 from game import get_logger
-from game.components.send import Sender
-from game.components.interaction import INTERACTION_TYPES, Interaction, InteractionType
+from game.components.send import Sender, Interaction, InteractionCallback, Response
 from utils.types import ChannelId, Grouping, PlayerId
 from config.config import config
 
 logger = get_logger(__name__)
-
-type Action = Callable[[Interaction],Awaitable]
 
 
 class Game_Interface(object):
@@ -18,11 +17,42 @@ class Game_Interface(object):
     this is a base class meant to be overwritten
     """
     def __init__(self):
-        self.actions:dict[InteractionType,list[Action]] = {}
-        self.action_owners:dict[Action,Hashable] = {}
-        self.clear_actions()
+        self.actions:dict[Any,set[InteractionCallback]] = {}
         self.default_sender = Sender()
-
+    def watch(self,filter:Callable[[Interaction],bool] = lambda _:True,owner:Any = None):
+        def decorator(func:InteractionCallback):
+            if iscoroutinefunction(func):
+                @wraps(func)
+                async def async_wrapper(interaction:Interaction) -> Response|None:
+                    if filter(interaction):
+                        return func(interaction)#type:ignore
+                if owner not in self.actions.keys():
+                    self.actions[owner] = set()
+                self.actions[owner].add(async_wrapper)
+                return async_wrapper
+            else:
+                @wraps(func)
+                def wrapper(interaction:Interaction) -> Response|None:
+                    if filter(interaction):
+                        return func(interaction)#type:ignore
+                if owner not in self.actions.keys():
+                    self.actions[owner] = set()
+                self.actions[owner].add(wrapper)
+                return wrapper
+        return decorator
+    async def interact(self,interaction:Interaction) -> Response|None:
+        response:Response|None = None
+        for action_set in self.actions.values():
+            for action in action_set:
+                val = action(interaction)
+                if isinstance(val,Awaitable):
+                    val = await val
+                if val is not None:
+                    if response is None:
+                        response = val
+                    else:
+                        response = response|val
+        return response
     async def reset(self):
         """
         clears all stored on_actions and messages
@@ -41,49 +71,21 @@ class Game_Interface(object):
         clears all on_actions
         """
         logger.info(f"clearing all on_action events totalling {len(self.actions)}")
-        for interaction_type in INTERACTION_TYPES:
-            self.actions[interaction_type] = []
-        self.action_owners = {}
+        owners = list(self.actions.keys())
+        for owner in owners:
+            self.purge_actions(owner)
     def purge_actions(self, owner:Hashable = None):
         """
         removes all on_actions corresponding to the given owner, which should have been registered when the action was;
         
         owner: can be of any type that is hashable, and is merely used for locating the action for purgeing
         """
-        actions_to_purge:set[Action] = set(action for action in self.action_owners if self.action_owners[action] == owner)
-        logger.info(f"clearing all on_action events owned by {owner} totalling {len(actions_to_purge)}")
-        for action in actions_to_purge:
-            for interaction_type in self.actions:
-                while action in self.actions[interaction_type]:
-                    self.actions[interaction_type].remove(action)
-            del self.action_owners[action]
+        del self.actions[owner]
     def get_sender(self) -> Sender:
         """
         returns the default sender
         """
         return self.default_sender
-    async def _trigger_action(
-            self,interaction:Interaction):
-        """
-        called when the game interface notices a player input and decides it is an interaction;
-        should be used in child classes
-        """
-        logger.info(f"interaction of type = {interaction.interaction_type} with interaction_id = {interaction.interaction_id} calling {len(list(self.actions[interaction.interaction_type]))} actions")
-        for action in self.actions[interaction.interaction_type]:
-            await action(interaction)
-    def on_action(self,action_type:InteractionType,owner:Hashable = None) -> Callable[[Action],Action]:
-        """
-        stores the given function to be called on interactions matching the given interactiontype;
-        returns a wrapper that stores the function, but does not change it
-        
-        owner: can be of any type that is hashable, and is merely used for locating the action for purgeing
-        """
-        def wrapper(func:Action) -> Action:
-            logger.info(f"adding new action seeking interactions of type = {action_type}; owned by {owner}")
-            self.actions[action_type].append(func)
-            self.action_owners[func] = owner
-            return func
-        return wrapper
     def get_players(self) -> frozenset[PlayerId]:
         """
         gets relevant players for Game object, should be randomized in order;

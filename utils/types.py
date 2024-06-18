@@ -8,7 +8,9 @@ from typing import (
     Protocol,
     runtime_checkable,
     override,
-    Hashable
+    Hashable,
+    Callable,
+    Awaitable
 )
 
 from typing_extensions import TypeVar
@@ -38,6 +40,10 @@ type PlayerMap[DataType] = Mapping[PlayerId,DataType]
 type KickReason = Literal['timeout','eliminated','unspecified']
 
 type Operators = Literal['command','run_game']
+
+type Callback[InData,OutData] = Callable[[InData],OutData]|Callable[[InData],Awaitable[OutData]]
+
+type SimpleCallback[Data] = Callback[Data,None]
 
 @dataclass(frozen=True)
 class Team(GS):
