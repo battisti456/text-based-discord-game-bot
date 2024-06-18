@@ -1,4 +1,3 @@
-from game.game_bases.basic_secret_message_base import Basic_Secret_Message_Base
 from game.game_bases.card_base import Card_Base
 from game.game_bases.chess_base import Chess_Base
 from game.game_bases.elimination_base import Elimination_Base

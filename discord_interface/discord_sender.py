@@ -28,6 +28,16 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 class Discord_Sender(Sender[Discord_Address]):
+    SUPPORTED_SENDABLES:tuple[type[Sendable],...] = (
+        Text_Only,
+        Text_With_Options,
+        Text_With_Text_Field
+    )
+    SUPPORTED_PROTOTYPES:tuple[type[Sendable],...] = (
+        Text,
+        With_Options,
+        With_Text_Field
+    )
     def __init__(self,gi:'Discord_Game_Interface'):
         Sender.__init__(self)
         self.gi = gi
@@ -70,6 +80,15 @@ class Discord_Sender(Sender[Discord_Address]):
             edit_kwargs.append({
                 'content' : f(sendable.text)
             })
+            #a bit hacky, but allows for simpler messages not to get the edited tag
+            if address is None:
+                channel = await self.client.fetch_channel(self.default_channel)#type:ignore
+                assert isinstance(channel,CompatibleChannels)
+                discord_message = await channel.send(f(sendable.text))
+                return Discord_Address([Discord_Message(
+                    channel_id=self.default_channel,#type:ignore
+                    message_id=discord_message.id)])
+
         elif isinstance(sendable,Text_With_Options):
             if address is None:
                 address = await self.generate_address()
@@ -85,7 +104,7 @@ class Discord_Sender(Sender[Discord_Address]):
                 'view' : One_Text_Field_View(self.gi,address,sendable)
             })
         else:#unknown type, just go by subtypes
-            logger.warning(f"Type of {sendable} not supported by {self}, attempting to send primitives.")
+            logger.warning(f"Type of {sendable} not supported by {self}, attempting to send primitives but {sendable.prototypes()-set(self.SUPPORTED_PROTOTYPES)} are not supported.")
             num_views:int = sum(int(isinstance(sendable,prototype)) for prototype in (
                 With_Text_Field,
                 With_Options

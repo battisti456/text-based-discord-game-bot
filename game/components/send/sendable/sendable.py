@@ -11,3 +11,6 @@ class Sendable():
         cls.is_prototype = is_prototype
         if not is_prototype:
             SENDABLES.append(cls)
+    @classmethod
+    def prototypes(cls) -> frozenset[type['Sendable']]:
+        return frozenset(base for base in cls.__bases__ if issubclass(base,Sendable) and base != Sendable and base.is_prototype)

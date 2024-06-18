@@ -1,9 +1,7 @@
 from typing import Optional
 
-from game.components.send.old_message import Old_Message
 import utils.emoji_groups
 from game.components.game_interface import Game_Interface
-from game.components.send.option import Option
 from game.components.player_input import (
     Player_Single_Selection_Input,
     Player_Text_Input,
@@ -13,6 +11,9 @@ from game.components.response_validator import (
     default_text_validator,
     not_none,
 )
+from game.components.send.old_message import Old_Message
+from game.components.send.option import Option
+from game.components.send.sendable.sendables import Text_Only
 from utils.common import arg_fix_grouping
 from utils.types import (
     ChannelId,
@@ -135,9 +136,14 @@ class Interface_Component():
         
         channel_id: what channel to send the message on
         """
-        message = Old_Message(
-            text = content,
-            attach_files=attachments_data,
-            on_channel=channel_id
-        )
-        await self.sender(message)
+        if len(attachments_data) == 0 and content is not None:
+            message = Text_Only(text = content)
+        else:
+            message = Old_Message(
+                text = content,
+                attach_files=attachments_data
+            )
+        address = None
+        if channel_id is not None:
+            address = await self.gi.default_sender.generate_address(channel_id)
+        await self.sender(message,address)
