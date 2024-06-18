@@ -6,7 +6,6 @@ import emoji
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
 from game.game_bases import (
-    Basic_Secret_Message_Base,
     Game_Word_Base,
     Rounds_With_Points_Base,
 )
@@ -64,9 +63,8 @@ def emoji_response_validator(player:PlayerId,value:str|None) -> tuple[bool,str|N
     return (True,None)
 #endregion
 
-class Emoji_Communication(Basic_Secret_Message_Base,Rounds_With_Points_Base,Game_Word_Base):
+class Emoji_Communication(Rounds_With_Points_Base,Game_Word_Base):
     def __init__(self,gh:Game_Interface):
-        Basic_Secret_Message_Base.__init__(self,gh)
         Rounds_With_Points_Base.__init__(self,gh)
         Game_Word_Base.__init__(self,gh)
         self.num_rounds = NUM_ROUNDS

@@ -6,7 +6,7 @@ from config.config import config
 from config.games_config import games_config
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
-from game.game_bases import Basic_Secret_Message_Base, Rounds_With_Points_Base
+from game.game_bases import Rounds_With_Points_Base
 from utils.grammar import wordify_iterable
 from utils.types import Number, PlayerDict, PlayerId
 
@@ -52,10 +52,9 @@ def validate_data(data:DataDict):
             if item not in data["items"]:
                 raise Exception(f"In container data item '{item}' from tier '{tier}'is undefined.")
 
-class Container_Bidding(Rounds_With_Points_Base,Basic_Secret_Message_Base):
+class Container_Bidding(Rounds_With_Points_Base):
     def __init__(self,gi:Game_Interface):
         Rounds_With_Points_Base.__init__(self,gi)
-        Basic_Secret_Message_Base.__init__(self,gi)
         self.num_rounds = NUM_CONTAINERS
         self.round_name = "bidding on container"
         self.point_frmt = lambda num: f"{moneyfy(num)} of valuables"

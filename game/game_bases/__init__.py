@@ -14,7 +14,6 @@ __all__ = (
     'Trivia_Base',
     'Rounds_With_Points_Base',
     'Image_Search_Base',
-    'Basic_Secret_Message_Base',
     'Chess_Base',
     'Team_Base',
     'Rounds_With_Points_Team_Base',

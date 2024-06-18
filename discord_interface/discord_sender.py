@@ -18,7 +18,7 @@ from game.components.send.sendable.prototype_sendables import (
     With_Options,
     With_Text_Field
 )
-from game.components.send.sendable.sendables import Text_Only, Text_With_Options, Text_With_Text_Field
+from game.components.send.sendable.sendables import Text_Only, Text_With_Options, Text_With_Text_Field, Attach_Files
 from utils.grammar import wordify_iterable
 
 if TYPE_CHECKING:
@@ -125,6 +125,11 @@ class Discord_Sender(Sender[Discord_Address]):
                 edit_kwargs.append({
                     'content' : text,
                     'view' : One_Text_Field_View(self.gi,address,sendable)
+                })
+            if isinstance(sendable,Attach_Files):
+                edit_kwargs.append({
+                    'content' : text,
+                    'attachments' : list(discord.File(path) for path in sendable.attach_files)
                 })
             if len(edit_kwargs) == 0:
                 edit_kwargs.append({

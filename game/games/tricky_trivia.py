@@ -6,7 +6,6 @@ from game import make_player_dict
 from game.components.game_interface import Game_Interface
 from game.components.response_validator import text_validator_maker
 from game.game_bases import (
-    Basic_Secret_Message_Base,
     Rounds_With_Points_Base,
     Trivia_Base,
 )
@@ -19,9 +18,8 @@ POINTS_FOOL = CONFIG['points_fool']
 POINTS_GUESS = CONFIG['points_guess']
 NUM_QUESTIONS = CONFIG['num_questions']
 
-class Tricky_Trivia(Basic_Secret_Message_Base,Trivia_Base,Rounds_With_Points_Base):
+class Tricky_Trivia(Trivia_Base,Rounds_With_Points_Base):
     def __init__(self,gi:Game_Interface):
-        Basic_Secret_Message_Base.__init__(self,gi)
         Trivia_Base.__init__(self,gi)
         Rounds_With_Points_Base.__init__(self,gi)
         self.num_rounds = NUM_QUESTIONS

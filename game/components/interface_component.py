@@ -89,11 +89,17 @@ class Interface_Component():
             emj += emojis
         bp:list[Option] = []
         for i in range(len(options)):
+            split = options[i].split('-')
+            if len(split) == 2:
+                text, long_text = split
+            else:
+                text = options[i]
+                long_text = options[1]
             bp.append(
                 Option(
-                    text = options[i],
+                    text = text,
                     emoji=emj[i],
-                    long_text=options[i]
+                    long_text=long_text
                 )
             )
         question = Old_Message(

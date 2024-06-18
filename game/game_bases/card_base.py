@@ -10,11 +10,12 @@ import PIL.ImageOps
 import utils.emoji_groups
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
-from game.components.send.old_message import Old_Message, _Old_Message
+from game.components.send.sendable.sendables import Text_With_Files
+from game.components.send import Address
 from game.game import Game, police_game_callable
 from utils.common import arg_fix_grouping
 from utils.grammar import temp_file_path, wordify_iterable
-from utils.types import GS, ChannelId, Grouping, PlayerDict, PlayerId
+from utils.types import GS, Grouping, PlayerDict, PlayerId
 
 POKER_HAND_NAMES = ["high card","pair","two pair","three of a kind","straight","flush","full house","four of a kind","straight flush","royal flush"]
 SUIT_NAMES = ["spades","hearts","diamonds","clubs"]
@@ -27,7 +28,7 @@ HAND_PADDING = 20
 HAND_COLOR = (0,0,0,0)
 OVERLAP_RATIO = 0.25
 BETTER_ART = True
-
+#region card stuff
 def card_file_name(suit:int,value:int):
     better_art = ""
     if ((value == 0 and suit == 0) or value > 9) and BETTER_ART:
@@ -272,17 +273,14 @@ def name_poker_hand_by_rank(rank:int) -> str:
         hex_string = '0' + hex_string
     hand_int = int('0x' + hex_string[0], base = 16)
     return POKER_HAND_NAMES[hand_int]
-    
-
-        
+#endregion
 
 class Card_Base(Game):
     def __init__(self,gi:Game_Interface):
         Game.__init__(self,gi)
         if Card_Base not in self.initialized_bases:
             self.initialized_bases.append(Card_Base)
-            self.hand_threads:PlayerDict[ChannelId] = {}
-            self.hand_message:PlayerDict[_Old_Message] = make_player_dict(self.unkicked_players,Old_Message)
+            self.hand_addresses:PlayerDict[Address|None] = make_player_dict(self.unkicked_players,None)
     async def setup_cards(self,num_decks:int = 1):
         self.deck:Deck = Deck(num_decks)
         self.discard = Card_Holder()
@@ -290,9 +288,10 @@ class Card_Base(Game):
         for player in self.unkicked_players:
             self.hands[player] = Hand()
         for player in self.unkicked_players:
-            if player not in self.hand_threads:#if first time
+            if self.hand_addresses[player] is None:#if first time
                 thread_id = await self.gi.new_channel("Your hand",[player])
-                self.hand_threads[player] = thread_id
+                address = await self.gi.default_sender.generate_address(thread_id)
+                self.hand_addresses[player] = address
             await self.update_hand(player)
     def ch_to_attachment(self,ch:Card_Holder) -> str:
         image = ch.image()
@@ -311,14 +310,11 @@ class Card_Base(Game):
                 contents += f"Your hand contains the {hand.string_contents()}"
             else:
                 contents += "Your hand is empty."
-        message = self.hand_message[player]
-        assert message is not None
-        message.limit_players_who_can_see = [player]
-        message.text = contents
-        message.channel_id = self.hand_threads[player]
-        ch_to_attachment = self.ch_to_attachment(hand)
-        message.attach_files = [ch_to_attachment]
-        await self.sender(message)
+        print(self.hand_addresses[player])
+        await self.sender(Text_With_Files(
+            attach_files=(self.ch_to_attachment(hand),),
+            text=contents
+        ),self.hand_addresses[player])
     @police_game_callable
     async def player_draw(self,player:PlayerId|Grouping[PlayerId],num:int = 1):
         players:Grouping[PlayerId] = arg_fix_grouping(self.unkicked_players,player)
