@@ -188,10 +188,10 @@ def validate_scentence(scentence:Sentence,min_conf = 0.95) -> bool:
         conf < min_conf for _,_,conf in tagger.tag(scentence,return_conf=True)
     )
 
-def find_random_related_scentences(
+def find_random_related_sentences(
             sentence:Sentence,
             num_to_change:list[int],
-            num_scentences:int,
+            num_sentences:int,
             relationships:list[WordRelationship] = []
             ) -> list[list[str]]:
         option_groups:list[list[str]] = []
@@ -213,7 +213,7 @@ def find_random_related_scentences(
         )
         if len(_valid_num_to_change) == 0:
             return []
-        while len(combos) < num_scentences and num_loops < MAX_RANDOM_SCENTENCE_LOOPS:
+        while len(combos) < num_sentences and num_loops < MAX_RANDOM_SCENTENCE_LOOPS:
             indexes_to_change = random.sample(_valid_options,random.choice(_valid_num_to_change))
             combo:tuple[int,...] = tuple(
                 0 if i not in indexes_to_change else random.randint(0,len(option_groups[i])-1) for i in range(len(option_groups))

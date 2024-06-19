@@ -11,7 +11,8 @@ from game.game_bases import (
 )
 from utils.grammar import nice_sentence
 from utils.types import PlayerDict, PlayerId
-from utils.word_tools import find_random_related_scentences
+from utils.word_tools import find_random_related_sentences
+from game.components.send import sendables
 
 #region config
 CONFIG = games_config['emoji_communications']
@@ -88,10 +89,10 @@ class Emoji_Communication(Rounds_With_Points_Base,Game_Word_Base):
             while player not in base_str:
                 raw = self.ww_sentence.sentence()
                 sentence = list(word for word in raw.lower()[:-1].split())
-                related = find_random_related_scentences(
+                related = find_random_related_sentences(
                     sentence,
                     list(range(SWAP_RANGE[0],SWAP_RANGE[1]+1)),
-                    num_scentences=NUM_OPTIONS
+                    num_sentences=NUM_OPTIONS
                     )
                 if len(related) < NUM_OPTIONS:
                     continue
@@ -106,8 +107,13 @@ class Emoji_Communication(Rounds_With_Points_Base,Game_Word_Base):
                 for sentence in opt_str[current_player][1:]:
                     avoid_text += sentence + '\n'
             player_questions[current_player] = f"Please do your best to convey this sentence through emoji.\n'{opt_str[current_player][0]}'{avoid_text}"
+            address = await self.sender.generate_address(for_players=frozenset([current_player]))
+            await self.sender(sendables.Text_Only(text=player_questions[current_player]),address)
 
-        emoji_responses = await self.text_response(self.unkicked_players,player_questions,response_validator=emoji_response_validator)
+        emoji_responses = await self.basic_text_response(
+            content="Input your emojis here!",
+            who_chooses = self.unkicked_players,
+            response_validator=emoji_response_validator)
 
         emoji_prompts:PlayerDict[str] = {}
         for current_player in self.unkicked_players:
@@ -125,7 +131,7 @@ class Emoji_Communication(Rounds_With_Points_Base,Game_Word_Base):
                 players_to_ask
             )
             correct_players = list(player for player in players_to_ask if options[responses[player]] == opt_str[current_player][0])
-            correct_text = f"The actual scentence was:\n{opt_str[current_player][0]}\n"
+            correct_text = f"The actual sentence was:\n{opt_str[current_player][0]}\n"
             if len(correct_players) == 0:#no one was correct
                 await self.basic_send(f"{correct_text}No one got it right. No points.")
             elif len(correct_players) == len(players_to_ask):#all right
