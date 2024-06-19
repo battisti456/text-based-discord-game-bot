@@ -22,3 +22,7 @@ class Attach_Files_Only(Attach_Files):
 @dataclass(frozen=True)
 class Text_With_Files(Text,Attach_Files):
     ...
+
+@dataclass(frozen = True)
+class Text_With_Options_And_Text_Field(Text,With_Options,With_Text_Field):
+    ...

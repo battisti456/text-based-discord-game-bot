@@ -9,10 +9,12 @@ from game.components.player_input import (
     Player_Text_Input,
     run_inputs,
 )
+from game.components.send.sendable.sendables import Text_With_Options_And_Text_Field, Text_With_Text_Field
 from game.components.response_validator import text_validator_maker
 from game.components.send.old_message import Old_Message
 from game.game_bases.elimination_base import Elimination_Base
 from game.game_bases.game_word_base import Game_Word_Base
+from game.components.send.option import make_options, NO_YES_OPTIONS
 from utils.emoji_groups import LEFT_RIGHT_EMOJI
 from utils.types import PlayerId
 
@@ -52,45 +54,46 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
             await self.basic_send(f"The letters are '{letters}'.")
             will_challenge_message = Old_Message(
                 text=f"Will you challenge {self.sender.format_players_md([self.last_player])}?",
-                with_options=make_no_yes_bullet_points()
+                with_options=NO_YES_OPTIONS
             )
-            left_right_message = Old_Message(
+            if not first_turn:
+                will_challenge_address = await self.sender(will_challenge_message)
+                challenge_input = Player_Single_Selection_Input(
+                    "choice to challenge",
+                    self.gi,
+                    self.sender,
+                    [player],
+                    question_address=will_challenge_address,
+                    response_validator=lambda player, value: (bool(value),None)
+            )
+            letter_sendable = Text_With_Options_And_Text_Field(
                 text = "Which side would you like to put your letter on, and which letter would you like to add?",
-                with_options=make_bullet_points(['left','right'],LEFT_RIGHT_EMOJI)
+                with_options=make_options(['left','right'],LEFT_RIGHT_EMOJI),
+                hint_text="Which letter would you like?"
             )
-            challenge_input = Player_Single_Selection_Input(
-                "choice to challenge",
-                self.gi,
-                self.sender,
-                [player],
-                message=will_challenge_message,
-                response_validator=lambda player, value: (bool(value),None)
-            )
+            letter_address = await self.sender(letter_sendable)
             left_right_input = Player_Single_Selection_Input(
                 "choice of left or right",
                 self.gi,
                 self.sender,
-                [player]
+                [player],
+                question_address=letter_address
             )
             letter_input = Player_Text_Input(
                 "choice of letter",
                 self.gi,
                 self.sender,
                 [player],
-                text_validator_maker(max_length=1,min_length=1,is_alpha=True)
+                question_address=letter_address,
+                response_validator=text_validator_maker(max_length=1,min_length=1,is_alpha=True)
             )
-            multi_bind_message(left_right_message,left_right_input,letter_input)
             if first_turn:
-                first_turn = False
-                await self.sender(left_right_message)
                 await run_inputs(
                     inputs = [left_right_input,letter_input],
                 )
                 await self.kick_none_response(left_right_input.responses)
                 await self.kick_none_response(letter_input.responses)
             else:
-                await self.sender(will_challenge_message)
-                await self.sender(left_right_message)
                 await run_inputs(
                     inputs = [challenge_input,left_right_input,letter_input],
                     completion_sets= [{challenge_input},{left_right_input,letter_input}],
@@ -102,7 +105,8 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
                 #if one of the two relevant players has been kicked, move to next round
                 self.last_player = player
                 return
-            if not challenge_input.responses[player]:#add letter
+            if first_turn or not challenge_input.responses[player]:#add letter
+                first_turn = False
                 letter = letter_input.responses[player]
                 assert letter is not None
                 letter = letter.lower()
@@ -124,16 +128,17 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
                     self.last_player = player
                     continue 
             else:#challenge
-                message = Old_Message(
-                    f"{self.format_players_md([player])} has chosen to challenge {self.format_players_md([self.last_player])} on the letters '{letters}'. \n" +
+                message = Text_With_Text_Field(
+                    text = f"{self.format_players_md([player])} has chosen to challenge {self.format_players_md([self.last_player])} on the letters '{letters}'. \n" +
                     "What word do you think you could have spelled?")
+                address = await self.sender(message)
                 word_input = Player_Text_Input(
                     "word",
                     self.gi,
                     self.sender,
                     [self.last_player],
-                    text_validator_maker(is_supstr_of=letters,min_length=NUM_LETTERS,is_alpha=True),
-                    message = message
+                    response_validator=text_validator_maker(is_supstr_of=letters,min_length=NUM_LETTERS,is_alpha=True),
+                    question_address=address
                 )
                 await word_input.run()
                 await self.kick_none_response(word_input.responses)

@@ -62,7 +62,7 @@ class Picture_Telephone(Rounds_With_Points_Base, Image_Search_Base):
                 content = f"Please enter between {MIN_NUM_WORDS} and {MAX_NUM_WORDS} words."
             else:
                 attach_paths = [self.images[self.i(player,-1)][player]]
-                content = f"Please summerize this image in between {MIN_NUM_WORDS} and {MAX_NUM_WORDS} words."
+                content = f"Please summarize this image in between {MIN_NUM_WORDS} and {MAX_NUM_WORDS} words."
             questions[player] = Old_Message(
                 text = content,
                 attach_files=attach_paths,

@@ -13,7 +13,7 @@ from game.components.response_validator import (
 )
 from game.components.send.old_message import Old_Message
 from game.components.send.option import Option
-from game.components.send.sendable.sendables import Text_Only
+from game.components.send.sendable.sendables import Text_Only, Text_With_Text_Field
 from utils.common import arg_fix_grouping
 from utils.types import (
     ChannelId,
@@ -45,11 +45,11 @@ class Interface_Component():
         allow_answer_change: weather or not users are permitted to change their response while the input is running
         """
         wc:PlayersIds= arg_fix_grouping(self.all_players,who_chooses)
-        question = Old_Message(
-            text = content,
-            on_channel=channel_id
+        question = Text_With_Text_Field(
+            text = content
         )
-        question_address = await self.sender(question)
+        question_address = await self.sender.generate_address(channel_id)
+        await self.sender(question,question_address)
         player_input = Player_Text_Input(
             name = "this text question",
             gi = self.gi,

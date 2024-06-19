@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from game.components.send.address import Address
     from utils.types import PlayerId
     from game.components.send import Sendable, Option
+    from smart_text import TextLike
 
 logger = get_logger(__name__)
 
@@ -31,7 +32,7 @@ class Select_Options(Interaction_Content):
     options:'tuple[Option,...]'
     indices:tuple[int,...]
     @override
-    def to_words(self) -> str:
+    def to_words(self) -> 'TextLike':
         return f"selected {wordify_iterable(option.text for option in self.options)}"
 @dataclass(frozen = True)
 class Interaction():
@@ -42,4 +43,6 @@ class Interaction():
     content:'Interaction_Content'
     def __post_init__(self):
         logger.debug(f"Generated interaction:{self}")
+    def to_text(self) -> 'TextLike':
+        return "interaction of " + self.content.to_words()
 

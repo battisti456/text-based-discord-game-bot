@@ -87,3 +87,17 @@ def temp_file_path(file_type:str) -> str:
     it doesn't actually check that the file doesn't already exist
     """
     return f"{TEMP_PATH}//{uuid.uuid4()}{file_type}"
+def moneyfy(value:Number):
+    to_return = ""
+    if value < 0:
+        to_return += "-"
+    to_return += "$" + str(abs(value))
+    return to_return
+def percentify(value:float,decimal_points:int = 2):
+    percent:float = value*100
+    nums = int(percent)
+    decimals = int((percent-nums)*10**decimal_points)
+    if decimal_points > 0 and decimals != 0:
+        return f"{nums}.{decimals}%"
+    else:
+        return f"{nums}%"

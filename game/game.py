@@ -5,7 +5,7 @@ import utils.emoji_groups
 from game import kick_text, score_to_placement, get_logger
 from game.components.game_interface import Game_Interface
 from game.components.interface_component import Interface_Component
-from game.components.send.old_message import Old_Message
+from game.components.send.old_message import _Old_Message
 from game.components.player_input import Player_Input
 from game.components.response_validator import (
     ResponseValidator,
@@ -264,7 +264,7 @@ class Game(Interface_Component):
                 place += 1
 
         return await self.basic_send(f"The placements are: {wordify_iterable(text_list,comma=';')}.")
-    async def policed_send(self,message:Old_Message):
+    async def policed_send(self,message:_Old_Message):
         """
         a wrapper of self.sender.__call__, for sending Message objects, if not restricted by policing
         """

@@ -3,16 +3,18 @@ from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smart_text import TextLike
+    from game.components.send import Interaction
 
 @dataclass(frozen = True)
 class Response():
-    text:'Optional[TextLike]' = None
+    to_interaction:'Interaction'
+    reason:'Optional[TextLike]' = None
     reject_interaction:bool = False
-    def __or__(self, value: 'Response') -> 'Response':
-        text:'Optional[TextLike]' = self.text
-        if value.text is not None:
-            if text is None:
-                text = value.text
-            else:
-                text += '\n' + value.text#type:ignore
-        return Response(text, self.reject_interaction or value.reject_interaction)
+    def to_text(self) -> str:
+        not_text:str = ""
+        if not self.reject_interaction:
+            not_text = "not "
+        reason:'TextLike' = ""
+        if self.reason is not None:
+            reason = self.reason
+        return self.to_interaction.to_text()+" has " + not_text + "been rejected" + reason + "."

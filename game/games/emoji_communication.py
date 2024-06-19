@@ -107,7 +107,7 @@ class Emoji_Communication(Rounds_With_Points_Base,Game_Word_Base):
                     avoid_text += sentence + '\n'
             player_questions[current_player] = f"Please do your best to convey this sentence through emoji.\n'{opt_str[current_player][0]}'{avoid_text}"
 
-        emoji_responses = await self.basic_secret_text_response(self.unkicked_players,player_questions,response_validator=emoji_response_validator)
+        emoji_responses = await self.text_response(self.unkicked_players,player_questions,response_validator=emoji_response_validator)
 
         emoji_prompts:PlayerDict[str] = {}
         for current_player in self.unkicked_players:

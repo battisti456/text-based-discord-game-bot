@@ -7,8 +7,8 @@ from config.games_config import games_config
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
 from game.game_bases import Rounds_With_Points_Base
-from utils.grammar import wordify_iterable
-from utils.types import Number, PlayerDict, PlayerId
+from utils.grammar import wordify_iterable, moneyfy
+from utils.types import PlayerDict, PlayerId
 
 CONFIG = games_config['container_bidding']
 
@@ -27,21 +27,6 @@ class DataDict(TypedDict):
     container_types:dict[str,dict[str,int]]
     items:dict[str,int]
 
-def moneyfy(value:Number):
-    to_return = ""
-    if value < 0:
-        to_return += "-"
-    to_return += "$" + str(abs(value))
-    return to_return
-def percentify(value:float,decimal_points:int = 2):
-    percent:float = value*100
-    nums = int(percent)
-    decimals = int((percent-nums)*10**decimal_points)
-    if decimal_points > 0 and decimals != 0:
-        return f"{nums}.{decimals}%"
-    else:
-        return f"{nums}%"
-
 def validate_data(data:DataDict):
     for desc_text in data["container_descriptions"]:
         for tier_text in data["container_descriptions"][desc_text]["possible_item_tiers"]:
@@ -51,7 +36,7 @@ def validate_data(data:DataDict):
         for item in data["container_types"][tier]:
             if item not in data["items"]:
                 raise Exception(f"In container data item '{item}' from tier '{tier}'is undefined.")
-
+#TODO: #10 The main game loop doesn't quite make sense, and it often makes more sense not to bid for items than to bid for items.
 class Container_Bidding(Rounds_With_Points_Base):
     def __init__(self,gi:Game_Interface):
         Rounds_With_Points_Base.__init__(self,gi)
@@ -67,11 +52,11 @@ class Container_Bidding(Rounds_With_Points_Base):
         await self.basic_send(
             "# Welcome to a game of container bidding!\n" + 
             f"In this game we will have {NUM_CONTAINERS} containers that we look at.\n" +
-            "For each container my expert evaluator will provide their decription.\n" +
+            "For each container my expert evaluator will provide their description.\n" +
             "Then you must each secretly choose how much you would be willing to contribute for it!\n" +
             "All of you are bidding together, but each secretly deciding how much to contribute.\n" +
             "The proportion of the total bid that your contribution takes up determines your share of the valuables inside the container.\n" +
-            f"If your cumulitive bidding exceeds your starting cash of {moneyfy(int(STARTING_MONEY/len(self.unkicked_players)))}, " +
+            f"If your cumulative bidding exceeds your starting cash of {moneyfy(int(STARTING_MONEY/len(self.unkicked_players)))}, " +
             f"then you will lose an extra {END_OF_GAME_INTEREST}% at the end of the game for interest for all money spent in excess of that.\n"+
             "Any money you don't end up spending will be added to your total at the end of the game.\n"
             "**WARNING: Your answers are only evaluated based of the digits they contain. All other characters are ignored. So '$100.00' is '$10000'.**")
@@ -100,10 +85,11 @@ class Container_Bidding(Rounds_With_Points_Base):
             f"So, {int(total_bid_threshold/len(self.unkicked_players))}.\n" +
             "How much are you willing to contribute?")
         await self.basic_send(f"{question_text}\nPlease respond in your private channel.")
-        individual_message:dict[PlayerId,str] = {}
-        for player in self.unkicked_players:
-            individual_message[player] = f"{question_text}\nYou currently have {moneyfy(self.money[player])} available to contribute."
-        responses = await self.basic_secret_text_response(self.unkicked_players,individual_message)
+        #TODO: #9 should add validification to this response
+        responses = await self.basic_text_response(
+            content="How much would you like to contribute for this bid?",
+            who_chooses=self.unkicked_players
+            )
         player_bids:dict[PlayerId,int] = make_player_dict(self.unkicked_players,0)
         for player in self.unkicked_players:
             response:str = responses[player]
@@ -126,15 +112,7 @@ class Container_Bidding(Rounds_With_Points_Base):
                 self.money[player] -= player_bids[player]
                 player_portion = player_bids[player]/total_bid
                 player_return = int(total_reward*player_portion)
-                net_text = "profit"
-                if player_bids[player] > player_return:
-                    net_text = "loss"
                 await self.score(player,player_return,True)
-                await self.basic_secret_send(
-                    player,
-                    f"Your portion of the bid was {percentify(player_portion)} making your return {moneyfy(player_return)}.\n" +
-                    f"This means you had a net {net_text} of {moneyfy(abs(player_bids[player] - player_return))}.\n" +
-                    f"You now have {moneyfy(self.money[player])} remaining to bid with and {moneyfy(self.point_totals[player])} in valuables.")
         else:
             await self.basic_send(
                 f"Your total bid of {moneyfy(total_bid)} didn't exceed our bid threshold of {moneyfy(total_bid_threshold)}.\n" +

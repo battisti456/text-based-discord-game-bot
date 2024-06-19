@@ -4,7 +4,7 @@ from typing import Any, Awaitable, Callable, Optional, Sequence, override
 from uuid import uuid4
 
 from config.config import config
-from game import correct_str, get_logger, make_player_dict
+from game import get_logger, make_player_dict
 from game.components.game_interface import Game_Interface
 from game.components.response_validator import (
     ResponseValidator,
@@ -14,7 +14,7 @@ from game.components.response_validator import (
 )
 from game.components.send import Address, Sender
 from game.components.send.interaction import Interaction, Select_Options, Send_Text
-from game.components.send.old_message import Old_Message
+from game.components.send.old_message import Old_Message, _Old_Message
 from game.components.send.sendable.sendables import Text_Only
 from utils.grammar import nice_time, ordinate
 from utils.types import GS, IDType, PlayerDict, PlayerDictOptional, PlayerId, PlayersIds
@@ -74,6 +74,7 @@ class Player_Input[T](GS):
         basic : controls weather to include validation feedback in the returned string,
         True excludes, False includes
         """
+        #TODO: #11 Move response status to response objects rather than fixed text
         #returns text describing which players have not responded to this input
         validation:PlayerDict[Validation] = {player:self._response_validator(player,self.responses[player]) for player in self.players}
         players_not_responded = list(player for player in self.players if not validation[player][0])
@@ -338,6 +339,7 @@ class Player_Single_Selection_Input(Player_Input_In_Response_To_Message[int]):
                     return
                 self.responses[interaction.by_player] = interaction.content.indices[0]
                 await self._update()
+#TODO #12 Move run_inputs to a multi-input input
 async def run_inputs(
         inputs:Sequence[Player_Input[Any]],
         completion_sets:Optional[list[set[Player_Input[Any]]]] = None,
@@ -391,7 +393,7 @@ async def run_inputs(
                 return "*All inputs are satisfied.*"
             else:
                 return "\n".join(feedback_list)
-        feedback_message:Old_Message = Alias_Message(
+        feedback_message:_Old_Message = Alias_Message(
             Old_Message(limit_players_who_can_see=who_can_see),content_modifier=lambda content:feedback_text())
         await sender(feedback_message)
         async def on_update():

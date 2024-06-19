@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Sequence
 
 from game import get_logger
 from game.components.send.sendable import Sendable
@@ -22,11 +22,11 @@ class _Old_Message(Sendable, is_prototype = True):
 
 def Old_Message(
     text:'Optional[str]' = None,
-    attach_files:'Optional[list[str]]' = None,
+    attach_files:'Optional[Sequence[str]]' = None,
     on_channel:'Optional[ChannelId]' = None,
     _1:'Optional[MessageId]' = None, 
     limit_players_who_can_see:'Optional[PlayersIds]' = None,
-    with_options:'Optional[list[Option]]' = None,
+    with_options:'Optional[Sequence[Option]]' = None,
     reference_message:'Optional[MessageId|InteractionId]' = None
 ) -> '_Old_Message':
     prototypes:'list[type[Sendable]]' = []

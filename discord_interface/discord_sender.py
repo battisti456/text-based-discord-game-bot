@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, override, Iterable
+from typing import TYPE_CHECKING, Iterable, override
 
 import discord
 
@@ -8,18 +8,24 @@ from discord_interface.common import (
     Discord_Address,
     Discord_Message,
     DiscordEditArgs,
+    edit_to_send,
     f,
-    edit_to_send
 )
-from discord_interface.custom_views import One_Selectable_View, One_Text_Field_View
+from discord_interface.custom_views import One_Selectable_View, One_Text_Field_View, Options_And_Text_View
 from game import get_logger
 from game.components.send import Sendable, Sender
 from game.components.send.sendable.prototype_sendables import (
     Text,
     With_Options,
-    With_Text_Field
+    With_Text_Field,
 )
-from game.components.send.sendable.sendables import Text_Only, Text_With_Options, Text_With_Text_Field, Attach_Files
+from game.components.send.sendable.sendables import (
+    Attach_Files,
+    Text_Only,
+    Text_With_Options,
+    Text_With_Options_And_Text_Field,
+    Text_With_Text_Field,
+)
 from utils.grammar import wordify_iterable
 
 if TYPE_CHECKING:
@@ -63,24 +69,27 @@ class Discord_Sender(Sender[Discord_Address]):
             address.messages.append(message)
     @override
     async def _send(self, sendable: Sendable, address: Discord_Address|None = None) -> Discord_Address:
+        if address is None:
+            address = await self.generate_address()
         edit_kwargs:list[DiscordEditArgs] = []
         if isinstance(sendable,Text_Only):
             edit_kwargs.append({
                 'content' : f(sendable.text)
             })
         elif isinstance(sendable,Text_With_Options):
-            if address is None:
-                address = await self.generate_address()
             edit_kwargs.append({
                 'content' : f(sendable.text),
                 'view' : One_Selectable_View(self.gi,address,sendable)
             })
         elif isinstance(sendable,Text_With_Text_Field):
-            if address is None:
-                address = await self.generate_address()
             edit_kwargs.append({
                 'content' : f(sendable.text),
                 'view' : One_Text_Field_View(self.gi,address,sendable)
+            })
+        elif isinstance(sendable,Text_With_Options_And_Text_Field):
+            edit_kwargs.append({
+                'content' : f(sendable.text),
+                'view' : Options_And_Text_View(self.gi,address,sendable)
             })
         else:#unknown type, just go by subtypes
             logger.warning(f"Type of {sendable} not supported by {self}, attempting to send primitives but {sendable.prototypes()-set(self.SUPPORTED_PROTOTYPES)} are not supported.")

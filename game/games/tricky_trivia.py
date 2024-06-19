@@ -44,9 +44,9 @@ class Tricky_Trivia(Trivia_Base,Rounds_With_Points_Base):
 
         question_text = f"*{trivia_dict['question']}*\nAn example of an incorrect answer (to give you a clue about formatting) is: '*{trivia_dict['incorrect_answers'][0]}*'."
         await self.basic_send(question_text)
-        responses:PlayerDict[str] = await self.basic_secret_text_response(
-            self.unkicked_players,
-            content = f"{question_text}\nWhat is a possible answer to this qustion that might fool your competitors?",
+        responses:PlayerDict[str] = await self.basic_text_response(
+            who_chooses = self.unkicked_players,
+            content = f"{question_text}\nWhat is a possible answer to this question that might fool your competitors?",
             allow_answer_change=False,
             response_validator=text_validator_maker(not_is_in=[trivia_dict['correct_answer']]))
         
