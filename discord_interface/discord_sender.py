@@ -56,7 +56,7 @@ class Discord_Sender(Sender[Discord_Address]):
     async def generate_address(
         self, 
         channel_id: 'ChannelId | None|Discord_Address' = None,
-        for_players:frozenset[PlayerId] = frozenset(),*,
+        for_players:frozenset['PlayerId'] = frozenset(),*,
         length:int = 1) -> 'Discord_Address':
         if channel_id is None or (isinstance(channel_id,Discord_Address) and len(channel_id.messages) == 0):
             if len(for_players) == 0:

@@ -38,7 +38,7 @@ class Custom_View[SendableType](discord.ui.View):
         self.add_item(Info_Button(self))
     async def give_feedback(self, discord_interaction: discord.Interaction):
         print(self.last_responses)
-        if len(self.last_responses) == 0:
+        if len(self.last_responses) == 0 or all(len(response_group) == 0  for response_group in self.last_responses.values()):
             await discord_interaction.response.defer()
         else:
             await discord_interaction.response.send_message(

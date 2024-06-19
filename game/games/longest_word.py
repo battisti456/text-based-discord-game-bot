@@ -4,9 +4,9 @@ from config.games_config import games_config
 from game.components.game_interface import Game_Interface
 from game.components.player_input import Player_Text_Input, run_inputs
 from game.components.response_validator import text_validator_maker
-from game.components.send.old_message import Old_Message
 from game.game_bases import Game_Word_Base, Rounds_With_Points_Base
 from utils.types import PlayerId
+from game.components.send import sendables
 
 CONFIG = games_config['longest_word']
 
@@ -36,32 +36,38 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
             "Then the letters are passed on to the next player.")
     async def longest_word_question(self,player:PlayerId) -> str:
         num_letters_can_refresh = NUM_LETTERS_CAN_REFRESH
-        change_letter_message = Alias_Message(
-            Old_Message(),
-            lambda _: f"**Which letters in '{self.current_letters}' would you like to swap, if any? You can swap {num_letters_can_refresh} letters.**")
-        choose_word_message = Alias_Message(
-            Old_Message(),
-            lambda _: f"**What word will you spell with '{self.current_letters}'?**")
+        change_letter_address = await self.sender.generate_address()
+        choose_word_address = await self.sender.generate_address()
+
         change_letter_input = Player_Text_Input(
             "change letter",
             self.gi,
             self.sender,
             [player],
-            lambda x,y: text_validator_maker(is_strictly_composed_of=self.current_letters,max_length=num_letters_can_refresh,check_lower_case=True)(x,y),
-            message=change_letter_message
+            response_validator=lambda x,y: text_validator_maker(is_strictly_composed_of=self.current_letters,max_length=num_letters_can_refresh,check_lower_case=True)(x,y),
+            question_address=change_letter_address
         )
         choose_word_input = Player_Text_Input(
             "choose word",
             self.gi,
             self.sender,
             [player],
-            lambda x,y: text_validator_maker(is_strictly_composed_of=self.current_letters,check_lower_case=True)(x,y),
-            message=choose_word_message
+            response_validator=lambda x,y: text_validator_maker(is_strictly_composed_of=self.current_letters,check_lower_case=True)(x,y),
+            question_address=choose_word_address
         )
+        @change_letter_input.on_update
+        @choose_word_input.on_update
+        async def update_display():
+            await self.sender(sendables.Text_With_Text_Field(
+                text = f"**Which letters in '{self.current_letters}' would you like to swap, if any? You can swap {num_letters_can_refresh} letters.**"
+            ),change_letter_address)
+            await self.sender(sendables.Text_With_Text_Field(
+                text = f"**What word will you spell with '{self.current_letters}'?**"
+            ),choose_word_address)
+        
         chosen_word:None|str = None
         while chosen_word is None:
-            await self.sender(change_letter_message)
-            await self.sender(choose_word_message)
+            await update_display()#type:ignore
             if num_letters_can_refresh:
                 change_letter_input.reset()
                 choose_word_input.reset()
@@ -73,7 +79,7 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
                 if not num_letters_can_refresh or change_letter_input.responses[player] is None:
                     await self.kick_players([player],reason='timeout')
                     return ""
-            if choose_word_input.has_recieved_all_responses():
+            if choose_word_input.has_received_all_responses():
                 chosen_word = choose_word_input.responses[player]
             else:
                 change_letters = change_letter_input.responses[player] 
@@ -98,8 +104,3 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
                 await self.basic_send(f"The word '{word}' is valid!")
             else:
                 await self.basic_send(f"I'm sorry. Your guess of '{word}' is not in our dictionary.")
-        
-
-                
-        
-
