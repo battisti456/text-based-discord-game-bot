@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from game import get_logger
+
+from utils.grammar import wordify_iterable
 
 if TYPE_CHECKING:
     from game.components.send.address import Address
@@ -13,17 +15,24 @@ logger = get_logger(__name__)
 
 @dataclass(frozen=True)
 class Interaction_Content():
-    ...
+    def to_words(self) -> str:
+        raise NotImplementedError()
 @dataclass(frozen=True)
 class Command(Interaction_Content):
     text:'str'
 @dataclass(frozen=True)
 class Send_Text(Interaction_Content):
     text:'str'
+    @override
+    def to_words(self) -> str:
+        return f"sent {self.text}"
 @dataclass(frozen=True)
 class Select_Options(Interaction_Content):
     options:'tuple[Option,...]'
     indices:tuple[int,...]
+    @override
+    def to_words(self) -> str:
+        return f"selected {wordify_iterable(option.text for option in self.options)}"
 @dataclass(frozen = True)
 class Interaction():
     at_address:'Address|None'

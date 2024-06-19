@@ -71,8 +71,8 @@ class Discord_Game_Interface(Game_Interface):
             ))
         @self.client.event
         async def on_raw_message_edit(payload:discord.RawMessageUpdateEvent):
-            assert payload.cached_message is not None
-            await on_message(payload.cached_message)
+            if payload.cached_message is not None:
+                await on_message(payload.cached_message)
         #endregion
     @override
     async def reset(self):
