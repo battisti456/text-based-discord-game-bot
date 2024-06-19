@@ -9,6 +9,7 @@ from discord_interface.common import (
     Discord_Message,
     DiscordEditArgs,
     f,
+    edit_to_send
 )
 from discord_interface.custom_views import One_Selectable_View, One_Text_Field_View
 from game import get_logger
@@ -52,20 +53,7 @@ class Discord_Sender(Sender[Discord_Address]):
         if isinstance(channel_id,Discord_Address):
             channel_id = channel_id.messages[-1].channel_id#type:ignore
         assert isinstance(channel_id,int)
-        channel = await self.client.fetch_channel(channel_id)
-        assert isinstance(channel,CompatibleChannels)
-        messages:list[Discord_Message] = []
-        for _ in range(length):
-            await self.client.wait_until_ready()
-            discord_message:discord.Message = await channel.send(BLANK_TEXT)
-            messages.append(Discord_Message(
-                message_id=discord_message.id,
-                channel_id=channel_id
-            ))
-        address = Discord_Address(messages)
-        for message in messages:
-            self.cached_addresses[message] = address
-        return address
+        return Discord_Address(list(Discord_Message(message_id=None,channel_id = channel_id) for _ in range(length)))
     async def extend_address(self,address:Discord_Address, num:int):
         to_add = await self.generate_address(
             None if len(address.messages) == 0 else address.messages[-1].channel_id,#type:ignore
@@ -80,15 +68,6 @@ class Discord_Sender(Sender[Discord_Address]):
             edit_kwargs.append({
                 'content' : f(sendable.text)
             })
-            #a bit hacky, but allows for simpler messages not to get the edited tag
-            if address is None:
-                channel = await self.client.fetch_channel(self.default_channel)#type:ignore
-                assert isinstance(channel,CompatibleChannels)
-                discord_message = await channel.send(f(sendable.text))
-                return Discord_Address([Discord_Message(
-                    channel_id=self.default_channel,#type:ignore
-                    message_id=discord_message.id)])
-
         elif isinstance(sendable,Text_With_Options):
             if address is None:
                 address = await self.generate_address()
@@ -142,17 +121,23 @@ class Discord_Sender(Sender[Discord_Address]):
         elif num_to_extend > 0:
             await self.extend_address(address,num_to_extend)
         assert address is not None
-        for i,message in enumerate(address.messages):
+        for i in range(len(address.messages)):
             kwargs:DiscordEditArgs
+            message = address.messages[i]
             if i >= len(edit_kwargs):
                 kwargs = {"content" : BLANK_TEXT}
             else:
                 kwargs = edit_kwargs[i]
             channel = self.client.get_channel(message.channel_id)
             assert isinstance(channel,CompatibleChannels)
-            partial_message = channel.get_partial_message(message.message_id)
-            discord_message = await partial_message.fetch()
-            await discord_message.edit(**kwargs)
+            if message.message_id is None:
+                discord_message = await channel.send(**edit_to_send(kwargs))
+                address.messages[i] = message.set_message_id(discord_message.id)
+                self.cached_addresses[address.messages[i]] = address
+            else:
+                partial_message = channel.get_partial_message(message.message_id)
+                discord_message = await partial_message.fetch()
+                await discord_message.edit(**kwargs)
         return address
     @override
     def format_players_md(self, players: 'Iterable[PlayerId]') -> str:

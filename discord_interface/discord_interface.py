@@ -91,6 +91,8 @@ class Discord_Game_Interface(Game_Interface):
         logger.warning("reconnecting after discord service reconnect")
         logger.warning("attempting to fetch tracked messages")
         for message in self.default_sender.cached_addresses.keys():
+            if message.message_id is None:
+                continue#message has not yet been sent
             channel = self.client.get_channel(message.channel_id)
             assert isinstance(channel,CompatibleChannels)
             partial = await channel.fetch_message(message.message_id)
