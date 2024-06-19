@@ -53,17 +53,25 @@ class Discord_Sender(Sender[Discord_Address]):
 
         self.cached_addresses:dict[Discord_Message,Discord_Address] = {}
     @override
-    async def generate_address(self, channel_id: 'ChannelId | None|Discord_Address' = None, length:int = 1) -> 'Discord_Address':
+    async def generate_address(
+        self, 
+        channel_id: 'ChannelId | None|Discord_Address' = None,
+        for_players:frozenset[PlayerId] = frozenset(),*,
+        length:int = 1) -> 'Discord_Address':
         if channel_id is None or (isinstance(channel_id,Discord_Address) and len(channel_id.messages) == 0):
-            channel_id = self.default_channel
+            if len(for_players) == 0:
+                channel_id = self.default_channel
+            else:
+                channel_id = await self.gi.who_can_see_channel(for_players)
         if isinstance(channel_id,Discord_Address):
+            for_players = channel_id.for_players
             channel_id = channel_id.messages[-1].channel_id#type:ignore
         assert isinstance(channel_id,int)
-        return Discord_Address(list(Discord_Message(message_id=None,channel_id = channel_id) for _ in range(length)))
+        return Discord_Address(for_players=for_players, messages=list(Discord_Message(message_id=None,channel_id = channel_id) for _ in range(length)))
     async def extend_address(self,address:Discord_Address, num:int):
         to_add = await self.generate_address(
             None if len(address.messages) == 0 else address.messages[-1].channel_id,#type:ignore
-            num)
+            length = num)
         for message in to_add.messages:
             self.cached_addresses[message] = address
             address.messages.append(message)

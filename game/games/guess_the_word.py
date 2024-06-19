@@ -14,6 +14,7 @@ from utils.word_tools import (
     SimplePartOfSpeech,
     definition_dict_to_list,
 )
+from game.components.send import Address, sendables
 
 CONFIG = games_config['guess_the_word']
 
@@ -75,8 +76,11 @@ class Guess_The_Word(Game_Word_Base, Rounds_With_Points_Base):
                                 feedback += secret_word[j]
                             else:
                                 feedback += "\\_"
-                        await self.basic_secret_send(player,f"Your current feedback is '{feedback}'.")
-            responses:PlayerDict[str] = await self.basic_secret_text_response(players_not_guessed,f"**What word{len_text} is this definition for?**\n{def_str}")
+                        address:Address = await self.sender.generate_address(for_players=frozenset([player]))
+                        await self.sender(sendables.Text_Only(text=f"Your current feedback is '{feedback}'."),address)
+            responses:PlayerDict[str] = await self.basic_text_response(
+                who_chooses=players_not_guessed,
+                content=f"**What word{len_text} is this definition for?**\n{def_str}")
             if len(responses.keys()) == 0:#no responses, everyone has been kicked
                 await self.basic_send(f"Since no one submitted a response, I will reveal the correct answer was '{secret_word}'.")
                 return

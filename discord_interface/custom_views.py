@@ -34,11 +34,11 @@ class Custom_View[SendableType](discord.ui.View):
         self.address = address
         self.sendable = sendable
         super().__init__(timeout=None)
-        self.last_responses:dict[type[Any],'Response|None'] = {}
+        self.last_responses:dict[type[Any],tuple['Response',...]] = {}
         self.add_item(Info_Button(self))
     async def give_feedback(self, discord_interaction: discord.Interaction):
         print(self.last_responses)
-        if len(self.last_responses) == 0 or all(value is None for value in self.last_responses.values()):
+        if len(self.last_responses) == 0:
             await discord_interaction.response.defer()
         else:
             await discord_interaction.response.send_message(
@@ -47,8 +47,7 @@ class Custom_View[SendableType](discord.ui.View):
                 delete_after=TIME_FEEDBACK_LASTS
             )
     def summarize_responses(self) -> str:
-        return '\n'.join(f(response.to_text()) for response in self.last_responses.values() if response is not None)
-
+        return '\n'.join('\n'.join(f(response.to_text()) for response in response_group) for response_group in self.last_responses.values())
 
 class Interaction_Handler():
     def __init__(self,cv:Custom_View):

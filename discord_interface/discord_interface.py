@@ -18,6 +18,8 @@ from game.components.send import Interaction, Address
 from game.components.send.interaction import Send_Text
 from utils.types import ChannelId, PlayerId
 
+from utils.types import Grouping
+
 type AsyncCallback = Callable[[],Awaitable[None]]
 
 logger = get_logger(__name__)
@@ -37,6 +39,8 @@ class Discord_Game_Interface(Game_Interface):
 
         self.first_initialization = True
         self.on_start_callbacks:list[AsyncCallback] = []
+
+        self.who_can_see_dict:dict[frozenset[PlayerId],ChannelId] = {}
         #region 
         @self.client.event
         async def on_ready():#triggers when client is logged into discord
@@ -83,6 +87,7 @@ class Discord_Game_Interface(Game_Interface):
         assert isinstance(channel,discord.TextChannel)
         for thread in channel.threads:
             await thread.delete()
+        self.who_can_see_dict = {}
         to_del = tuple(self.default_sender.cached_addresses.keys())
         for message in to_del:
             del self.default_sender.cached_addresses[message]
@@ -132,6 +137,22 @@ class Discord_Game_Interface(Game_Interface):
     def on_start(self,callback:AsyncCallback) -> AsyncCallback:
         self.on_start_callbacks.append(callback)
         return callback
+    async def who_can_see_channel(self,players:Grouping[PlayerId]) -> ChannelId:
+        """
+        creates a ChannelId that only players can see, or returns one that it already made
+        """
+        fr_players = frozenset(players)
+        channel_id:ChannelId
+        if fr_players in self.who_can_see_dict:
+            channel_id = self.who_can_see_dict[fr_players]
+        else:
+            channel_id = await self.new_channel(
+                f"{self.default_sender.format_players(players)}'s Private Channel",
+                players
+            )
+            self.who_can_see_dict[fr_players] = channel_id
+        logger.info(f"channel limited game interface changing channel to id = {channel_id} so player_ids = {players} can see")
+        return channel_id
 
         
         

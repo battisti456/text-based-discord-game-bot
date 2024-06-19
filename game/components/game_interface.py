@@ -40,8 +40,8 @@ class Game_Interface(object):
                 self.actions[owner].add(wrapper)
                 return wrapper
         return decorator
-    async def interact(self,interaction:Interaction) -> Response|None:
-        response:Response|None = None
+    async def interact(self,interaction:Interaction) -> tuple[Response,...]:
+        responses = []
         for action_set in tuple(self.actions.values()):
             for action in action_set:
                 if iscoroutinefunction(action):
@@ -51,11 +51,8 @@ class Game_Interface(object):
                 if isinstance(val,Awaitable):
                     val = await val
                 if val is not None:
-                    if response is None:
-                        response = val
-                    else:
-                        response = response|val
-        return response
+                    responses.append(val)
+        return tuple(responses)
     async def reset(self):
         """
         clears all stored on_actions and messages
