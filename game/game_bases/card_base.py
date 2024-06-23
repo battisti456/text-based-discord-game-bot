@@ -12,7 +12,7 @@ from game import make_player_dict
 from game.components.game_interface import Game_Interface
 from game.components.send.sendable.sendables import Text_With_Files
 from game.components.send import Address
-from game.game import Game, police_game_callable
+from game.game import Game
 from utils.common import arg_fix_grouping
 from utils.grammar import temp_file_path, wordify_iterable
 from utils.types import GS, Grouping, PlayerDict, PlayerId
@@ -298,7 +298,6 @@ class Card_Base(Game):
         path = temp_file_path(".png")
         image.save(path)
         return path
-    @police_game_callable
     async def update_hand(self,player:PlayerId,add_text:str = ""):
         contents = add_text
         hand = self.hands[player]
@@ -315,11 +314,10 @@ class Card_Base(Game):
             attach_files=(self.ch_to_attachment(hand),),
             text=contents
         ),self.hand_addresses[player])
-    @police_game_callable
     async def player_draw(self,player:PlayerId|Grouping[PlayerId],num:int = 1):
         players:Grouping[PlayerId] = arg_fix_grouping(self.unkicked_players,player)
         if players:
-            await self.basic_policed_send(f"{self.format_players_md(players)} drew {num} card(s).")
+            await self.say(f"{self.format_players_md(players)} drew {num} card(s).")
         for _player in players:
             hand:Hand|None = self.hands[_player]
             assert hand is not None
@@ -328,21 +326,19 @@ class Card_Base(Game):
             if self.allowed_to_speak():
                 draw_text = f"You drew: {wordify_cards(cards)}."
             await self.update_hand(_player,draw_text)
-    @police_game_callable
     async def player_discard(self,player:PlayerId,num_random:int = 0,cards:int|Card|Grouping[int]|Grouping[Card] = []):
         hand = self.hands[player]
         assert hand is not None
         cards = hand.give(self.discard,num_random,cards)
         discard_text = ""
-        await self.basic_policed_send(f"{self.format_players_md([player])} discarded {len(cards)} card(s).")
+        await self.say(f"{self.format_players_md([player])} discarded {len(cards)} card(s).")
         if self.allowed_to_speak():
             discard_text = f"You discarded: {wordify_cards(cards)}."
         await self.update_hand(player,discard_text)
-    @police_game_callable#wildly untested....
     async def shuffle_discord_into_deck(self):
         self.discard.give(self.deck,cards=self.deck.cards)
         self.deck.shuffle()
-        await self.basic_policed_send("The discard has been shuffled back into the deck.")
+        await self.say("The discard has been shuffled back into the deck.")
 
     
         

@@ -14,7 +14,7 @@ if __name__ == "__main__":
         text = ""
         if len(sys.argv) > 1:
             text = f"{sys.argv[1]}\n"
-        await go.basic_send(
-            f"{text}The game bot is ready. If you are a command user, please input '{config['command_prefix']} run_game' to start a random game, or '{config['command_prefix']} help' to see more options."
+        await go.send(
+            text=f"{text}The game bot is ready. If you are a command user, please input '{config['command_prefix']} run_game' to start a random game, or '{config['command_prefix']} help' to see more options."
         )
     gi.client.run(discord_config['token'])

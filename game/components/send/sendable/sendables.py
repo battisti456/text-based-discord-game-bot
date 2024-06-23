@@ -1,6 +1,11 @@
 from dataclasses import dataclass
 
-from game.components.send.sendable.prototype_sendables import Text, Attach_Files, With_Options, With_Text_Field
+from game.components.send.sendable.prototype_sendables import (
+    Attach_Files,
+    Text,
+    With_Options,
+    With_Text_Field,
+)
 
 
 @dataclass(frozen=True)
@@ -26,3 +31,4 @@ class Text_With_Files(Text,Attach_Files):
 @dataclass(frozen = True)
 class Text_With_Options_And_Text_Field(Text,With_Options,With_Text_Field):
     ...
+

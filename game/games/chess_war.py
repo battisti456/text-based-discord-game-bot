@@ -43,7 +43,7 @@ class Chess_War(Team_Base,Chess_Base):
         self.team_board_player_messages:TeamDict[set[_Old_Message]]
     @override
     async def game_intro(self):
-        await self.basic_send(
+        await self.say(
             "# Welcome to a game of chess war!\n" + 
             "In this game we have two teams, one playing for white and the other playing for black.\n" +
             "Everyone is given a fair portion of their team's chess pieces and plays simultaneously\n" +

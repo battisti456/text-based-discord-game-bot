@@ -26,7 +26,7 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
         self.current_letters = self.random_balanced_letters(NUM_LETTERS)
     @override
     async def game_intro(self):
-        await self.basic_send(
+        await self.say(
             "# We are playing a game of create the longest word.\n" +
             f"Each turn you will be given a set of {NUM_LETTERS} letters and the choice of whether or not to refresh them.\n" +
             "If you do, you spend as many points as letters you refreshed.\n" +
@@ -101,6 +101,6 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
                 p= POINT_FUNCTION(word)
                 await self.score([player],p)
                 self.words_used.append(word)
-                await self.basic_send(f"The word '{word}' is valid!")
+                await self.say(f"The word '{word}' is valid!")
             else:
-                await self.basic_send(f"I'm sorry. Your guess of '{word}' is not in our dictionary.")
+                await self.say(f"I'm sorry. Your guess of '{word}' is not in our dictionary.")

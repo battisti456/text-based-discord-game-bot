@@ -49,7 +49,7 @@ class The_Great_Kitten_Race(Game):
             self.times:PlayerDict[int] = {}
     @override
     async def game_intro(self):
-        await self.basic_send(
+        await self.say(
             "# Here y'all are, finally, at the great kitten race!\n" +
             "You have each spent the past year training your kitten to compete in our randomized obstacle course!\n" +
             f"You have made sure to allocate each of those {self.kitten_config['point_limit']} skill points gained into the stats you believe will be most valuable.\n" +
@@ -69,7 +69,7 @@ class The_Great_Kitten_Race(Game):
             obstacle_text_list.append(
                 f"An obstacle of **{obstacle_name}** which involves {wordify_iterable(formatted_stats)}."
             )
-        await self.basic_send(
+        await self.say(
             "Before you began training you were told which obstacles would show up in today's competition:\n" +
             "\n".join(obstacle_text_list) + '\n' + 
             "So let's have you introduce your kittens!")
@@ -155,7 +155,7 @@ class The_Great_Kitten_Race(Game):
                     time_penalty = random.randint(self.kitten_config['loss_penalty'][0],self.kitten_config['loss_penalty'][1])
                 kitten_text_list.append(f"{text} lost {time_penalty} seconds because of it.")
                 kittens[player]['time'] += time_penalty
-            await self.basic_send(
+            await self.say(
                 f"Our kittens come across an obstacle of **{obstacle_name}**.\n" +
                 '\n'.join(kitten_text_list)
             )
@@ -167,7 +167,7 @@ class The_Great_Kitten_Race(Game):
             f"Crossing {ordinate(i+1)} we have __*{kittens[order[i]]['name']}*__ " + 
             f"racing for {self.format_players_md([order[i]])} with a final time of " +
             f"{kittens[order[i]]['time']} seconds!" for i in range(len(order)))
-        await self.basic_send(
+        await self.say(
             "Anxiously we await at the finish line. Who will be first? Then coming over the hill we see...\n"+
             '\n'.join(cross_finish_text_list)
             )

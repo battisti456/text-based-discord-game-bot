@@ -173,7 +173,7 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Image_Search_Base):
         self.num_rounds = NUM_ROUNDS
     @override
     async def game_intro(self):
-        await self.basic_send(
+        await self.say(
             "# Welcome to a game of guess what I searched!\n" + 
             "In this game, I will search through an online image database via a random search term.\n" +
             "I will then take that image, and alter it to make it harder to guess.\n" +
@@ -199,9 +199,9 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Image_Search_Base):
         image.save(image_path)
         altered_image.save(altered_path)
 
-        await self.basic_send(
-            f"I have found a random image from a search prompt, here is a version I have altered through {alter_method} the image.",
-            attachments_data=[altered_path]
+        await self.send(
+            text =f"I have found a random image from a search prompt, here is a version I have altered through {alter_method} the image.",
+            attach_files=(altered_path,)
         )
         
         responses:PlayerDict[int] = await self.basic_multiple_choice(
@@ -213,9 +213,9 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Image_Search_Base):
 
         correct_players = list(player for player in self.unkicked_players if search_options[responses[player]] == actual_search)
 
-        await self.basic_send(
-            f"I actually searched for '{actual_search}'.",
-            attachments_data=[image_path]
+        await self.send(
+            text =f"I actually searched for '{actual_search}'.",
+            attach_files=(image_path,)
         )
 
         await self.score(correct_players,1)

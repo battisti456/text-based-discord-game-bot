@@ -8,7 +8,7 @@ import discord.types.emoji
 from time import time
 
 from discord_interface.discord_sender import Discord_Sender
-from discord_interface.common import Discord_Message, CompatibleChannels
+from discord_interface.common import Discord_Message, CompatibleChannels, Discord_Address
 
 from game import get_logger
 from game.components.game_interface import (
@@ -16,6 +16,7 @@ from game.components.game_interface import (
 )
 from game.components.send import Interaction, Address
 from game.components.send.interaction import Send_Text
+from game.components.send import sendables
 from utils.types import ChannelId, PlayerId
 
 from utils.types import Grouping
@@ -23,6 +24,8 @@ from utils.types import Grouping
 type AsyncCallback = Callable[[],Awaitable[None]]
 
 logger = get_logger(__name__)
+
+THREAD_MESSAGE_EXPIRATION = 60
 
 class Discord_Game_Interface(Game_Interface):
     def __init__(self,channel_id:ChannelId,players:list[PlayerId]):
@@ -41,6 +44,8 @@ class Discord_Game_Interface(Game_Interface):
         self.on_start_callbacks:list[AsyncCallback] = []
 
         self.who_can_see_dict:dict[frozenset[PlayerId],ChannelId] = {}
+
+        self.last_thread_message:tuple[float,str,Discord_Address]|None = None
         #region 
         @self.client.event
         async def on_ready():#triggers when client is logged into discord
@@ -128,6 +133,17 @@ class Discord_Game_Interface(Game_Interface):
                 assert user is not None#user not found
                 await self.client.wait_until_ready()
                 await thread.add_user(user)
+        #a hacky attempt to condense a lot of thread notifications if several are created within a certain time of each other
+        t = time()
+        if self.last_thread_message is None or t - self.last_thread_message[0] > THREAD_MESSAGE_EXPIRATION:
+            text:str = f"<#{thread.id}>"
+            address = await self.default_sender(sendables.Text_Only(text=text))
+            self.last_thread_message = (t,text,address)
+        else:
+            text = self.last_thread_message[1] + f" <#{thread.id}>"
+            await self.default_sender(sendables.Text_Only(text=text),self.last_thread_message[2])
+            self.last_thread_message = (t,text,self.last_thread_message[2])
+        
         return thread.id#type:ignore
     @override
     def get_players(self) -> frozenset[PlayerId]:

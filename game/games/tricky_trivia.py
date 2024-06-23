@@ -25,7 +25,7 @@ class Tricky_Trivia(Trivia_Base,Rounds_With_Points_Base):
         self.num_rounds = NUM_QUESTIONS
     @override
     async def game_intro(self):
-        await self.basic_send(
+        await self.say(
             "# Today we are playing a game of tricky trivia!\n" +
             "In this game you will be presented with trivia questions and each player will secretly craft their own possiple answer.\n" +
             "Then, the trivia question will be asked at large.\n" +
@@ -43,7 +43,7 @@ class Tricky_Trivia(Trivia_Base,Rounds_With_Points_Base):
             trivia_dict = await self.get_trivia(type_ = self.type_.Multiple_Choice)
 
         question_text = f"*{trivia_dict['question']}*\nAn example of an incorrect answer (to give you a clue about formatting) is: '*{trivia_dict['incorrect_answers'][0]}*'."
-        await self.basic_send(question_text)
+        await self.say(question_text)
         responses:PlayerDict[str] = await self.basic_text_response(
             who_chooses = self.unkicked_players,
             content = f"{question_text}\nWhat is a possible answer to this question that might fool your competitors?",
@@ -59,16 +59,16 @@ class Tricky_Trivia(Trivia_Base,Rounds_With_Points_Base):
             players_who_gave = list(player for player in self.unkicked_players if responses[player] == option)
             players_who_chose = list(player for player in self.unkicked_players if options[choices[player]] == option and player not in players_who_gave)
             if not players_who_chose == []:
-                await self.basic_send(f"{self.format_players_md(players_who_gave)} provided the answer:\n'{option}'\n and fooled {self.format_players_md(players_who_chose)}.")
+                await self.say(f"{self.format_players_md(players_who_gave)} provided the answer:\n'{option}'\n and fooled {self.format_players_md(players_who_chose)}.")
                 await self.score(players_who_gave,len(players_who_chose)*POINTS_FOOL)
         correct_answer_text = f"The correct answer was:\n'{trivia_dict['correct_answer']}'"
         correct_choice_index = options.index(trivia_dict['correct_answer'])
         correct_players = list(player for player in self.unkicked_players if choices[player] == correct_choice_index)
         if correct_players:
-            await self.basic_send(f"{correct_answer_text}\n{self.format_players_md(correct_players)} got the answer right!")
+            await self.say(f"{correct_answer_text}\n{self.format_players_md(correct_players)} got the answer right!")
             point_dict = make_player_dict(correct_players,POINTS_GUESS)
             await self.score(correct_players,point_dict)
         else:
-            await self.basic_send(f"{correct_answer_text}\nNo one got it right :(.")
+            await self.say(f"{correct_answer_text}\nNo one got it right :(.")
 
 

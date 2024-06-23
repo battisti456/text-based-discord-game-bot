@@ -18,7 +18,7 @@ class Basic_Game(Rounds_With_Points_Base):
         Rounds_With_Points_Base.__init__(self,gi)
     @override
     async def game_intro(self):
-        await self.basic_send(
+        await self.say(
             "# Hi welcome to this basic game!\n" +
             "Answer with how many points you would like to get!"
         )

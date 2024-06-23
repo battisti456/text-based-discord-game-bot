@@ -34,7 +34,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
         return sum
     @override
     async def game_intro(self):
-        await self.basic_send(
+        await self.say(
             "# This will be a game of elimination blackjack!\n" +
             "We will play a round of blackjack, and, at the end, those with the lowest score are eliminated.\n" +
             "On your turn you may either choose to draw or pass. If you draw another card is added to your hand.\n" +
@@ -58,7 +58,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
                 have_text = "have"
                 if len(players_eliminated_this_draw) == 1:
                     have_text = "has"
-                await self.basic_send(f"{self.format_players_md(players_eliminated_this_draw)} {have_text} overdrawn.")
+                await self.say(f"{self.format_players_md(players_eliminated_this_draw)} {have_text} overdrawn.")
                 await self.eliminate(players_eliminated_this_draw)
                 if set(players_eliminated_this_draw) == set(self.not_eliminated):
                     return#restart the round

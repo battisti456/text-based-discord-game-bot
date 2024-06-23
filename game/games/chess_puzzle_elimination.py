@@ -113,7 +113,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
         return puzzle
     @override
     async def game_intro(self):
-        await self.basic_send(
+        await self.say(
             "# Welcome to a game of elimination chess puzzles!\n" + 
             "In this game you will be presented with chess puzzles.\n" +
             ("" if RATING_RANGE is None else f"These puzzles will start with a chess rating between {RATING_RANGE[0]} and {RATING_RANGE[1]}, but may escalate if y'all do well.\n") +
@@ -138,9 +138,9 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
             return self.make_board_image({"white_perspective" : player_color})
 
         move_index = 1
-        await self.basic_send(
-            f"Here is the start of the puzzle! You will be playing for {player_color_name}.",
-            attachments_data=[get_board()]
+        await self.send(
+            text=f"Here is the start of the puzzle! You will be playing for {player_color_name}.",
+            attach_files=(get_board(),)
         )
 
         def best_move(move_uci:str) -> bool:
@@ -182,9 +182,9 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
             if self.board.is_game_over(claim_draw=True):
                 end_text = f" This ends the game in {get_game_over_text(self.board)}."
             
-            await self.basic_send(
-                f"{move_right_text} {best_move_text}{end_text}",
-                attachments_data=[get_board()]
+            await self.send(
+                text=f"{move_right_text} {best_move_text}{end_text}",
+                attach_files=(get_board(),)
             )
 
             await self.eliminate(incorrect_players)
@@ -192,7 +192,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
             move_index += 1
 
             if move_index == len(moves):
-                await self.basic_send("And that's that for this puzzle!\nLet's do another one.")
+                await self.say("And that's that for this puzzle!\nLet's do another one.")
                 return
             
             mt = get_move_text(self.board,moves[move_index])
@@ -204,9 +204,9 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
             if self.board.is_game_over(claim_draw=True):
                 end_text = f" This ends the game in {get_game_over_text(self.board)}."
 
-            await self.basic_send(
-                f"The opponent, {opponent_color}, {respond_text} {mt}.{end_text}",
-                attachments_data=[get_board()]
+            await self.send(
+                text = f"The opponent, {opponent_color}, {respond_text} {mt}.{end_text}",
+                attach_files=(get_board(),)
             )
             move_index += 1
 
@@ -218,9 +218,9 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
             end_text = ""
             if self.board.is_game_over(claim_draw=True):
                 end_text = f" This ends the game in {get_game_over_text(self.board)}."
-            await self.basic_send(
-                f"{begin_text}{chess.COLOR_NAMES[self.board.turn]} plays {move_text}.{end_text}",
-                attachments_data=[get_board()]
+            await self.send(
+                text = f"{begin_text}{chess.COLOR_NAMES[self.board.turn]} plays {move_text}.{end_text}",
+                attach_files=(get_board(),)
             )
             begin_text = ""
             move_index += 1

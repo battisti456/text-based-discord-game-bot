@@ -11,7 +11,7 @@ class Elimination_Trivia(Elimination_Base,Trivia_Base):
         Trivia_Base.__init__(self,gi)
     @override
     async def game_intro(self):
-        await self.basic_send(
+        await self.say(
             "# This is a game of elimination trivia.\n" +
             "I will ask you a trivia question, and you will react with the appropriate option.\n" +
             "Once everyone not yet eliminated has answered, I will reveal the correct answer and eliminate those who got it wrong.\n" +

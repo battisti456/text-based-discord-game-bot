@@ -35,9 +35,12 @@ class Custom_View[SendableType](discord.ui.View):
         self.sendable = sendable
         super().__init__(timeout=None)
         self.last_responses:dict[type[Any],tuple['Response',...]] = {}
-        self.add_item(Info_Button(self))
+        #disabled, it didn't really help all that much
+        #self.add_item(Info_Button(self))
     async def give_feedback(self, discord_interaction: discord.Interaction):
-        print(self.last_responses)
+        await discord_interaction.response.defer()
+        return
+        #disabled cause it didn't look great visually
         if len(self.last_responses) == 0 or all(len(response_group) == 0  for response_group in self.last_responses.values()):
             await discord_interaction.response.defer()
         else:

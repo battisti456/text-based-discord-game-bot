@@ -30,7 +30,7 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
         self.num_rounds = NUM_ROUNDS
     @override
     async def game_intro(self):
-        await self.basic_send(
+        await self.say(
             "# Welcome to a game of prediction Texas Holdem!\n" +
             "This isn't going to work like most games of Texas Holdem.\n" +
             f"In this game, you get {PLAYER_CARDS} to yourself while there are {SHARED_CARDS} shared.\n" +
@@ -46,9 +46,9 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
         await self.player_draw(self.unkicked_players,PLAYER_CARDS)
         self.deck.give(shared,SHARED_CARDS)
         attachment = self.ch_to_attachment(shared)
-        await self.basic_send(
-            "Here are the shared cards:",
-            attachments_data=[attachment]
+        await self.send(
+            text="Here are the shared cards:",
+            attach_files=(attachment,)
         )
         responses = await self.basic_multiple_choice(
             "Judging from your own cards and the shared cards, where do you think you will place amongst your fellow players?",
@@ -81,15 +81,15 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
                     down_check = False
             player_diffs[player] = diff
         for player in self.unkicked_players:
-            await self.basic_send(
-                f"{self.format_players_md([player])}'s hand was:",
-                [self.ch_to_attachment(self.hands[player])]
+            await self.send(
+                text=f"{self.format_players_md([player])}'s hand was:",
+                attach_files=(self.ch_to_attachment(self.hands[player]),)
             )
-            await self.basic_send(
-                f"Meaning {self.format_players_md([player])}'s best poker hand with the shared cards was:",
-                [self.ch_to_attachment(players_best_poker_hands[player])]
+            await self.send(
+                text=f"Meaning {self.format_players_md([player])}'s best poker hand with the shared cards was:",
+                attach_files=(self.ch_to_attachment(players_best_poker_hands[player]),)
             )
-            await self.basic_send(
+            await self.say(
                 f"This placed {self.format_players_md([player])} {ordinate(1+ranking.index(player))} "+
                 f"in the hand rankings with a {name_poker_hand_by_rank(player_hand_ranks[player])}, "+
                 f"and they predicted they would be {ordinate(responses[player]+1)}."

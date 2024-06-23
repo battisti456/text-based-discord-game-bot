@@ -191,7 +191,7 @@ class Game_Operator(Interface_Operator):
         try:
             await self.game.basic_send_placement(self.game.generate_placements())
         except Exception as e:
-            await self.basic_send("There has been an error in generating your placements. Many apologies.")
+            await self.say("There has been an error in generating your placements. Many apologies.")
             logger.error(f"Game '{self.game}' errored trying to generate placements : {e}.")
         await self.gi.reset()
         self.bind()#re-add this function to game_interface's on action list

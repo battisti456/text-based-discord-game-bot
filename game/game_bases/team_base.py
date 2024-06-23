@@ -78,7 +78,7 @@ class Team_Base(Rounds_Base):
             ) for team in self.all_teams
         }
         for team in self.all_teams:
-            await self.basic_send(
+            await self.say(
                 f"On team '{team}' we have {self.sender.format_players(self.team_players[team])}!"
             )
     async def basic_send_team(

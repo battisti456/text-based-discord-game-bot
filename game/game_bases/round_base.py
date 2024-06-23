@@ -27,7 +27,7 @@ class Rounds_Base(Game):
             of_str = f" of {self.num_rounds}"
         while True:
             if not self.num_rounds == 1:
-                await self.basic_send(f"## {self.string_round(round+1).capitalize()}{of_str}:")
+                await self.say(f"## {self.string_round(round+1).capitalize()}{of_str}:")
             await self.start_round()
             await self.core_game()
             await self.end_round()

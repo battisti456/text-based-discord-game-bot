@@ -47,7 +47,7 @@ class Elimination_Framework(Participant_Base[Participant],Rounds_Base):
             message_text += f", leaving {self._part_str(tuple(set(self.not_eliminated) - to_eliminate)[0])} as the winner!"
         else:
             message_text += '.'
-        await self.basic_send(message_text)
+        await self.say(message_text)
     def eliminate_participants(self,participants:Grouping[Participant]|Participant):
         """
         attempts to eliminate participants; returns True if successful, False if not

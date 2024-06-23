@@ -71,7 +71,7 @@ class Emoji_Communication(Rounds_With_Points_Base,Game_Word_Base):
         self.num_rounds = NUM_ROUNDS
     @override
     async def game_intro(self):
-        await self.basic_send(
+        await self.say(
             "# Welcome to a game of emoji communication!\n" +
             "In this game I will give each of you a sentence in secret and you will do your best to translate it into emojis.\n" +
             f"Please note you can only use at max {MAX_EMOJI}, and all non-emoji characters in your responses will be ignored.\n" +
@@ -133,9 +133,9 @@ class Emoji_Communication(Rounds_With_Points_Base,Game_Word_Base):
             correct_players = list(player for player in players_to_ask if options[responses[player]] == opt_str[current_player][0])
             correct_text = f"The actual sentence was:\n{opt_str[current_player][0]}\n"
             if len(correct_players) == 0:#no one was correct
-                await self.basic_send(f"{correct_text}No one got it right. No points.")
+                await self.say(f"{correct_text}No one got it right. No points.")
             elif len(correct_players) == len(players_to_ask):#all right
-                await self.basic_send(
+                await self.say(
                     f"{correct_text}Since everyone got it right, each player only gets " +
                     f"{POINTS_FOR_ALL_GUESS}, except {self.format_players_md([current_player])} who gets none.")
                 await self.score(correct_players,POINTS_FOR_ALL_GUESS,mute = True)
@@ -146,7 +146,7 @@ class Emoji_Communication(Rounds_With_Points_Base,Game_Word_Base):
                     points = BONUS_POINTS_PER_GUESSER*len(correct_players)
                     bonus_text = f", and achieving the bonus for using less than {BONUS_NUM} emojis,"
 
-                await self.basic_send(
+                await self.say(
                     f"{correct_text}{self.format_players_md(correct_players)} got it right each earning {POINTS_FOR_GUESS} point(s).\n" +
                     f"For guiding them so well{bonus_text} {self.format_players_md([current_player])} earned {points} point(s)."
 

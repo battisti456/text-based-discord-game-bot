@@ -49,7 +49,7 @@ class Container_Bidding(Rounds_With_Points_Base):
         self.money:PlayerDict[int] = make_player_dict(self.unkicked_players,int(STARTING_MONEY/len(self.unkicked_players)))
     @override
     async def game_intro(self):
-        await self.basic_send(
+        await self.say(
             "# Welcome to a game of container bidding!\n" + 
             f"In this game we will have {NUM_CONTAINERS} containers that we look at.\n" +
             "For each container my expert evaluator will provide their description.\n" +
@@ -84,7 +84,7 @@ class Container_Bidding(Rounds_With_Points_Base):
             f"I would suggest contributing 1/{len(self.unkicked_players)} of this. " +
             f"So, {int(total_bid_threshold/len(self.unkicked_players))}.\n" +
             "How much are you willing to contribute?")
-        await self.basic_send(f"{question_text}\nPlease respond in your private channel.")
+        await self.say(f"{question_text}\nPlease respond in your private channel.")
         #TODO: #9 should add validification to this response
         responses = await self.basic_text_response(
             content="How much would you like to contribute for this bid?",
@@ -103,7 +103,7 @@ class Container_Bidding(Rounds_With_Points_Base):
             player_split_text = f"It will be split {len(player_bids)} way(s) between {self.format_players_md(list(player_bids))} according to the amounts they contributed to the bid."
             if len(player_bids) == 1:
                 player_split_text = f"{self.format_players_md(list(player_bids))} has won the whole amount."
-            await self.basic_send(
+            await self.say(
                 f"Your total bid of {moneyfy(total_bid)} exceeded our bid threshold of {moneyfy(total_bid_threshold)}.\n" +
                 "\n".join(reward_text) + '\n' +
                 f"The total contents of this container are worth {moneyfy(total_reward)}.\n" +
@@ -114,11 +114,11 @@ class Container_Bidding(Rounds_With_Points_Base):
                 player_return = int(total_reward*player_portion)
                 await self.score(player,player_return,True)
         else:
-            await self.basic_send(
+            await self.say(
                 f"Your total bid of {moneyfy(total_bid)} didn't exceed our bid threshold of {moneyfy(total_bid_threshold)}.\n" +
                 "Y'all have decided to pass on this container. Ah well.")
     async def game_cleanup(self):
-        await self.basic_send(
+        await self.say(
             "That was our last container, so, at the end of the game: "+
             f"{self.format_players_md(self.unkicked_players)} had {wordify_iterable(moneyfy(self.money[player]) for player in self.unkicked_players)} leftover respectively." +
             f"This remaining money will be added to your final money score, but any negatives will be charged an extra {END_OF_GAME_INTEREST}% in interest.")

@@ -83,10 +83,10 @@ class Game(Interface_Component):
         except GameEndException as e:
             logger.warning(f"{self} ended due to {e}.")
             self.game_end_exception = e
-            await self.basic_send(e.explanation)
+            await self.say(e.explanation)
         except:  # noqa: E722
             logger.exception("Game failed due to unexpected error.")
-            await self.basic_send("The game has experienced an unforseen exception and will attempt to close itself...")
+            await self.say("The game has experienced an unforseen exception and will attempt to close itself...")
         logger.info(f"Un-setting up {self}.")
         await self.game_unsetup()
         logger.info(f"Playing outro for {self}.")
@@ -234,20 +234,6 @@ class Game(Interface_Component):
         returns whether the current member function is restricted by being policed
         """
         return self.current_class_execution not in self.classes_banned_from_speaking
-    async def basic_policed_send(
-            self,content:Optional[str] = None,attachments_data:list[str] = [],
-            channel_id:Optional[ChannelId] = None):
-        """
-        self.basic_send if self.allowed_to_speak
-        
-        content: the text content of the message
-        
-        attachments_data: a list of file paths to attach to the message
-        
-        channel_id: what channel to send the message on
-        """
-        if self.allowed_to_speak():
-            return await self.basic_send(content,attachments_data,channel_id)
     async def basic_send_placement(self,placement:PlayerPlacement):
         """
         takes a placement list and formats it correctly, and sends to the players
@@ -263,7 +249,7 @@ class Game(Interface_Component):
                 text_list.append(f"in {ordinate(place)} place we have {self.format_players_md(group)}")
                 place += 1
 
-        return await self.basic_send(f"The placements are: {wordify_iterable(text_list,comma=';')}.")
+        return await self.say(f"The placements are: {wordify_iterable(text_list,comma=';')}.")
     async def policed_send(self,message:_Old_Message):
         """
         a wrapper of self.sender.__call__, for sending Message objects, if not restricted by policing

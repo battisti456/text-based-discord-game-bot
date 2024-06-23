@@ -28,7 +28,7 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
         self.last_player:PlayerId = self.unkicked_players[0]
     @override
     async def game_intro(self):
-        await self.basic_send(
+        await self.say(
             "# We are playing a game of word creation!\n" +
             "In this game you take turns adding letters to the combined letters, choosing to put them on the left or right side.\n" +
             f"Once we have more than {NUM_LETTERS}, if you add a letter that makes it spell a word, you lose!\n" +
@@ -51,7 +51,7 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
                 player = self.all_players[(main_index+i)%len(self.unkicked_players)]
                 if player in self.unkicked_players:
                     break
-            await self.basic_send(f"The letters are '{letters}'.")
+            await self.say(f"The letters are '{letters}'.")
             will_challenge_message = Old_Message(
                 text=f"Will you challenge {self.sender.format_players_md([self.last_player])}?",
                 with_options=NO_YES_OPTIONS
@@ -119,7 +119,7 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
                     def_text = ""
                     if definition is not None:
                         def_text = f"\nHere are some definitions:\n{self.definition_string(definition)}"
-                    await self.basic_send(
+                    await self.say(
                         f"{self.format_players_md([player])} has spelled the word {letters}.{def_text}")
                     self.last_player = player
                     await self.eliminate([player])
@@ -154,12 +154,12 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
                     definition_text = ""
                     if definition is not None:
                         definition_text = f"\n{self.definition_string(definition)}"
-                    await self.basic_send(f"The word {word} is valid!{definition_text}")
+                    await self.say(f"The word {word} is valid!{definition_text}")
                     self.last_player = player
                     await self.eliminate([player])
                     return
                 elif not self.is_valid_word(word):
-                    await self.basic_send(f"I'm sorry, {self.format_players_md([self.last_player])}, '{word}' is not a valid word.")
+                    await self.say(f"I'm sorry, {self.format_players_md([self.last_player])}, '{word}' is not a valid word.")
                     await self.eliminate([self.last_player])
                     self.last_player = player
                     return

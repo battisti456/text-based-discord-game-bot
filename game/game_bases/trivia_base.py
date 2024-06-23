@@ -80,7 +80,7 @@ class Trivia_Base(Game):
         else:#boolean
             options = ['False','True']
             choices:PlayerDict[int] = await self.basic_no_yes(question['question'],players)
-        await self.basic_send(f"The correct answer was '{question['correct_answer']}'.")
+        await self.say(f"The correct answer was '{question['correct_answer']}'.")
         correct_index = options.index(question['correct_answer'])
         player_correct:dict[PlayerId,bool] = {}
         for player in set(players) & set(self.unkicked_players):

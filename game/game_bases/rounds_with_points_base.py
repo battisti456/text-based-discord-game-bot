@@ -55,7 +55,7 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Participant_Ba
                 self.point_frmt(self.point_totals[participant] + a[participant])
                 for participant in w
         )
-        await self.basic_send('\n'.join(participant_lines))
+        await self.say('\n'.join(participant_lines))
     def point_frmt(self,num:Number) -> str:
         return f"{num} {self.point_word}{s(num)}"
     def receive_score(

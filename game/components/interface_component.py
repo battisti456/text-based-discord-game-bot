@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Unpack
 
 import utils.emoji_groups
 from game.components.game_interface import Game_Interface
@@ -12,7 +12,7 @@ from game.components.response_validator import (
     not_none,
 )
 from game.components.send.old_message import Old_Message
-from game.components.send.option import Option
+from game.components.send import Option, Address, make_sendable, MakeSendableArgs
 from game.components.send.sendable.sendables import Text_Only, Text_With_Text_Field
 from utils.common import arg_fix_grouping
 from utils.types import (
@@ -22,7 +22,7 @@ from utils.types import (
     PlayerId,
     PlayersIds,
 )
-
+from smart_text import TextLike
 
 class Interface_Component():
     def __init__(self,gi:Game_Interface):
@@ -132,26 +132,11 @@ class Interface_Component():
         returns the senders formatting of a list of players without markdown
         """
         return self.sender.format_players(user_id)
-    async def basic_send(
-            self,content:Optional[str] = None,attachments_data:list[str] = [],
-            channel_id:Optional[ChannelId] = None):
-        """
-        creates a message with the given parameters and sends it with self.sender
-        
-        content: the text content of the message
-        
-        attachments_data: a list of file paths to attach to the message
-        
-        channel_id: what channel to send the message on
-        """
-        if len(attachments_data) == 0 and content is not None:
-            message = Text_Only(text = content)
-        else:
-            message = Old_Message(
-                text = content,
-                attach_files=attachments_data
-            )
-        address = None
-        if channel_id is not None:
-            address = await self.gi.default_sender.generate_address(channel_id)
-        await self.sender(message,address)
+    async def send(self,address:Address|None=None,**kwargs:Unpack[MakeSendableArgs]):
+        sendable = make_sendable(**kwargs)
+        await self.sender(sendable,address)
+    async def say(self,text:TextLike,address:Address|None = None):
+        await self.sender(
+            Text_Only(text=text),
+            address=address
+        )
