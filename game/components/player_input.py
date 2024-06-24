@@ -34,7 +34,6 @@ class Player_Input[T](GS):
     def __init__(
             self,
             name:str, 
-            gi:Game_Interface,
             sender:Sender,
             players:PlayersIds,
             *,
@@ -47,7 +46,6 @@ class Player_Input[T](GS):
         self.timeout = timeout
         self.warnings = warnings
         self.name = name
-        self.gi = gi
         self.sender = sender
         self.who_can_see = None if who_can_see is None else tuple(who_can_see)
         self.players:PlayersIds = tuple(players)
@@ -213,12 +211,13 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
             question_address:Address|None = None,
             allow_edits:bool = True):
         Player_Input.__init__(
-            self,name,gi,sender,players,
+            self,name,sender,players,
             response_validator=response_validator,
             who_can_see=who_can_see,
             timeout=timeout,
             warnings=warnings,
             status_address=status_address)
+        self.gi = gi
         self.question_address:None|Address = question_address
         self.allow_edits:bool = allow_edits
     @override
