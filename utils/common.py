@@ -48,6 +48,8 @@ def random_from(obj:Any,num:int = 0) -> float:
         r.random()
         i += 1
     return r.random()
+def is_scale(val:float) -> bool:
+    return val >= 0 and val <= 1
 """
 def _list_combine(current:list[R],future_options:list[Sequence[R]]) -> list[list[R]]:
     if len(future_options) == 0:

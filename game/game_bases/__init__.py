@@ -6,6 +6,8 @@ from game.game_bases.image_search_base import Image_Search_Base
 from game.game_bases.rounds_with_points_base import Rounds_With_Points_Base
 from game.game_bases.trivia_base import Trivia_Base
 from game.game_bases.team_base import Team_Base, Rounds_With_Points_Team_Base, Elimination_Team_Base
+from game.game_bases.physics_base import Physics_Base
+from game.game_bases.whisper_base import Whisper_Base
 
 __all__ = (
     'Elimination_Base',
@@ -17,5 +19,7 @@ __all__ = (
     'Chess_Base',
     'Team_Base',
     'Rounds_With_Points_Team_Base',
-    'Elimination_Team_Base'
+    'Elimination_Team_Base',
+    'Physics_Base',
+    'Whisper_Base'
 )

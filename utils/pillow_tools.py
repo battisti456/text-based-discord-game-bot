@@ -1,4 +1,4 @@
-from typing import Any, Optional, override
+from typing import Any, Optional, override, Unpack, TypedDict, Required, Literal, Tuple
 
 import PIL.ExifTags as ExifTags  # noqa: F401
 import PIL.Image
@@ -15,6 +15,86 @@ type DrawTextParameters = dict[str,Any]
 FONT_START_SIZE = 1000
 TREAT_TRANSPARENT_AS = (49, 51, 56)
 
+type CordOrBox = Tuple[int,int]|Tuple[int,int,int,int]
+type Anchor = Literal[
+    'la','lt','lm','ls','lb','ld',
+    'ma','mt','mm','ms','mb','md',
+    'ra','rt','rm','rs','rb','rd',
+    'sa','st','sm','ss','sb','sd'
+]
+"""
+Horizontal anchor followed by Vertical
+Horizontal anchor alignment
+l — left
+
+    Anchor is to the left of the text.
+
+    For horizontal text this is the origin of the first glyph, as shown in the FreeType tutorial.
+m — middle
+
+    Anchor is horizontally centered with the text.
+
+    For vertical text it is recommended to use s (baseline) alignment instead, as it does not change based on the specific glyphs of the given text.
+r — right
+
+    Anchor is to the right of the text.
+
+    For horizontal text this is the advanced origin of the last glyph, as shown in the FreeType tutorial.
+s — baseline (vertical text only)
+
+    Anchor is at the baseline (middle) of the text. The exact alignment depends on the font.
+
+    For vertical text this is the recommended alignment, as it does not change based on the specific glyphs of the given text (see image for vertical text above).
+
+Vertical anchor alignment
+a — ascender / top (horizontal text only)
+
+    Anchor is at the ascender line (top) of the first line of text, as defined by the font.
+
+    See Font metrics on Wikipedia for more information.
+t — top (single-line text only)
+
+    Anchor is at the top of the text.
+
+    For vertical text this is the origin of the first glyph, as shown in the FreeType tutorial.
+
+    For horizontal text it is recommended to use a (ascender) alignment instead, as it does not change based on the specific glyphs of the given text.
+m — middle
+
+    Anchor is vertically centered with the text.
+
+    For horizontal text this is the midpoint of the first ascender line and the last descender line.
+s — baseline (horizontal text only)
+
+    Anchor is at the baseline (bottom) of the first line of text, only descenders extend below the anchor.
+
+    See Font metrics on Wikipedia for more information.
+b — bottom (single-line text only)
+
+    Anchor is at the bottom of the text.
+
+    For vertical text this is the advanced origin of the last glyph, as shown in the FreeType tutorial.
+
+    For horizontal text it is recommended to use d (descender) alignment instead, as it does not change based on the specific glyphs of the given text.
+d — descender / bottom (horizontal text only)
+
+    Anchor is at the descender line (bottom) of the last line of text, as defined by the font.
+
+    Taken from: https://pillow.readthedocs.io/en/stable/handbook/text-anchors.html
+    """
+
+class DrawOptions(TypedDict, total=False):
+    xy:Required[CordOrBox]
+    fill:Color|None
+class DrawTextOptions(DrawOptions,total=False):
+    text:Required[str]
+    font:Optional[Font]
+    anchor:Optional[Anchor]
+    spacing:int
+    align:Literal['left,right','center']
+    stroke_width:int
+    stroke_fill:Optional[Color]
+
 def get_color_name(color:Color) -> str:
     """not fully implemented"""
     return color_name(color)
@@ -27,6 +107,24 @@ def _get_font(font_path:Optional[str] = None,size:Optional[float] = None) -> Fon
             return PIL.ImageFont.truetype(font=font_path)
         else:
             return PIL.ImageFont.truetype(font=font_path,size=int(size))
+def center_draw_text(image:PIL.Image.Image,**kwargs:Unpack[DrawTextOptions]):
+    draw = PIL.ImageDraw.Draw(image)
+    edited_kwargs= kwargs.copy()
+    if 'fill' in edited_kwargs:
+        del edited_kwargs['fill']
+    if 'stroke_fill' in edited_kwargs:
+        del edited_kwargs['stroke_fill']
+    edited_kwargs['xy'] = (0,0)
+    top:int
+    left:int
+    bottom:int
+    right:int
+    top,left,bottom,right = draw.textbbox(
+        **edited_kwargs#type:ignore
+        )
+    center:tuple[int,int] = (int((bottom-top)/2)+top,int((right-left)/2)+left)
+    kwargs['xy'] = (kwargs['xy'][0]-center[0],kwargs['xy'][1]-center[1])
+    draw.text(**kwargs)
 
 def get_font(
         font_path:Optional[str] = None,

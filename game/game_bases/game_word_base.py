@@ -58,7 +58,8 @@ class Game_Word_Base(Game):
         return scrabble.check(word)
     def define(self,word:str) -> DefinitionDict:
         return get_word_definition(word).to_dict()
-    def random_balanced_letters(self,num:int = 5) -> str:
+    @classmethod
+    def random_balanced_letters(cls,num:int = 5) -> str:
         letter_list = random.choices(LETTERS,LETTER_WEIGHTS,k = num)
         return "".join(letter_list)
     def _definintion_string(self,defs_list:DefinitionList) -> str:
