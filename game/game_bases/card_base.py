@@ -95,7 +95,7 @@ class Card_Holder(object):
             hand_height = 80
         base = PIL.Image.new('RGBA',(HAND_WIDTH,hand_height),color = HAND_COLOR)
         for i in range(len(self.cards)):
-            base.paste(card_images[i],(int(offset+i*card_width*overlap_ratio),0))
+            base.paste(card_images[i],(int(offset+i*card_width*overlap_ratio),0),card_images[i])
         return PIL.ImageOps.expand(base,border = HAND_PADDING,fill =HAND_COLOR)
     def give(self,other:'Card_Holder',num_random_cards:int = 0,cards:int|Card|Grouping[int]|Grouping[Card]= []) -> list[Card]:
         cards_to_remove:set[Card] = set()
