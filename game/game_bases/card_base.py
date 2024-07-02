@@ -289,7 +289,7 @@ class Card_Base(Game):
             self.hands[player] = Hand()
         for player in self.unkicked_players:
             if self.hand_addresses[player] is None:#if first time
-                thread_id = await self.gi.new_channel("Your hand",[player])
+                thread_id = await self.gi.new_channel(f"{self.format_players((player,))}'s hand",[player])
                 address = await self.gi.default_sender.generate_address(thread_id)
                 self.hand_addresses[player] = address
             await self.update_hand(player)
