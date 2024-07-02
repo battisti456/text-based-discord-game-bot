@@ -96,7 +96,7 @@ class Interface_Component():
                 long_text = long_text.strip()
             else:
                 text = options[i]
-                long_text = options[1]
+                long_text = options[i]
             bp.append(
                 Option(
                     text = text,
