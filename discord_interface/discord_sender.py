@@ -148,12 +148,15 @@ class Discord_Sender(Sender[Discord_Address]):
             channel = self.client.get_channel(message.channel_id)
             assert isinstance(channel,CompatibleChannels)
             if message.message_id is None:
+                await self.client.wait_until_ready()
                 discord_message = await channel.send(**edit_to_send(kwargs))
                 address.messages[i] = message.set_message_id(discord_message.id)
                 self.cached_addresses[address.messages[i]] = address
             else:
                 partial_message = channel.get_partial_message(message.message_id)
+                await self.client.wait_until_ready()
                 discord_message = await partial_message.fetch()
+                await self.client.wait_until_ready()
                 await discord_message.edit(**kwargs)
         return address
     @override
