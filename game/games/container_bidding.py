@@ -74,7 +74,7 @@ class Container_Bidding(Rounds_With_Points_Base):
             total_reward += value
         return total_reward, reward_text
     @override
-    async def core_game(self):
+    async def core_round(self):
         desc_name:str = random.choice(list(self.data["container_descriptions"]))
         desc:DescDict = self.data['container_descriptions'][desc_name]
         total_bid_threshold:int = random.randint(desc["starting_bid_range"][0],desc["starting_bid_range"][1])

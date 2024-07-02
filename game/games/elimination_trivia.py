@@ -19,6 +19,6 @@ class Elimination_Trivia(Elimination_Base,Trivia_Base):
             "Let's begin!"
         )
     @override
-    async def core_game(self):
+    async def core_round(self):
         player_correct:PlayerDict[bool] = await self.basic_ask_trivia(self.unkicked_players)
         await self.eliminate(tuple(player for player in self.unkicked_players if not player_correct[player]))

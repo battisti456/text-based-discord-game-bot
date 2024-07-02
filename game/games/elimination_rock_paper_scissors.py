@@ -22,7 +22,7 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
             "Then I will tell you what I picked.\n" +
             "If I beat you, you are eliminated!")
     @override
-    async def core_game(self):
+    async def core_round(self):
         options = ['rock','paper','scissors']
         players_with_guns = list(player for player in self.unkicked_players if self.guns[player] > 0)
         gun_text = ""

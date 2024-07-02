@@ -2,7 +2,6 @@ from typing import Optional, override
 
 from game.components.game_interface import Game_Interface
 from game.game_bases.round_base import Rounds_Base
-from game.game_bases.participant_base import Participant_Base
 from utils.common import arg_fix_grouping
 from utils.exceptions import GameEndElimination
 from utils.grammar import wordify_iterable
@@ -15,9 +14,9 @@ from utils.types import (
     PlayerPlacement,
 )
 
-class Elimination_Framework(Participant_Base[Participant],Rounds_Base):
+class Elimination_Framework(Rounds_Base[Participant]):
     def __init__(self,gi:Game_Interface):
-        Rounds_Base.__init__(self,gi)
+        Rounds_Base.__init__(self,gi)#type:ignore
         if Elimination_Framework not in self.initialized_bases:
             self.initialized_bases.append(Elimination_Framework)
     @override

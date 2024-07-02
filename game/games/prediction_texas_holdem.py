@@ -40,7 +40,7 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
             "Lowest penalties at the end of the game wins!"
         )
     @override
-    async def core_game(self) -> PlayerDict[int] | None:
+    async def core_round(self) -> PlayerDict[int] | None:
         await self.setup_cards()
         shared:Card_Holder = Card_Holder("Shared cards.")
         await self.player_draw(self.unkicked_players,PLAYER_CARDS)

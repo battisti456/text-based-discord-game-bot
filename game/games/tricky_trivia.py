@@ -36,7 +36,7 @@ class Tricky_Trivia(Trivia_Base,Rounds_With_Points_Base):
             "**WARNING: Sometimes the trivia is phrased in such a way that you can provide an alternative correct answer. Please provide an incorrect answer!**"
         )
     @override
-    async def core_game(self):
+    async def core_round(self):
         trivia_dict:TriviaDict = await self.get_trivia(type_ = self.type_.Multiple_Choice)
         while trivia_dict['question'][0:5] == "Which" or any(clipping in trivia_dict['question'] for clipping in (
             "hich of these","f the following")):#hopefully prevent some bad qs

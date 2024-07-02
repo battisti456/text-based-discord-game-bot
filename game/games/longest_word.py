@@ -92,7 +92,7 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
                     num_letters_can_refresh -= len(change_letters)
         return chosen_word
     @override
-    async def core_game(self):
+    async def core_round(self):
         for player in self.unkicked_players:
             word = await self.longest_word_question(player)
             if player in self.kicked_players:

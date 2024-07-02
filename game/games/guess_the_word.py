@@ -43,7 +43,7 @@ class Guess_The_Word(Game_Word_Base, Rounds_With_Points_Base):
             "The highest points at the end is the winner!\n" +
             "CAUTION: Sometimes words can be spelled other ways....")
     @override
-    async def core_game(self):
+    async def core_round(self):
         definition_list:DefinitionList = []
         type_set:set[SimplePartOfSpeech] = set()
         secret_word:str= ""

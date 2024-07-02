@@ -1,16 +1,19 @@
 import math
-from typing import override
 import random
+from typing import Literal, override, assert_never
 
-from PIL.Image import Image
 import pymunk
 from color_tools_battisti456 import Color
+import PIL.Image
 
-from game.components.game_interface import Game_Interface
-from game.game_bases import Physics_Base, Game_Word_Base
 from game import get_logger
+from game.components.game_interface import Game_Interface
+from game.components.player_input import Player_Text_Input
+from game.components.response_validator import text_validator_maker
+from game.game_bases import Game_Word_Base, Physics_Base, Rounds_With_Points_Base
 from utils.common import random_in_range
-from utils.pillow_tools import get_font, center_draw_text
+from utils.pillow_tools import center_draw_text, get_font
+from utils.types import PlayerId
 
 logger = get_logger(__name__)
 
@@ -29,6 +32,17 @@ DAMPING:float = 0.75
 COMPARE_THRESHOLD:float = 0.1
 LETTER_RADIUS:float = 40
 FONT_PATH:str|None = None
+MAX_FREEZE_SPEED = 1
+NUM_FROZEN_RESTING = 2
+TIME_TO_START_FREEZING = 3
+MIN_COLOR_MATCH = 4
+MIN_WORD_LENGTH = 4
+POINTS_PER_LETTER = 5
+POINTS_PER_MATCH = 2
+POINT_REFRESH_TIME = 1
+POINT_TEXT_COLOR = '#02491f'
+POINT_TEXT_OUTLINE_COLOR = '#ffffff'
+POINT_TEXT_OUTLINE_WIDTH = 2
 
 LETTER_COLORS:tuple[Color,...] = (
     "#338731",
@@ -44,6 +58,14 @@ LETTER_COLORS:tuple[Color,...] = (
 
 LETTER_TYPE = 10
 CENTER_TYPE = 100
+ANIMATION_STAGE_MAX = 10
+
+SPRITES:tuple[PIL.Image.Image,...] = (1,)
+
+pre_validator = text_validator_maker(
+    min_length=MIN_WORD_LENGTH,
+    is_alpha=True
+)
 
 class Letter_RO(Physics_Base.Render_Object):
     def __init__(self):
@@ -56,7 +78,53 @@ class Letter_RO(Physics_Base.Render_Object):
         self.border_thickness = 5
         self.collision_type = LETTER_TYPE
         self._is_frozen:bool = False
-        self.frozen_to:set[Letter_RO] = set()
+        self.in_contact:set[Letter_RO] = set()
+    def get_colored_network(self) -> frozenset['Letter_RO']:
+        final_network:set[Letter_RO] = set((self,))
+        checked_nodes:set[Letter_RO] = set()
+        while checked_nodes != final_network:
+            to_check = final_network - checked_nodes
+            for node in to_check:
+                to_check.update(set(
+                    sub_node for sub_node in node.in_contact
+                    if sub_node.letter_color == self.letter_color
+                ))
+                checked_nodes.add(node)
+        return frozenset(final_network)
+    def get_word_network(self,word:str) -> frozenset['Letter_RO']|None:
+        splits = word.split(self.letter)
+        if len(splits) == 1:
+            return None
+        left_rights:set[tuple[str,str]] = set()
+        for i in range(len(splits)-1):
+            left_rights.add((splits[i],splits[i+1]))
+        network:set[Letter_RO] = set()
+        for left_right in left_rights:
+            left_right_networks = tuple(self._get_segment_network(segment) for segment in left_right)
+            if None in left_right_networks:
+                continue
+            for sub_network in left_right_networks:
+                assert sub_network is not None
+                network.update(sub_network)
+        if len(network) == 0:
+            return None
+        else:
+            return frozenset(network)
+    def _get_segment_network(self,segment:str) -> frozenset['Letter_RO']|None:
+        if len(segment) == 0:
+            return frozenset((self,))
+        network:set['Letter_RO'] = set()
+        for node in self.in_contact:
+            if node.letter != segment[0]:
+                continue
+            sub_network = node._get_segment_network(segment[1:])
+            if sub_network is None:
+                continue
+            network.update(sub_network)
+        if len(network) == 0:
+            return None
+        else:
+            return frozenset(network)
     @property
     def is_frozen(self) -> bool:
         return self.is_frozen
@@ -69,7 +137,7 @@ class Letter_RO(Physics_Base.Render_Object):
             self.frozen_to = set()
         self._is_frozen = val
     @override
-    def insert(self, image: Image) -> Image:
+    def insert(self, image: PIL.Image.Image) -> PIL.Image.Image:
         image = super().insert(image)
         font = get_font(
             font_path=FONT_PATH,
@@ -89,11 +157,16 @@ class Letter_RO(Physics_Base.Render_Object):
         )
         return image
 
+def get_letter(arbiter:pymunk.Arbiter) -> tuple[Letter_RO,Letter_RO]:
+    return tuple(shape.ro for shape in arbiter.shapes)
 
-class Letter_Physics(Physics_Base, Game_Word_Base):
+
+class Letter_Physics(Physics_Base, Game_Word_Base,Rounds_With_Points_Base):
     def __init__(self, gi: Game_Interface):
         Physics_Base.__init__(self,gi)
         Game_Word_Base.__init__(self,gi)
+        Rounds_With_Points_Base.__init__(self,gi)
+        self.participant_round_is_concurrent = False
         self.size = SIZE
         self.center_body = pymunk.Body(body_type=pymunk.Body.STATIC)
         self.center_body.position = pymunk.Vec2d(self.size[0]/2,self.size[1]/2)
@@ -112,6 +185,11 @@ class Letter_Physics(Physics_Base, Game_Word_Base):
         self.letters:set[Letter_RO] = set()
         self.space.collision_slop = 0.2
         self.is_freezing:bool = False
+        self.___pop_animations:set[tuple[pymunk.Vec2d,Color,int]] = set()
+        "x,y (in pymunk coordinates),animation_state"
+        self.___current_points:int = 0
+        self.___last_point_update:float|None = 0
+        self.___points_overlay:PIL.Image.Image
 
         self.collision_center =  self.space.add_collision_handler(LETTER_TYPE,CENTER_TYPE)
         def on_center_collision(_,arbiter:pymunk.Arbiter):
@@ -126,16 +204,37 @@ class Letter_Physics(Physics_Base, Game_Word_Base):
         self.collision_center.begin = on_center_collision
         self.collision_letter = self.space.add_collision_handler(LETTER_TYPE,LETTER_TYPE)
         def on_letter_collision(_,arbiter:pymunk.Arbiter):
+            ros: tuple[Letter_RO, Letter_RO] = get_letter(arbiter)
+            ros[0].in_contact.add(ros[1])
+            ros[1].in_contact.add(ros[0])
+            if ros[0].letter_color == ros[1].letter_color:
+                network = ros[0].get_colored_network()
+                if len(network) >= MIN_COLOR_MATCH:
+                    self.pop_network(network,'color')
+                    return
             if not self.is_freezing:
                 return
-            ros:tuple[Letter_RO,Letter_RO] = tuple(shape.ro for shape in arbiter.shapes)
             if ros[0].is_frozen == ros[1].is_frozen:
-                return#neither or both are frozen
-            for i in True,False:
-                ros[i].frozen_to.add(ros[not i])
-                ros[i].is_frozen = True
+                return
+            if ros[0].is_frozen:
+                ros = (ros[1],ros[0])
+            if ros[0].body.velocity > MAX_FREEZE_SPEED:
+                return
+            num_frozen = sum(int(ro.is_frozen) for ro in ros[0].in_contact)
+            if num_frozen < NUM_FROZEN_RESTING:
+                return
+            ros[0].is_frozen = True
         self.collision_letter.begin = on_letter_collision
-
+        def on_letter_remove_collision(_,arbiter):
+            ros = get_letter(arbiter)
+            ros[0].in_contact.remove(ros[1])
+            ros[1].in_contact.remove(ros[0])
+        self.collision_letter.separate = on_letter_remove_collision
+    @override
+    def on_record_loop(self):
+        if self.simulation_time - self._start_time > TIME_TO_START_FREEZING:
+            self.is_freezing = True
+        super().on_record_loop()
     def add_letter(self,pos:tuple[float,float]):
         ro = Letter_RO()
         ro.position = pos
@@ -176,6 +275,93 @@ class Letter_Physics(Physics_Base, Game_Word_Base):
         for letter in self.letters:
             letter.is_frozen = False
         return path
+    def reset(self):
+        self.is_freezing = False
+        for ro in self.ros():
+            if isinstance(ro,Letter_RO):
+                ro.is_frozen = False
+    def match_word(self,word:str) -> frozenset[Letter_RO]:
+        network:set[Letter_RO] = set()
+        for node in self.ros():
+            if not isinstance(node,Letter_RO):
+                continue
+            ret = node.get_word_network(word)
+            if ret is None:
+                continue
+            network.update(ret)
+        return frozenset(network)
+    @override
+    async def participant_round(self, participant: PlayerId):
+        await super().participant_round(participant)
+        self.reset()
+        self.___current_word_network:frozenset['Letter_RO']|None = None
+        def validator(_,text:str|None) -> tuple[bool,str|None]:
+            pre = pre_validator(_,text)
+            if not pre[0]:
+                return pre
+            assert text is not None
+            if not self.is_valid_word(text):
+                return (False,f'{text} is not a acceptable word')
+            self.___current_word_network = self.match_word(text)
+            if self.___current_word_network is None:
+                return (False,f'{text} could not be found on screen')
+            return (True,None)
+        address = await self.send(
+            text = f"Come on, {self.sender.format_players_md((participant,))},  give me a word!",
+            hint_text="Input your word here.",
+        )
+        inpt = Player_Text_Input(
+            "choice of word",
+            self.gi,
+            self.gi.default_sender,
+            (participant,),
+            question_address=address,
+            response_validator=validator
+        )
+        await inpt.run()
+        if self.___current_word_network is None:
+            await self.kick_players((participant,),reason='timeout')
+            return
+        self.pop_network(self.___current_word_network,'word')
+        img = self.record_simulation()
+        await self.send(
+            text=f"{self.format_players((participant,))}'s choice of '{inpt.responses[participant]}' resulted in:",
+            attach_files=(img,)
+        )
+    def pop_network(self,network:frozenset[Letter_RO],pop_type:Literal['word','color']):
+        num_removed = len(network)
+        for ro in network:
+            self.___pop_animations.add((ro.body.position,ro.letter_color,ANIMATION_STAGE_MAX))
+            ro.unlink(self.space)
+        match(pop_type):
+            case 'word':
+                self.___current_points += num_removed * POINTS_PER_LETTER
+            case 'color':
+                self.___current_points += num_removed * POINTS_PER_MATCH
+            case _:
+                assert_never(pop_type)
+    @override
+    def draw_space(self) -> PIL.Image.Image:
+        image = super().draw_space()
+        if self.___last_point_update is None or self.simulation_time - self.___last_point_update > POINT_REFRESH_TIME:
+            self.___last_point_update = self.simulation_time
+            self.___points_overlay = PIL.Image.new('RGBA',self.size,'#00000000')
+            point_text = f"+{self.___current_points}"
+            font = get_font(text=point_text,max_width=int(CENTER_RADIUS*2))
+            center_draw_text(
+                text = point_text,
+                image = self.___points_overlay,
+                xy=self.center_body.position,
+                font=font,
+                fill = POINT_TEXT_COLOR,
+                stroke_width=POINT_TEXT_OUTLINE_WIDTH,
+                stroke_fill=POINT_TEXT_OUTLINE_COLOR
+            )
+        for position,color,state in self.___pop_animations:
+            ...
+        image.paste(self.___points_overlay,mask=self.___points_overlay)
+        return image
+
 
 
 def compare(pos1:tuple[float,float],pos2:tuple[float,float]) -> bool:

@@ -43,7 +43,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
             f"If your score goes above {HAND_LIMIT}, you are immediately eliminated (earlier than if you had just scored lowest in the round).\n" +
             f"The closer to {HAND_LIMIT} you get, the higher the chance you will defeat your competitors, however.")
     @override
-    async def core_game(self):
+    async def core_round(self):
         await self.setup_cards(ceil(len(self.unkicked_players)/NUM_PLAYERS_PER_DECK))
         await self.player_draw(self.unkicked_players,2)
         players_passed:list[PlayerId] = []

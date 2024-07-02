@@ -123,7 +123,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
             "Last player standing wins!"
         )
     @override
-    async def core_game(self):
+    async def core_round(self):
         puzzle:ChessPuzzleDict = self.random_puzzle(self.rating_range,POPULARITY_RANGE)
         self.rating_range = (self.rating_range[0],self.rating_range[1]+PUZZLE_RATING_CAP_ESCALATION)
         self.board.set_fen(puzzle['FEN'])

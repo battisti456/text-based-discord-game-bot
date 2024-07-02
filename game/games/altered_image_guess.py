@@ -181,7 +181,7 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Image_Search_Base):
             f"We will play {NUM_ROUNDS} rounds. Most points at the end wins!"
         )
     @override
-    async def core_game(self):
+    async def core_round(self):
         search_options:list[str] = random.sample(list(SEARCH_TOPICS),NUM_CHOICES)
         actual_search:str = search_options[random.randint(0,NUM_CHOICES-1)]
         image:PIL.Image.Image|None = None
@@ -189,7 +189,7 @@ class Altered_Image_Guess(Rounds_With_Points_Base,Image_Search_Base):
             image = self.random_image(size=MIN_IMAGE_SIZE,search_terms=[actual_search])
         except ImageSearchException as e:
             logger.error(f"Unable to retrieve a random image using search term = {actual_search}\n{repr(e)}")
-            await self.core_game()#start over
+            await self.core_round()#start over
             return
         alter_method = random.choice(list(ALTER_METHODS))
         altered_image = ALTER_METHODS[alter_method](image)

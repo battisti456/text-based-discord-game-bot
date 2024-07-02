@@ -42,7 +42,7 @@ class Picture_Telephone(Rounds_With_Points_Base, Image_Search_Base):
     async def game_intro(self):
         pass
     @override
-    async def core_game(self) -> PlayerDict[int] | None:
+    async def core_round(self) -> PlayerDict[int] | None:
         self.reset()
         while self.current_offset < len(self.unkicked_players):
             await self.prompt_telephone()

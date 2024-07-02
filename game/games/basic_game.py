@@ -23,7 +23,7 @@ class Basic_Game(Rounds_With_Points_Base):
             "Answer with how many points you would like to get!"
         )
     @override
-    async def core_game(self):
+    async def core_round(self):
         question_address = await self.sender(Text_Only(text = "Respond here with how many points you would like!"))
         inpt = Player_Text_Input(
             "this point score question",

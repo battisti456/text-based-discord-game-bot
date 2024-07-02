@@ -82,7 +82,7 @@ class Emoji_Communication(Rounds_With_Points_Base,Game_Word_Base):
             "That's about it. Lets get started!"
         )
     @override
-    async def core_game(self):
+    async def core_round(self):
         base_str:PlayerDict[str] = {}
         opt_str:PlayerDict[list[str]] = {}
         for player in self.unkicked_players:

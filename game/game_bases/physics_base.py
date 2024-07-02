@@ -6,7 +6,9 @@ from typing import (
     Optional,
     Sequence,
     override,
+    Iterator,
 )
+from typing_extensions import TypeVar
 
 import PIL.Image
 import PIL.ImageDraw
@@ -24,6 +26,8 @@ if TYPE_CHECKING:
     import pymunk.pygame_util
 
 logger = get_logger(__name__)
+
+RenderObject = TypeVar('RenderObject',bound='Physics_Base.Render_Object',default='Physics_Base.Render_Object')
 
 DEFAULT_RUN_TIME = 10
 DEFAULT_SIMULATION_TIMEOUT = 30
@@ -383,6 +387,8 @@ class Physics_Base(Game):
         for shape in all_shapes:
             image = draw_shape(shape,image)
         return image
+    def on_record_loop(self):
+        ...
     def record_simulation(self) -> str:
         path = temp_file_path('.gif')
         images:list[PIL.Image.Image] = []
@@ -390,6 +396,7 @@ class Physics_Base(Game):
         self._start_time = self.simulation_time
         while not self.at_simulation_pause():
             logger.debug(f"{self} recording loop generating new frame")
+            self.on_record_loop()
             if self._debug:
                 self._debug_surf.fill(self.bg_color)
                 self.space.debug_draw(self._debug_draw_options)
@@ -412,5 +419,13 @@ class Physics_Base(Game):
         )
         logger.info(f"{self} recording saved at '{path}'")
         return path
+    def ros(self) -> Iterator[Render_Object]:
+        for body in self.space.bodies:
+            if hasattr(body,'ro'):
+                yield body.ro
+    def coords_to_pixels(self,coords:pymunk.Vec2d) -> tuple[int,int]:
+        return (int(coords[0]),self.size[1] - int(coords[1]))
+    def pixels_to_coords(self,pixels:tuple[int,int]) -> pymunk.Vec2d:
+        return pymunk.Vec2d(pixels[0],self.size[1]-pixels[1])
 
     

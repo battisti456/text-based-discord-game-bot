@@ -5,7 +5,6 @@ from typing_extensions import TypeVar
 from game import score_to_placement
 from game.components.game_interface import Game_Interface
 from game.game_bases.round_base import Rounds_Base
-from game.game_bases.participant_base import Participant_Base
 from utils.common import arg_fix_grouping, arg_fix_map
 from utils.grammar import s
 from utils.types import (
@@ -19,9 +18,9 @@ from utils.types import (
 
 PointType = TypeVar('PointType',bound = Number, default=int)
 
-class Rounds_With_Points_Framework(Generic[Participant,PointType],Participant_Base[Participant],Rounds_Base):
+class Rounds_With_Points_Framework(Generic[Participant,PointType],Rounds_Base[Participant]):
     def __init__(self,gi:Game_Interface):
-        Rounds_Base.__init__(self,gi)
+        Rounds_Base.__init__(self,gi)#type:ignore
         if Rounds_With_Points_Framework not in self.initialized_bases:
             self.initialized_bases.append(Rounds_With_Points_Framework)
             self.zero_score:PointType = 0#type: ignore

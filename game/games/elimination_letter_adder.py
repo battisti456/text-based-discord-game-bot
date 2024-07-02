@@ -38,7 +38,7 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
             f"To start us off in a round, I will generate {START_LETTERS} letters which are definitely a part of a word."
         )
     @override
-    async def core_game(self):
+    async def core_round(self):
         num_letters_in_starting_word = START_LETTERS + random.randint(1,len(self.unkicked_players))
         starting_word = self.random_valid_word(num_letters_in_starting_word)
         offset = random.randint(0,num_letters_in_starting_word-START_LETTERS-1)
