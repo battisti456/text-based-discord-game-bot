@@ -244,8 +244,8 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
         if interaction.by_player not in self.players:
             logger.info(f"{interaction} ignored by {self} because its player_id was not listed for the input")
             return False
-        if not interaction.at_address == self.question_address:
-            logger.info(f"{interaction} ignored by {self} because it was not a response to the message")
+        if interaction.at_address != self.question_address:
+            logger.info(f"{interaction} ignored by {self} because it was not addressed to {self.question_address}")
             return False
         val = self.allow_edits or not self._response_validator(interaction.by_player,self.responses[interaction.by_player])[0]
         if not val:

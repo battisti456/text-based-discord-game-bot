@@ -162,20 +162,44 @@ class Physics_Base(Game):
                 element.collision_type = self.ro.collision_type
                 element.ro = self.ro
                 return super().add(element)
+        class Position_Buffer():
+            def __init__(self,max_size:int):
+                self.max_size = max_size
+                self._stored_values:list[pymunk.Vec2d] = []
+            def __getitem__(self,i:int) -> pymunk.Vec2d:
+                return self._stored_values[i]
+            def __contains__(self,val:pymunk.Vec2d) -> bool:
+                return val in self._stored_values
+            def __iter__(self) -> Iterator[pymunk.Vec2d]:
+                return self._stored_values.__iter__()
+            def __len__(self) -> int:
+                return len(self._stored_values)
+            def update(self,val:pymunk.Vec2d):
+                if len(self._stored_values) == self.max_size:
+                    self._stored_values.pop(-1)
+                self._stored_values.insert(0,val)
+            def is_populated(self) -> bool:
+                return len(self) == self.max_size
+            
         def __init__(
                 self):
             self._color:Color = '#00000000'
             self.sprite:Optional[PIL.Image.Image] = None
             self.vertices:Optional[Sequence[pymunk.Vec2d]] = None
             self.re_orient_sprite:bool = True
-            self.body:pymunk.Body = pymunk.Body(mass=1,moment=1)
-            self.body._ro = self
+            self.body:pymunk.Body = pymunk.Body()
+            self._init_body()
             self.shapes:set[pymunk.Shape] = Physics_Base.Render_Object.Shape_Holder(self)
             self._elasticity:float = 0
             self._friction:float = 0
             self.border_thickness:float = 0
             self.border_color:Color = 'black'
             self._collision_type:int = 0
+            self.pb = Physics_Base.Render_Object.Position_Buffer(2)
+        def _init_body(self):
+            self.body._ro = self
+            self.body.mass = 1
+            self.body.moment = 1
         @property
         def collision_type(self) -> int:
             return self._collision_type
@@ -295,6 +319,9 @@ class Physics_Base(Game):
             )
         def insert(self,image:PIL.Image.Image) -> PIL.Image.Image:
             pos:pymunk.Vec2d = self.body.position
+            if float('nan') in pos:
+                logger.warning(f"{self} has an unknown position and cannot be drawn")
+                return image
             angle:float = self.body.angle
             image = image.copy()
             if self.sprite is None:
@@ -366,10 +393,10 @@ class Physics_Base(Game):
     def _enable_debug(self):
         self._debug = True
         import pygame
-        import pymunk.pygame_util
+        import utils.pymunk_safe_pygame
         self.pygame = pygame
         self._debug_surf = self.pygame.display.set_mode(self.size,flags=self.pygame.SRCALPHA)
-        self._debug_draw_options = pymunk.pygame_util.DrawOptions(self._debug_surf)
+        self._debug_draw_options = utils.pymunk_safe_pygame.SafeDrawOptions(self._debug_surf)
     def at_simulation_pause(self) -> bool:
         if self.simulation_time - self._start_time > DEFAULT_RUN_TIME:
             return True
@@ -387,16 +414,17 @@ class Physics_Base(Game):
         for shape in all_shapes:
             image = draw_shape(shape,image)
         return image
-    def on_record_loop(self):
-        ...
-    def record_simulation(self) -> str:
+    async def on_record_loop(self):
+        for ro in self.ros():
+            ro.pb.update(ro.position)
+    async def record_simulation(self) -> str:
         path = temp_file_path('.gif')
         images:list[PIL.Image.Image] = []
         logger.info(f"{self} beginning to record")
         self._start_time = self.simulation_time
         while not self.at_simulation_pause():
             logger.debug(f"{self} recording loop generating new frame")
-            self.on_record_loop()
+            await self.on_record_loop()
             if self._debug:
                 self._debug_surf.fill(self.bg_color)
                 self.space.debug_draw(self._debug_draw_options)
@@ -421,8 +449,8 @@ class Physics_Base(Game):
         return path
     def ros(self) -> Iterator[Render_Object]:
         for body in self.space.bodies:
-            if hasattr(body,'ro'):
-                yield body.ro
+            if hasattr(body,'_ro'):
+                yield body._ro
     def coords_to_pixels(self,coords:pymunk.Vec2d) -> tuple[int,int]:
         return (int(coords[0]),self.size[1] - int(coords[1]))
     def pixels_to_coords(self,pixels:tuple[int,int]) -> pymunk.Vec2d:

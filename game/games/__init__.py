@@ -16,6 +16,7 @@ from game.games.prediction_texas_holdem import Prediction_Texas_Holdem
 from game.games.the_great_kitten_race import The_Great_Kitten_Race
 from game.games.tricky_trivia import Tricky_Trivia
 from game.games.chess_war import Chess_War
+from game.games.letter_physics import Letter_Physics
 
 valid_games:list[type[Game]] = [
     Elimination_Blackjack,
@@ -30,7 +31,8 @@ valid_games:list[type[Game]] = [
     Prediction_Texas_Holdem,
     Chess_Puzzle_Elimination,
     Altered_Image_Guess,
-    Emoji_Communication]
+    Emoji_Communication,
+    Letter_Physics]
 
 def random_game() -> type[Game]:
     return choice(valid_games)
@@ -72,5 +74,6 @@ __all__ = (
     'Altered_Image_Guess',
     'Emoji_Communication',
     'Basic_Game',
-    'Chess_War'
+    'Chess_War',
+    'Letter_Physics'
 )

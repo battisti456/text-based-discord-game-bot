@@ -1,5 +1,6 @@
 from typing import TypedDict, Sequence, Union
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+import uuid
 
 import discord
 
@@ -64,7 +65,10 @@ class Discord_Message():
 
 @dataclass(frozen=True)
 class Discord_Address(Address):
-    messages:list[Discord_Message]
+    messages:list[Discord_Message] = field(hash=False,compare=False)
+    id:uuid.UUID = field(default_factory=uuid.uuid4,init=False)
+
+
 
 def f(text:TextLike) -> str:
     return str(text)

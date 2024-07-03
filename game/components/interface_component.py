@@ -132,11 +132,11 @@ class Interface_Component():
         returns the senders formatting of a list of players without markdown
         """
         return self.sender.format_players(user_id)
-    async def send(self,address:Address|None=None,**kwargs:Unpack[MakeSendableArgs]):
+    async def send(self,address:Address|None=None,**kwargs:Unpack[MakeSendableArgs]) -> Address:
         sendable = make_sendable(**kwargs)
-        await self.sender(sendable,address)
-    async def say(self,text:TextLike,address:Address|None = None):
-        await self.sender(
+        return await self.sender(sendable,address)
+    async def say(self,text:TextLike,address:Address|None = None) -> Address:
+        return await self.sender(
             Text_Only(text=text),
             address=address
         )
