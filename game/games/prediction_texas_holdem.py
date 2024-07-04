@@ -25,7 +25,7 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
     def __init__(self,gi:Game_Interface):
         Rounds_With_Points_Base.__init__(self,gi)
         Card_Base.__init__(self,gi)
-        self.reverse_scoring = True
+        self.reverse_points = True
         self.points_format = lambda points: f"{points} penalties"
         self.num_rounds = NUM_ROUNDS
     @override
