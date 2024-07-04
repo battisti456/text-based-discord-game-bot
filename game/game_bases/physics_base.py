@@ -166,6 +166,19 @@ class Physics_Base(Game):
             def __init__(self,max_size:int):
                 self.max_size = max_size
                 self._stored_values:list[pymunk.Vec2d] = []
+            def average(self) -> pymunk.Vec2d:
+                _sum = self._stored_values[0]
+                for val in self._stored_values[1:]:
+                    _sum = _sum + val
+                return _sum/len(self._stored_values)
+            def max_variance(self) -> float:
+                avg = self.average()
+                _max = abs(self._stored_values[0] - avg)
+                for val in self._stored_values[1:]:
+                    diff = abs(val - avg)
+                    if diff > _max:
+                        _max = diff
+                return _max
             def __getitem__(self,i:int) -> pymunk.Vec2d:
                 return self._stored_values[i]
             def __contains__(self,val:pymunk.Vec2d) -> bool:
@@ -180,9 +193,13 @@ class Physics_Base(Game):
                 self._stored_values.insert(0,val)
             def is_populated(self) -> bool:
                 return len(self) == self.max_size
+            def clear(self):
+                while len(self._stored_values) > 0:
+                    self._stored_values.pop(0)
             
         def __init__(
-                self):
+                self,*,
+                buffer_size:int = 2):
             self._color:Color = '#00000000'
             self.sprite:Optional[PIL.Image.Image] = None
             self.vertices:Optional[Sequence[pymunk.Vec2d]] = None
@@ -195,7 +212,7 @@ class Physics_Base(Game):
             self.border_thickness:float = 0
             self.border_color:Color = 'black'
             self._collision_type:int = 0
-            self.pb = Physics_Base.Render_Object.Position_Buffer(2)
+            self.pb = Physics_Base.Render_Object.Position_Buffer(buffer_size)
         def _init_body(self):
             self.body._ro = self
             self.body.mass = 1

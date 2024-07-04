@@ -45,6 +45,8 @@ type Callback[InData,OutData] = Callable[[InData],OutData]|Callable[[InData],Awa
 
 type SimpleCallback[Data] = Callback[Data,None]
 
+type Tuple9[T] = tuple[T,T,T,T,T,T,T,T,T]
+
 @dataclass(frozen=True)
 class Team(GS):
     string:str
