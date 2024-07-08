@@ -3,12 +3,13 @@ from typing import override
 
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
+from game.components.participant import Player
 from game.game_bases import (
     Game_Word_Base,
     Rounds_With_Points_Base,
 )
 from utils.grammar import wordify_iterable
-from utils.types import PlayerDict, PlayerId
+from utils.types import PlayerDict
 from utils.word_tools import (
     DefinitionList,
     SimplePartOfSpeech,
@@ -62,7 +63,7 @@ class Guess_The_Word(Game_Word_Base, Rounds_With_Points_Base):
         if LENGTH_HINT:
             len_text = f" of length {len(secret_word)} and type(s) {wordify_iterable(type_set)}"
         random.shuffle(definition_list)
-        players_not_guessed:list[PlayerId] = list(self.unkicked_players)
+        players_not_guessed:list[Player] = list(self.unkicked_players)
         await self.say(f"The secret word{len_text} has been chosen!")
         for sub_round in range(NUM_DEFINITIONS):
             def_str = self.definition_string([definition_list[sub_round]])
@@ -84,7 +85,7 @@ class Guess_The_Word(Game_Word_Base, Rounds_With_Points_Base):
             if len(responses.keys()) == 0:#no responses, everyone has been kicked
                 await self.say(f"Since no one submitted a response, I will reveal the correct answer was '{secret_word}'.")
                 return
-            correct_players:list[PlayerId] = list(player for player,response in responses.items() if response.lower() == secret_word)
+            correct_players:list[Player] = list(player for player,response in responses.items() if response.lower() == secret_word)
             if GUESS_FEEDBACK:
                 no_success = (len(correct_players) == 0)
                 for player in responses.keys():

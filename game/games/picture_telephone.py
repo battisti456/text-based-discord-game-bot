@@ -1,11 +1,12 @@
 from typing import override
 
 from game.components.game_interface import Game_Interface
+from game.components.participant import Player
 from game.components.send.old_message import Old_Message, _Old_Message
 from game.components.player_input import Player_Text_Input, run_inputs
-from game.components.response_validator import text_validator_maker
+from game.components.player_input.response_validator import text_validator_maker
 from game.game_bases import Image_Search_Base, Rounds_With_Points_Base
-from utils.types import PlayerDict, PlayerDictOptional, PlayerId
+from utils.types import PlayerDict, PlayerDictOptional
 
 NUM_ROUNDS = 1
 MIN_NUM_WORDS = 1
@@ -50,7 +51,7 @@ class Picture_Telephone(Rounds_With_Points_Base, Image_Search_Base):
         for i in range(len(self.all_players)):
             if i not in self.failed_paths:
                 ...#wait does this game even make sense?
-    def i(self,player:PlayerId,add:int = 0) -> int:
+    def i(self,player:Player,add:int = 0) -> int:
         return (self.unkicked_players.index(player)+self.current_offset+add)%len(self.images)
     async def prompt_telephone(self):
         questions:PlayerDict[_Old_Message] = {}
@@ -79,7 +80,7 @@ class Picture_Telephone(Rounds_With_Points_Base, Image_Search_Base):
             )
         await run_inputs(list(inputs[player] for player in self.unkicked_players))
         raw_text_responses:PlayerDictOptional[str] = {player:inputs[player].responses[player] for player in self.unkicked_players}
-        none_responders:list[PlayerId] = list(player for player in self.unkicked_players if raw_text_responses[player] is None)
+        none_responders:list[Player] = list(player for player in self.unkicked_players if raw_text_responses[player] is None)
         failed_i = set(self.i(player) for player in none_responders)
         failed_paths = set(list(j for j in range(len(self._texts)) if self.images[i] == self._images[j])[0] for i in failed_i)
         self.failed_paths = self.failed_paths.union(failed_paths)

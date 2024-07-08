@@ -6,7 +6,8 @@ from typing import (
     _TypedDictMeta,  # type: ignore
 )
 
-from utils.types import ChannelId, PlayerId
+from game.components.participant import Player
+from utils.types import ChannelId
 from utils.chess_tools import _RenderChessOptions
 from ast import literal_eval
 
@@ -25,9 +26,9 @@ class DiscordConfigDict(TypedDict):
     token:str
 class ConfigDict(TypedDict):
     command_prefix:str
-    command_users:list['PlayerId']
+    command_users:list['Player']
     main_channel_id:'ChannelId'
-    players:list['PlayerId']
+    players:list['Player']
     temp_path:str
     data_path:str
     default_timeout:int

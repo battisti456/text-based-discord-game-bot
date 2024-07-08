@@ -2,12 +2,12 @@ import logging
 from typing import Callable, Iterable, Mapping, Optional, override
 
 from config.config import config
+from game.components.participant import Player
 from utils.types import (
     KickReason,
     Number,
     Placement,
     PlayerDict,
-    PlayerId,
     PlayerMapOptional,
     PlayerPlacement,
 )
@@ -62,8 +62,8 @@ def treat_responses[T](responses:PlayerMapOptional[T],players:Optional[None]=Non
         return new_responses
 
 def make_player_dict[T](
-        players:Iterable[PlayerId],
-        value:T|Callable[[],T]|Callable[[PlayerId],T] = None
+        players:Iterable[Player],
+        value:T|Callable[[],T]|Callable[[Player],T] = None
         ) -> PlayerDict[T]:
     to_return:PlayerDict[T] = {}
     for player in players:
@@ -115,7 +115,7 @@ def _merge_placements(pl1:PlayerPlacement,pl2:PlayerPlacement):
     i:int = 0
     while i < len(pl1):
         if len(pl1[i]) > 1:
-            seperated:list[list[PlayerId]] = []
+            seperated:list[list[Player]] = []
             for group in pl2:
                 new = list(player for player in pl1[i] if player in group)
                 if new:#if there were any relevant players in that group

@@ -6,9 +6,10 @@ from config.config import config
 from config.games_config import games_config
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
+from game.components.participant import Player
 from game.game_bases import Rounds_With_Points_Base
 from utils.grammar import wordify_iterable, moneyfy
-from utils.types import PlayerDict, PlayerId
+from utils.types import PlayerDict
 
 CONFIG = games_config['container_bidding']
 
@@ -90,7 +91,7 @@ class Container_Bidding(Rounds_With_Points_Base):
             content="How much would you like to contribute for this bid?",
             who_chooses=self.unkicked_players
             )
-        player_bids:dict[PlayerId,int] = make_player_dict(self.unkicked_players,0)
+        player_bids:dict[Player,int] = make_player_dict(self.unkicked_players,0)
         for player in self.unkicked_players:
             response:str = responses[player]
             response_only_num:str = "".join(list(num for num in response if num.isdigit()))

@@ -4,8 +4,9 @@ from inspect import iscoroutinefunction
 from functools import wraps
 
 from game import get_logger
+from game.components.participant import Player
 from game.components.send import Sender, Interaction, InteractionCallback, Response
-from utils.types import ChannelId, Grouping, PlayerId
+from utils.types import ChannelId, Grouping
 from config.config import config
 
 logger = get_logger(__name__)
@@ -86,15 +87,15 @@ class Game_Interface(object):
         returns the default sender
         """
         return self.default_sender
-    def get_players(self) -> frozenset[PlayerId]:
+    def get_players(self) -> frozenset[Player]:
         """
         gets relevant players for Game object, should be randomized in order;
         should be implemented in child classes
         """
         return frozenset()
-    async def _new_channel(self,name:Optional[str],who_can_see:Optional[Grouping[PlayerId]]) -> ChannelId:
+    async def _new_channel(self,name:Optional[str],who_can_see:Optional[Grouping[Player]]) -> ChannelId:
         raise NotImplementedError()
-    async def new_channel(self,name:Optional[str] = None, who_can_see:Optional[Grouping[PlayerId]] = None) -> ChannelId:
+    async def new_channel(self,name:Optional[str] = None, who_can_see:Optional[Grouping[Player]] = None) -> ChannelId:
         """
         returns the ChannelId of a channel
         

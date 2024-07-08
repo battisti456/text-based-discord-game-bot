@@ -1,13 +1,14 @@
 import functools
 from typing import Awaitable, Callable, Optional, ParamSpec, TypeVar, overload, override
 
+from game.components.participant import Player
 import utils.emoji_groups
 from game import kick_text, score_to_placement, get_logger
 from game.components.game_interface import Game_Interface
 from game.components.interface_component import Interface_Component
 from game.components.send.old_message import _Old_Message
 from game.components.player_input import Player_Input
-from game.components.response_validator import (
+from game.components.player_input.response_validator import (
     ResponseValidator,
     default_text_validator,
     not_none,
@@ -21,7 +22,6 @@ from utils.types import (
     KickReason,
     PlayerDict,
     PlayerDictOptional,
-    PlayerId,
     PlayerMapOptional,
     PlayerPlacement,
     PlayersIds,
@@ -47,13 +47,13 @@ class Game(Interface_Component):
 
             self.kicked:PlayerDict[tuple[int,KickReason]] = {}
             self.game_end_exception:Optional[GameEndException] = None
-    def is_player_kicked(self,player:PlayerId) -> bool:
+    def is_player_kicked(self,player:Player) -> bool:
         return player in self.kicked
     @property
-    def kicked_players(self) -> tuple[PlayerId,...]:
+    def kicked_players(self) -> tuple[Player,...]:
         return tuple(player for player in self.all_players if self.is_player_kicked(player))#maintian order
     @property 
-    def unkicked_players(self) -> tuple[PlayerId,...]:
+    def unkicked_players(self) -> tuple[Player,...]:
         return tuple(player for player in self.all_players if not self.is_player_kicked(player))
     async def game_intro(self):
         ...
@@ -106,13 +106,13 @@ class Game(Interface_Component):
         ...
     @overload
     async def basic_multiple_choice(
-            self,content:Optional[str]=...,options:list[str]=...,who_chooses:PlayerId=...,
+            self,content:Optional[str]=...,options:list[str]=...,who_chooses:Player=...,
             emojis:Optional[list[str]]=..., channel_id:Optional[ChannelId]=..., 
             allow_answer_change:bool=...,response_validator:ResponseValidator[int] = ...) -> int:
         ...
     #endregion
     async def basic_multiple_choice(
-            self,content:Optional[str] = None,options:list[str] = [],who_chooses:Optional[PlayersIds|PlayerId] = None,
+            self,content:Optional[str] = None,options:list[str] = [],who_chooses:Optional[PlayersIds|Player] = None,
             emojis:Optional[list[str]] = None, channel_id:Optional[ChannelId] = None, 
             allow_answer_change:bool = True, response_validator:ResponseValidator[int] = not_none) -> PlayerDict[int]|int:
         """
@@ -153,19 +153,19 @@ class Game(Interface_Component):
     #region basic_no_yes overloads
     @overload
     async def basic_no_yes(
-            self,content:Optional[str]=...,who_chooses:Optional[Grouping[PlayerId]]=...,
+            self,content:Optional[str]=...,who_chooses:Optional[Grouping[Player]]=...,
             channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...,
             response_validator:ResponseValidator[int] = ...) -> PlayerDict[int]:
         ...
     @overload
     async def basic_no_yes(
-            self,content:Optional[str]=...,who_chooses:PlayerId=...,
+            self,content:Optional[str]=...,who_chooses:Player=...,
             channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...,
             response_validator:ResponseValidator[int] = ...) -> int:
         ...
     #endregion
     async def basic_no_yes(
-            self,content:Optional[str] = None,who_chooses:Optional[PlayerId|Grouping[PlayerId]] = None,
+            self,content:Optional[str] = None,who_chooses:Optional[Player|Grouping[Player]] = None,
             channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True,
             response_validator:ResponseValidator[int] = not_none) -> int | PlayerDict[int]:
         """
@@ -184,19 +184,19 @@ class Game(Interface_Component):
     #region text_response overloads
     @overload
     async def basic_text_response(
-            self,content:str,who_chooses:Grouping[PlayerId]|None=...,
+            self,content:str,who_chooses:Grouping[Player]|None=...,
             channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...,
             response_validator:ResponseValidator[str] = ...) -> PlayerDict[str]:
         ...
     @overload
     async def basic_text_response(
-            self,content:str,who_chooses:PlayerId=...,
+            self,content:str,who_chooses:Player=...,
             channel_id:Optional[ChannelId]=..., allow_answer_change:bool=...,
             response_validator:ResponseValidator[str] = ...) -> str:
         ...
     #endregion
     async def basic_text_response(
-            self,content:str,who_chooses:PlayerId|PlayersIds|None = None,
+            self,content:str,who_chooses:Player|PlayersIds|None = None,
             channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True,
             response_validator:ResponseValidator[str] = default_text_validator) -> str|PlayerDict[str]:
         """

@@ -6,6 +6,7 @@ from config.config import config
 from config.games_config import games_config
 from game import correct_int, make_player_dict, merge_placements, score_to_placement
 from game.components.game_interface import Game_Interface
+from game.components.participant import Player
 from game.components.player_input import (
     Player_Input,
     Player_Single_Selection_Input,
@@ -13,12 +14,12 @@ from game.components.player_input import (
     run_inputs,
 )
 from game.components.send.option import make_options
-from game.components.response_validator import Validation
+from game.components.player_input.response_validator import Validation
 from game.components.send.sendable.sendables import Text_With_Options, Text_With_Text_Field
 from game.game import Game
 from utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
 from utils.grammar import ordinate, wordify_iterable
-from utils.types import PlayerDict, PlayerId, PlayerPlacement
+from utils.types import PlayerDict, PlayerPlacement
 
 CONFIG = games_config['the_great_kitten_race']
 
@@ -95,7 +96,7 @@ class The_Great_Kitten_Race(Game):
                 question_address=address
             )
             stat_input_dict[stat] = input
-        def verify_points(player:PlayerId,value:int|None) -> Validation:
+        def verify_points(player:Player,value:int|None) -> Validation:
             if value is None:
                 return (False,None)
             num_points = sum(correct_int(stat_input_dict[stat].responses[player]) for stat in self.kitten_config['stats'])
@@ -160,7 +161,7 @@ class The_Great_Kitten_Race(Game):
                 '\n'.join(kitten_text_list)
             )
         
-        order:list[PlayerId] = list(self.unkicked_players).copy()
+        order:list[Player] = list(self.unkicked_players).copy()
         order.sort(key=lambda player:kittens[player]['time'])
 
         cross_finish_text_list:list[str] = list(

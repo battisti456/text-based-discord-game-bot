@@ -5,12 +5,13 @@ import emoji
 
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
+from game.components.participant import Player
 from game.game_bases import (
     Game_Word_Base,
     Rounds_With_Points_Base,
 )
 from utils.grammar import nice_sentence
-from utils.types import PlayerDict, PlayerId
+from utils.types import PlayerDict
 from utils.word_tools import find_random_related_sentences
 from game.components.send import sendables
 
@@ -52,7 +53,7 @@ def is_only_emoji(text:str) -> bool:
         for token in emoji.analyze("".join(text.split()),True,True)
         )
 
-def emoji_response_validator(player:PlayerId,value:str|None) -> tuple[bool,str|None]:
+def emoji_response_validator(player:Player,value:str|None) -> tuple[bool,str|None]:
     if value is None:
         return (False,None)
     if not is_only_emoji(value):

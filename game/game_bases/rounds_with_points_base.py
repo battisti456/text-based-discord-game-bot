@@ -4,6 +4,7 @@ from typing_extensions import TypeVar
 
 from game import score_to_placement
 from game.components.game_interface import Game_Interface
+from game.components.participant import Player
 from game.game_bases.round_base import Rounds_Base
 from utils.common import arg_fix_grouping, arg_fix_map
 from utils.grammar import s
@@ -12,7 +13,6 @@ from utils.types import (
     Number,
     Participant,
     Placement,
-    PlayerId,
     PlayerPlacement,
 )
 
@@ -81,7 +81,7 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Rounds_Base[Pa
         return score_to_placement(self.point_totals,self._participants,not self.reverse_points)
 
 
-class Rounds_With_Points_Base(Rounds_With_Points_Framework[PlayerId,int]):
+class Rounds_With_Points_Base(Rounds_With_Points_Framework[Player,int]):
     def __init__(self,gi:Game_Interface):
         Rounds_With_Points_Framework.__init__(self,gi)
         if Rounds_With_Points_Base not in self.initialized_bases:
@@ -91,8 +91,8 @@ class Rounds_With_Points_Base(Rounds_With_Points_Framework[PlayerId,int]):
     @override
     def generate_placements(self) -> PlayerPlacement:
         return self._generate_participant_placements()
-    async def score(self,who:Optional[PlayerId|Grouping[PlayerId]] = None,
-            amount:Optional[int|Mapping[PlayerId,int]] = None,
+    async def score(self,who:Optional[Player|Grouping[Player]] = None,
+            amount:Optional[int|Mapping[Player,int]] = None,
             mute:bool = False):
         if not mute:
             await self.announce_score(who,amount)

@@ -6,7 +6,8 @@ from uuid import uuid4
 from config.config import config
 from game import get_logger, make_player_dict
 from game.components.game_interface import Game_Interface
-from game.components.response_validator import (
+from game.components.participant import Player
+from game.components.player_input.response_validator import (
     ResponseValidator,
     Validation,
     default_text_validator,
@@ -17,7 +18,7 @@ from game.components.send.interaction import Interaction, Select_Options, Send_T
 from game.components.send.old_message import Old_Message, _Old_Message
 from game.components.send.sendable.sendables import Text_Only
 from utils.grammar import nice_time, ordinate
-from utils.types import GS, IDType, PlayerDict, PlayerDictOptional, PlayerId, PlayersIds
+from utils.types import GS
 
 type Condition = dict[Player_Input,bool]
 type OnUpdate = Callable[[],Awaitable[None]]
@@ -204,7 +205,7 @@ class Player_Input_In_Response_To_Message[T](Player_Input[T]):
             players:PlayersIds,
             *, 
             response_validator:ResponseValidator[T] = not_none,
-            who_can_see:Optional[list[PlayerId]] = None, 
+            who_can_see:Optional[list[Player]] = None, 
             timeout:Optional[int] = config['default_timeout'], 
             warnings:list[int] = config['default_warnings'],
             status_address:Address|None = None,
@@ -268,7 +269,7 @@ class Player_Text_Input(Player_Input_In_Response_To_Message[str]):
             players:PlayersIds,
             *,
             response_validator:ResponseValidator[str] = default_text_validator,
-            who_can_see:Optional[list[PlayerId]] = None, 
+            who_can_see:Optional[list[Player]] = None, 
             timeout:Optional[int] = config['default_timeout'], 
             warnings:list[int] = config['default_warnings'],
             status_address:Address|None = None,
@@ -307,7 +308,7 @@ class Player_Single_Selection_Input(Player_Input_In_Response_To_Message[int]):
             players:PlayersIds,
             *,
             response_validator:ResponseValidator[int] = not_none, 
-            who_can_see:Optional[list[PlayerId]] = None, 
+            who_can_see:Optional[list[Player]] = None, 
             timeout:Optional[int] = config['default_timeout'], 
             warnings:list[int] = config['default_warnings'],
             status_address:Address|None = None,

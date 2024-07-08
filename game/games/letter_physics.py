@@ -8,12 +8,13 @@ import PIL.Image
 
 from game import get_logger
 from game.components.game_interface import Game_Interface
+from game.components.participant import Player
 from game.components.player_input import Player_Text_Input
-from game.components.response_validator import text_validator_maker
+from game.components.player_input.response_validator import text_validator_maker
 from game.game_bases import Game_Word_Base, Physics_Base, Rounds_With_Points_Base
 from utils.common import random_in_range
 from utils.pillow_tools import center_draw_text, get_font
-from utils.types import PlayerId, Tuple9
+from utils.types import Tuple9
 from utils.grammar import temp_file_path
 
 logger = get_logger(__name__)
@@ -453,7 +454,7 @@ class Letter_Physics(Physics_Base, Game_Word_Base,Rounds_With_Points_Base):
     #endregion
     #region game functions
     @override
-    async def participant_round(self, participant: PlayerId):
+    async def participant_round(self, participant: Player):
         await super().participant_round(participant)
         self.reset()
         self.___current_word_network:frozenset['Letter_RO']|None = None

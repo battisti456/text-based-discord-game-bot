@@ -13,6 +13,7 @@ from discord_interface.common import (
 )
 from discord_interface.custom_views import One_Selectable_View, One_Text_Field_View, Options_And_Text_View
 from game import get_logger
+from game.components.participant import Player
 from game.components.send import Sendable, Sender
 from game.components.send.sendable.prototype_sendables import (
     Text,
@@ -30,7 +31,7 @@ from utils.grammar import wordify_iterable
 
 if TYPE_CHECKING:
     from discord_interface.discord_interface import Discord_Game_Interface
-    from utils.types import ChannelId, PlayerId
+    from utils.types import ChannelId
 
 logger = get_logger(__name__)
 
@@ -56,7 +57,7 @@ class Discord_Sender(Sender[Discord_Address]):
     async def generate_address(
         self, 
         channel_id: 'ChannelId | None|Discord_Address' = None,
-        for_players:frozenset['PlayerId'] = frozenset(),*,
+        for_players:frozenset['Player'] = frozenset(),*,
         length:int = 1) -> 'Discord_Address':
         if channel_id is None or (isinstance(channel_id,Discord_Address) and len(channel_id.messages) == 0):
             if len(for_players) == 0:
@@ -160,10 +161,10 @@ class Discord_Sender(Sender[Discord_Address]):
                 await discord_message.edit(**kwargs)
         return address
     @override
-    def format_players_md(self, players: 'Iterable[PlayerId]') -> str:
+    def format_players_md(self, players: 'Iterable[Player]') -> str:
         return wordify_iterable(f"<@{player}>" for player in players)
     @override
-    def format_players(self,players:'Iterable[PlayerId]') -> str:
+    def format_players(self,players:'Iterable[Player]') -> str:
         player_names:list[str] = []
         for player in players:
             assert isinstance(player,int)

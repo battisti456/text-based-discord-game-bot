@@ -3,6 +3,7 @@ from typing import override
 from config.games_config import games_config
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
+from game.components.participant import Player
 from game.game_bases import Card_Base, Rounds_With_Points_Base
 from game.game_bases.card_base import (
     Card_Holder,
@@ -12,7 +13,7 @@ from game.game_bases.card_base import (
 )
 from utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
 from utils.grammar import ordinate
-from utils.types import PlayerDict, PlayerId
+from utils.types import PlayerDict
 
 CONFIG = games_config['prediction_texas_holdem']
 
@@ -56,8 +57,8 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
             self.unkicked_players,
             list(NUMBERED_KEYCAP_EMOJI[1:])
         )
-        players_best_poker_hands:dict[PlayerId,Poker_Hand] = dict()
-        player_hand_ranks:dict[PlayerId,int] = dict()
+        players_best_poker_hands:dict[Player,Poker_Hand] = dict()
+        player_hand_ranks:dict[Player,int] = dict()
         for player in self.unkicked_players:
             players_best_poker_hands[player],player_hand_ranks[player] = best_poker_hand(self.hands[player],shared)
         ranking=list(self.unkicked_players)

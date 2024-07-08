@@ -4,12 +4,13 @@ import chess
 
 from config.game_bases_config import game_bases_config
 from game.components.game_interface import Game_Interface
-from game.components.response_validator import ResponseValidator, Validation
+from game.components.participant import Player
+from game.components.player_input.response_validator import ResponseValidator, Validation
 from game.game import Game
 from utils.chess_tools import get_move, get_square_name, render_chess, RenderChessAll, RenderChessOptional, RENDERCHESSOPTIONS
 from utils.common import get_first
 from utils.grammar import temp_file_path, wordify_iterable
-from utils.types import Grouping, PlayerId
+from utils.types import Grouping
 
 CONFIG = game_bases_config['chess_base']
 
@@ -22,7 +23,7 @@ def chess_move_validator_maker(
         move_not_in:Optional[Sequence[chess.Move]] = None,
         is_legal_on_any:Optional[Sequence[chess.Board]] = None,
         allow_implicit_assignment:bool = True) -> ResponseValidator[str]:
-    def validator(player:PlayerId,content:str|None) -> Validation:
+    def validator(player:Player,content:str|None) -> Validation:
         if content is None:
             return (False,None)
         move:chess.Move|None = get_move(

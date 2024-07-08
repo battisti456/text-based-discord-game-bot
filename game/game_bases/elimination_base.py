@@ -1,6 +1,7 @@
 from typing import Optional, override
 
 from game.components.game_interface import Game_Interface
+from game.components.participant import Player
 from game.game_bases.round_base import Rounds_Base
 from utils.common import arg_fix_grouping
 from utils.exceptions import GameEndElimination
@@ -10,7 +11,6 @@ from utils.types import (
     KickReason,
     Participant,
     Placement,
-    PlayerId,
     PlayerPlacement,
 )
 
@@ -61,7 +61,7 @@ class Elimination_Framework(Rounds_Base[Participant]):
     def _generate_participant_placements(self) -> Placement[Participant]:
         return tuple(reversed(self.elimination_order))
         
-class Elimination_Base(Elimination_Framework[PlayerId]):
+class Elimination_Base(Elimination_Framework[Player]):
     def __init__(self,gi:Game_Interface):
         Elimination_Framework.__init__(self,gi)
         if Elimination_Base not in self.initialized_bases:
@@ -69,14 +69,14 @@ class Elimination_Base(Elimination_Framework[PlayerId]):
             self._part_str = lambda player: self.sender.format_players((player,))
             self._participant_name = "player"
             self._participants = self.all_players
-    async def eliminate(self,players:PlayerId|Grouping[PlayerId]):
+    async def eliminate(self,players:Player|Grouping[Player]):
         players = arg_fix_grouping(self.unkicked_players,players)
         await self.announce_eliminate(players)
         if set(players) != set(self.unkicked_players):
             self.eliminate_participants(players)
             await super().kick_players(players, 'eliminated')
     @override
-    async def kick_players(self, players: Grouping[PlayerId], reason: KickReason = 'unspecified', priority:Optional[int] = None):
+    async def kick_players(self, players: Grouping[Player], reason: KickReason = 'unspecified', priority:Optional[int] = None):
         players = tuple(players)
         await super().kick_players(players, reason, priority)
         await self.announce_eliminate(players)

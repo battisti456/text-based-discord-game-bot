@@ -1,15 +1,15 @@
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, override, Generic
 
-from typing import TYPE_CHECKING, override
+from typing_extensions import TypeVar
 
 from game import get_logger
-
 from utils.grammar import wordify_iterable
 
 if TYPE_CHECKING:
+    from game.components.participant import Player
+    from game.components.send import Option, Sendable
     from game.components.send.address import Address
-    from utils.types import PlayerId
-    from game.components.send import Sendable, Option
     from smart_text import TextLike
 
 logger = get_logger(__name__)
@@ -34,13 +34,16 @@ class Select_Options(Interaction_Content):
     @override
     def to_words(self) -> 'TextLike':
         return f"selected {wordify_iterable(option.text for option in self.options)}"
+
+InteractionContentVar = TypeVar('InteractionContentVar', bound=Command|Send_Text|Select_Options)
+
 @dataclass(frozen = True)
-class Interaction():
+class Interaction(Generic[InteractionContentVar]):
     at_address:'Address|None'
     with_sendable:'Sendable|None'
-    by_player:'PlayerId'
+    by_player:'Player'
     at_time:'float'
-    content:'Interaction_Content'
+    content:'InteractionContentVar'
     def __post_init__(self):
         logger.debug(f"Generated interaction:{self}")
     def to_text(self) -> 'TextLike':

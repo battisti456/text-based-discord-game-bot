@@ -3,10 +3,11 @@ from typing import override
 
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
-from game.components.response_validator import single_choice_validator_maker
+from game.components.participant import Player
+from game.components.player_input.response_validator import single_choice_validator_maker
 from game.game_bases import Elimination_Base
 from utils.emoji_groups import ROCK_PAPER_SCISSORS_EMOJI
-from utils.types import PlayerDict, PlayerId
+from utils.types import PlayerDict
 
 
 class Elimination_Rock_Paper_Scissors(Elimination_Base):
@@ -29,7 +30,7 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
         if players_with_guns:
             gun_text += " "
             options.append('gun')
-            gun_owners:list[list[PlayerId]] = []
+            gun_owners:list[list[Player]] = []
             for player in players_with_guns:
                 while len(gun_owners) < self.guns[player]:
                     gun_owners.append([])
@@ -54,8 +55,8 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
                 {player:set(range(3)) for player in self.unkicked_players if player not in players_with_guns},
                 list(ROCK_PAPER_SCISSORS_EMOJI)))
         my_pick = random.randint(0,2)
-        players_eliminated:list[PlayerId] = []
-        players_who_won_guns:list[PlayerId] = []
+        players_eliminated:list[Player] = []
+        players_who_won_guns:list[Player] = []
         for player in self.unkicked_players:
             if responses[player] < 3:
                 if responses[player] == my_pick:#tie

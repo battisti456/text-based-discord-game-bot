@@ -14,10 +14,11 @@ from game import get_logger
 from game.components.game_interface import (
     Game_Interface,
 )
+from game.components.participant import Player
 from game.components.send import Interaction, Address
 from game.components.send.interaction import Send_Text
 from game.components.send import sendables
-from utils.types import ChannelId, PlayerId
+from utils.types import ChannelId
 
 from utils.types import Grouping
 
@@ -28,7 +29,7 @@ logger = get_logger(__name__)
 THREAD_MESSAGE_EXPIRATION = 60
 
 class Discord_Game_Interface(Game_Interface):
-    def __init__(self,channel_id:ChannelId,players:list[PlayerId]):
+    def __init__(self,channel_id:ChannelId,players:list[Player]):
         Game_Interface.__init__(self)
         self.channel_id = channel_id
         self.players = players
@@ -43,7 +44,7 @@ class Discord_Game_Interface(Game_Interface):
         self.first_initialization = True
         self.on_start_callbacks:list[AsyncCallback] = []
 
-        self.who_can_see_dict:dict[frozenset[PlayerId],ChannelId] = {}
+        self.who_can_see_dict:dict[frozenset[Player],ChannelId] = {}
 
         self.last_thread_message:tuple[float,str,Discord_Address]|None = None
         #region 
@@ -113,7 +114,7 @@ class Discord_Game_Interface(Game_Interface):
             except discord.HTTPException:
                 logger.error(f"failed to fetch message {message}")
     @override
-    async def _new_channel(self, name: Optional[str], who_can_see: Optional[Iterable[PlayerId]]) -> ChannelId:
+    async def _new_channel(self, name: Optional[str], who_can_see: Optional[Iterable[Player]]) -> ChannelId:
         assert isinstance(self.channel_id,int)
         main_channel = self.client.get_channel(self.channel_id)
         assert isinstance(main_channel,discord.TextChannel)
@@ -146,14 +147,14 @@ class Discord_Game_Interface(Game_Interface):
         
         return thread.id#type:ignore
     @override
-    def get_players(self) -> frozenset[PlayerId]:
+    def get_players(self) -> frozenset[Player]:
         players = self.players.copy()
         shuffle(players)
         return frozenset(players)
     def on_start(self,callback:AsyncCallback) -> AsyncCallback:
         self.on_start_callbacks.append(callback)
         return callback
-    async def who_can_see_channel(self,players:Grouping[PlayerId]) -> ChannelId:
+    async def who_can_see_channel(self,players:Grouping[Player]) -> ChannelId:
         """
         creates a ChannelId that only players can see, or returns one that it already made
         """
