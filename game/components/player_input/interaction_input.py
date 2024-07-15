@@ -7,8 +7,8 @@ from game.components.game_interface import Game_Interface
 from game.components.participant import Player
 from game.components.player_input._input_names import InputNameVar
 from game.components.player_input.player_input import (
-    Player_Input,
-    PlayerInputArgs,
+    Input,
+    InputArgs,
 )
 from game.components.send import (
     Interaction,
@@ -21,7 +21,7 @@ from utils.logging import get_logger
 logger= get_logger(__name__)
 
 class InteractionReceivingPlayerInputArgs(
-    PlayerInputArgs[InteractionContentVar,InputNameVar,Player],
+    InputArgs[InteractionContentVar,InputNameVar,Player],
     total = False,
 ):
     interaction_filter:InteractionFilter[InteractionContentVar]
@@ -29,7 +29,7 @@ class InteractionReceivingPlayerInputArgs(
 
 
 class Interaction_Receiving_Player_Input(
-    Player_Input[InteractionContentVar,InputNameVar,Player]
+    Input[InteractionContentVar,InputNameVar,Player]
     ):
     def __init__(
             self,

@@ -23,7 +23,7 @@ WAIT_UNTIL_DONE_CHECK_TIME = 5
 
 InputDataTypeVar = TypeVar('InputDataTypeVar')
 
-class PlayerInputArgs(
+class InputArgs(
     Generic[InputDataTypeVar,InputNameVar,ParticipantVar],
     TypedDict,
     total = False
@@ -33,11 +33,11 @@ class PlayerInputArgs(
     participants:Required[Grouping[ParticipantVar]]
     status_displays:Sequence[Status_Display[InputDataTypeVar,InputNameVar,ParticipantVar]]
 
-class Player_Input(
+class Input(
     Generic[InputDataTypeVar,InputNameVar,ParticipantVar],
     Interface_Component
     ):
-    def __init__(self,gi:Game_Interface,**kwargs:Unpack[PlayerInputArgs[InputDataTypeVar,InputNameVar,ParticipantVar]]):
+    def __init__(self,gi:Game_Interface,**kwargs:Unpack[InputArgs[InputDataTypeVar,InputNameVar,ParticipantVar]]):
         Interface_Component.__init__(self,gi)
         self.participants: Grouping[ParticipantVar] = kwargs['participants']
         self.response_validator:ResponseValidator[InputDataTypeVar,ParticipantVar] = not_none

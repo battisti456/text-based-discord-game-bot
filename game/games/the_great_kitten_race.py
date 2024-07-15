@@ -8,7 +8,7 @@ from game import correct_int, make_player_dict, merge_placements, score_to_place
 from game.components.game_interface import Game_Interface
 from game.components.participant import Player
 from game.components.player_input import (
-    Player_Input,
+    Input,
     Player_Single_Selection_Input,
     Player_Text_Input,
     run_inputs,
@@ -75,7 +75,7 @@ class The_Great_Kitten_Race(Game):
             "\n".join(obstacle_text_list) + '\n' + 
             "So let's have you introduce your kittens!")
         
-        stat_input_dict:dict[str,Player_Input] = {}
+        stat_input_dict:dict[str,Input] = {}
 
         bp = make_options(
             list(str(num) for num in range(self.kitten_config['stat_limit']+1)),

@@ -3,16 +3,16 @@ from typing import TYPE_CHECKING, Any, Generic, Iterator
 from game.components.participant import ParticipantVar
 
 if TYPE_CHECKING:
-    from game.components.player_input.player_input import InputDataTypeVar, Player_Input
+    from game.components.player_input.player_input import InputDataTypeVar, Input
 
 
 class Responses(
     Generic[InputDataTypeVar,ParticipantVar],
     dict[ParticipantVar,InputDataTypeVar|None]
 ):
-    def __init__(self,pi:'Player_Input[InputDataTypeVar,Any,ParticipantVar]'):
+    def __init__(self,pi:'Input[InputDataTypeVar,Any,ParticipantVar]'):
         dict.__init__(self)
-        self.pi: 'Player_Input[InputDataTypeVar, Any, ParticipantVar]' = pi
+        self.pi: 'Input[InputDataTypeVar, Any, ParticipantVar]' = pi
         for participant in self.pi.participants:
             self[participant] = None
     def did_not_respond(self) -> Iterator[ParticipantVar]:

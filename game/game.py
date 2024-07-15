@@ -7,7 +7,7 @@ from game import kick_text, score_to_placement
 from game.components.game_interface import Game_Interface
 from game.components.interface_component import Interface_Component
 from game.components.send.old_message import _Old_Message
-from game.components.player_input import Player_Input
+from game.components.player_input import Input
 from game.components.player_input.response_validator import (
     ResponseValidator,
     default_text_validator,
@@ -257,11 +257,11 @@ class Game(Interface_Component):
         """
         if self.allowed_to_speak():
             await self.sender(message)
-    async def kick_none_response(self,*args:PlayerMapOptional[R]|Player_Input[R],reason:KickReason='timeout'):
+    async def kick_none_response(self,*args:PlayerMapOptional[R]|Input[R],reason:KickReason='timeout'):
         none_responders = set()
         for arg in args:
             responses:PlayerMapOptional[R]
-            if isinstance(arg,Player_Input):
+            if isinstance(arg,Input):
                 responses = arg.responses
             else:
                 responses = arg
@@ -291,9 +291,9 @@ class Game(Interface_Component):
             self.kicked[player] = (priority,reason)
         if len(self.unkicked_players) <= 1:
             raise GameEndInsufficientPlayers(f"{self.sender.format_players_md(players)} being {kick_text[reason]}")
-    def clean_player_dict(self,responses:Player_Input[R]|PlayerMapOptional[R],*args:PlayersIds) -> PlayerDict[R]:
+    def clean_player_dict(self,responses:Input[R]|PlayerMapOptional[R],*args:PlayersIds) -> PlayerDict[R]:
         clean_responses:PlayerDict = {}
-        if isinstance(responses,Player_Input):
+        if isinstance(responses,Input):
             responses = responses.responses
         if args:
             players = list(set.intersection(*list(set(p) for p in args)))
