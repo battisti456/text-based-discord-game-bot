@@ -6,7 +6,7 @@ from typing_extensions import TypeVar
 from game.components.game_interface import Game_Interface
 from game.components.interface_component import Interface_Component
 from game.components.participant import ParticipantVar
-from game.components.input_._input_names import InputNameVar
+from game.components.input_.input_name import InputNameVar
 from game.components.input_.completion_criteria import (
     All_Valid_Responded,
     Completion_Criteria,

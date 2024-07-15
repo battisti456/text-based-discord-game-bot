@@ -5,7 +5,7 @@ from typeguard import check_type
 import game.components.send.interaction as interactions
 from game.components.game_interface import Game_Interface
 from game.components.participant import Player
-from game.components.input_._input_names import InputNameVar
+from game.components.input_.input_name import InputNameVar
 from game.components.input_.input_ import (
     Input,
     InputArgs,

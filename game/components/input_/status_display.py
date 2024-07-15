@@ -3,7 +3,7 @@ from game.components.send import Address
 from typing import TYPE_CHECKING, Generic
 
 from game.components.participant import ParticipantVar
-from game.components.input_._input_names import InputNameVar
+from game.components.input_.input_name import InputNameVar
 
 if TYPE_CHECKING:
     from game.components.input_.input_ import Input, InputDataTypeVar

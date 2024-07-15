@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, override, Generic, Any
 
 from game.components.input_.input_ import Input, InputDataTypeVar
-from game.components.input_._input_names import InputNameVar
+from game.components.input_.input_name import InputNameVar
 from game.components.participant import ParticipantVar
 
 if TYPE_CHECKING:
