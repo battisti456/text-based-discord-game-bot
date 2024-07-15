@@ -39,7 +39,7 @@ games_config:GamesConfigDict = {
     "container_bidding" : {
         'num_containers' : 5,
         'data_path':"container_contents.json",
-        'starting_money':1000,
+        'starting_money':100,
         'percentile_var':10,
         'end_of_game_interest':20
     },
