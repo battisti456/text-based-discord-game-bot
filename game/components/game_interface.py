@@ -3,9 +3,9 @@ import os
 from inspect import iscoroutinefunction
 from functools import wraps
 
-from utils.logging import get_logger
+from game import get_logger
 from game.components.participant import Player
-from game.components.send import Sender, Interaction, InteractionCallback, Response, InteractionFilter, no_filter
+from game.components.send import Sender, Interaction, InteractionCallback, Response
 from utils.types import ChannelId, Grouping
 from config.config import config
 
@@ -20,7 +20,7 @@ class Game_Interface(object):
     def __init__(self):
         self.actions:dict[Any,set[InteractionCallback]] = {}
         self.default_sender = Sender()
-    def watch(self,filter:InteractionFilter = no_filter,owner:Any = None):
+    def watch(self,filter:Callable[[Interaction],bool] = lambda _:True,owner:Any = None):
         def decorator(func:InteractionCallback):
             if iscoroutinefunction(func):
                 @wraps(func)

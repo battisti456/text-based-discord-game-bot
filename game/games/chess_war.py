@@ -4,7 +4,7 @@ import dataclasses
 
 import chess
 
-from utils.logging import get_logger
+from game import get_logger
 from game.components.participant import Player, Team
 from game.components.send.option import Option
 from game.components.game_interface import Game_Interface

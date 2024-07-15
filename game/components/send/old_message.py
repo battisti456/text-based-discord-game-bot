@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Optional, Sequence
 
-from utils.logging import get_logger
+from game import get_logger
 from game.components.send.sendable import Sendable
 from game.components.send.sendable.prototype_sendables import (
     Attach_Files,

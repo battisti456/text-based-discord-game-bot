@@ -1,12 +1,25 @@
-from typing import Mapping, Optional
+from dataclasses import dataclass
+from typing import override, Optional, Mapping
 
 from typing_extensions import TypeVar
 
-from game.components.participant.participant import Participant
-from game.components.participant.player import Player
-from game.components.participant.team import Team
-from utils.types import Grouping, Placement
+from utils.types import GS, Grouping, Placement
 
+
+@dataclass(frozen=True)
+class Participant(GS):
+    ...
+
+class Player(Participant):
+    ...
+
+@dataclass(frozen=True)
+class Team(Participant):
+    string:str
+    @override
+    def __str__(self) -> str:
+        return self.string
+    
 ParticipantVar = TypeVar('ParticipantVar',bound=Participant,default=Player)
 
 type PlayerPlacement = Placement[Player]

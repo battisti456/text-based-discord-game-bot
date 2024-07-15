@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Generic, Iterable
 
 from typing_extensions import TypeVar
 
-from utils.logging import get_logger
+from game import get_logger
 from game.components.participant import Player
 from game.components.send.address import Address
 from utils.grammar import wordify_iterable

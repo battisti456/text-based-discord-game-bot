@@ -20,7 +20,7 @@ from typing_extensions import TypeVar
 from config.config import config
 from config.config_tools import ConfigAction, ConfigError
 from config.config_tools import edit as config_edit
-from utils.logging import get_logger
+from game import get_logger
 from game.components.game_interface import Game_Interface
 from game.components.interface_operator import Interface_Operator
 from game.components.send import Interaction

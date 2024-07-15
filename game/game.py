@@ -3,7 +3,7 @@ from typing import Awaitable, Callable, Optional, ParamSpec, TypeVar, overload, 
 
 from game.components.participant import Player
 import utils.emoji_groups
-from game import kick_text, score_to_placement
+from game import kick_text, score_to_placement, get_logger
 from game.components.game_interface import Game_Interface
 from game.components.interface_component import Interface_Component
 from game.components.send.old_message import _Old_Message
@@ -16,7 +16,6 @@ from game.components.player_input.response_validator import (
 from utils.common import arg_fix_grouping
 from utils.exceptions import GameEndException, GameEndInsufficientPlayers
 from utils.grammar import ordinate, wordify_iterable
-from utils.logging import get_logger
 from utils.types import (
     ChannelId,
     Grouping,

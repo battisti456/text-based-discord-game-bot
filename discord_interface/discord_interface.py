@@ -10,7 +10,7 @@ from time import time
 from discord_interface.discord_sender import Discord_Sender
 from discord_interface.common import Discord_Message, CompatibleChannels, Discord_Address
 
-from utils.logging import get_logger
+from game import get_logger
 from game.components.game_interface import (
     Game_Interface,
 )

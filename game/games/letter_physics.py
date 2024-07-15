@@ -6,7 +6,7 @@ import pymunk
 from color_tools_battisti456 import Color
 import PIL.Image
 
-from utils.logging import get_logger
+from game import get_logger
 from game.components.game_interface import Game_Interface
 from game.components.participant import Player
 from game.components.player_input import Player_Text_Input
