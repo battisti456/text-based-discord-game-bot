@@ -8,7 +8,7 @@ from utils.logging import get_logger
 from game.components.participant import Player, Team
 from game.components.send.option import Option
 from game.components.game_interface import Game_Interface
-from game.components.player_input import (
+from game.components.input_ import (
     Player_Single_Selection_Input,
     run_inputs,
 )

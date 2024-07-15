@@ -4,7 +4,7 @@ from typing import override
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
 from game.components.participant import Player
-from game.components.player_input.response_validator import single_choice_validator_maker
+from game.components.input_.response_validator import single_choice_validator_maker
 from game.game_bases import Elimination_Base
 from utils.emoji_groups import ROCK_PAPER_SCISSORS_EMOJI
 from utils.types import PlayerDict

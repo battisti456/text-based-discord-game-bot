@@ -2,8 +2,8 @@ from typing import override
 
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
-from game.components.player_input import Player_Text_Input, run_inputs
-from game.components.player_input.response_validator import text_validator_maker
+from game.components.input_ import Player_Text_Input, run_inputs
+from game.components.input_.response_validator import text_validator_maker
 from game.game_bases import Game_Word_Base, Rounds_With_Points_Base
 from game.components.participant import Player
 from game.components.send import sendables

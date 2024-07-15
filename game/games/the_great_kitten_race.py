@@ -7,14 +7,14 @@ from config.games_config import games_config
 from game import correct_int, make_player_dict, merge_placements, score_to_placement
 from game.components.game_interface import Game_Interface
 from game.components.participant import Player
-from game.components.player_input import (
+from game.components.input_ import (
     Input,
     Player_Single_Selection_Input,
     Player_Text_Input,
     run_inputs,
 )
 from game.components.send.option import make_options
-from game.components.player_input.response_validator import Validation
+from game.components.input_.response_validator import Validation
 from game.components.send.sendable.sendables import Text_With_Options, Text_With_Text_Field
 from game.game import Game
 from utils.emoji_groups import NUMBERED_KEYCAP_EMOJI

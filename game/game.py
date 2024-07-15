@@ -7,8 +7,8 @@ from game import kick_text, score_to_placement
 from game.components.game_interface import Game_Interface
 from game.components.interface_component import Interface_Component
 from game.components.send.old_message import _Old_Message
-from game.components.player_input import Input
-from game.components.player_input.response_validator import (
+from game.components.input_ import Input
+from game.components.input_.response_validator import (
     ResponseValidator,
     default_text_validator,
     not_none,

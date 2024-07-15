@@ -6,14 +6,14 @@ from typing_extensions import TypeVar
 from game.components.game_interface import Game_Interface
 from game.components.interface_component import Interface_Component
 from game.components.participant import ParticipantVar
-from game.components.player_input._input_names import InputNameVar
-from game.components.player_input.completion_criteria import (
+from game.components.input_._input_names import InputNameVar
+from game.components.input_.completion_criteria import (
     All_Valid_Responded,
     Completion_Criteria,
 )
-from game.components.player_input.response_validator import ResponseValidator, not_none
-from game.components.player_input.responses import Responses
-from game.components.player_input.status_display import Status_Display
+from game.components.input_.response_validator import ResponseValidator, not_none
+from game.components.input_.responses import Responses
+from game.components.input_.status_display import Status_Display
 from utils.logging import get_logger
 from utils.types import Grouping
 

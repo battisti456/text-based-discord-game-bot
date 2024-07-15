@@ -3,11 +3,11 @@ from typing import Optional, Unpack
 import utils.emoji_groups
 from game.components.game_interface import Game_Interface
 from game.components.participant import Player, PlayerDictOptional, PlayersIds
-from game.components.player_input import (
+from game.components.input_ import (
     Player_Single_Selection_Input,
     Player_Text_Input,
 )
-from game.components.player_input.response_validator import (
+from game.components.input_.response_validator import (
     ResponseValidator,
     default_text_validator,
     not_none,

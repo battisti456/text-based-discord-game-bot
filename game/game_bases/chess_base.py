@@ -5,7 +5,7 @@ import chess
 from config.game_bases_config import game_bases_config
 from game.components.game_interface import Game_Interface
 from game.components.participant import Player
-from game.components.player_input.response_validator import ResponseValidator, Validation
+from game.components.input_.response_validator import ResponseValidator, Validation
 from game.game import Game
 from utils.chess_tools import get_move, get_square_name, render_chess, RenderChessAll, RenderChessOptional, RENDERCHESSOPTIONS
 from utils.common import get_first

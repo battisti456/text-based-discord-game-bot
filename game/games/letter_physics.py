@@ -9,8 +9,8 @@ import PIL.Image
 from utils.logging import get_logger
 from game.components.game_interface import Game_Interface
 from game.components.participant import Player
-from game.components.player_input import Player_Text_Input
-from game.components.player_input.response_validator import text_validator_maker
+from game.components.input_ import Player_Text_Input
+from game.components.input_.response_validator import text_validator_maker
 from game.game_bases import Game_Word_Base, Physics_Base, Rounds_With_Points_Base
 from utils.common import random_in_range
 from utils.pillow_tools import center_draw_text, get_font

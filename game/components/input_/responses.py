@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Generic, Iterator
 from game.components.participant import ParticipantVar
 
 if TYPE_CHECKING:
-    from game.components.player_input.player_input import InputDataTypeVar, Input
+    from game.components.input_.player_input import InputDataTypeVar, Input
 
 
 class Responses(

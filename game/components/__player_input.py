@@ -7,7 +7,7 @@ from config.config import config
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
 from game.components.participant import Player
-from game.components.player_input.response_validator import (
+from game.components.input_.response_validator import (
     ResponseValidator,
     Validation,
     default_text_validator,

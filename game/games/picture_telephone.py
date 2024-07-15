@@ -3,8 +3,8 @@ from typing import override
 from game.components.game_interface import Game_Interface
 from game.components.participant import Player
 from game.components.send.old_message import Old_Message, _Old_Message
-from game.components.player_input import Player_Text_Input, run_inputs
-from game.components.player_input.response_validator import text_validator_maker
+from game.components.input_ import Player_Text_Input, run_inputs
+from game.components.input_.response_validator import text_validator_maker
 from game.game_bases import Image_Search_Base, Rounds_With_Points_Base
 from utils.types import PlayerDict, PlayerDictOptional
 
