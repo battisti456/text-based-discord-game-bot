@@ -4,7 +4,7 @@ from typing import override
 from config.games_config import games_config
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
-from game.components.player_input.response_validator import text_validator_maker
+from game.components.response_validator import text_validator_maker
 from game.game_bases import (
     Rounds_With_Points_Base,
     Trivia_Base,

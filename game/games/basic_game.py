@@ -3,7 +3,7 @@ from typing import override
 from game.components.game_interface import Game_Interface
 from game.components.send.sendable.sendables import Text_Only
 from game.components.player_input import Player_Text_Input
-from game.components.player_input.response_validator import text_validator_maker
+from game.components.response_validator import text_validator_maker
 from game.game_bases import Rounds_With_Points_Base
 from utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
 from utils.grammar import s

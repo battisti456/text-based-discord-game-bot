@@ -5,7 +5,6 @@ import dataclasses
 import chess
 
 from game import get_logger
-from game.components.participant import Player, Team
 from game.components.send.option import Option
 from game.components.game_interface import Game_Interface
 from game.components.player_input import (
@@ -19,7 +18,7 @@ from utils.common import get_first
 from utils.chess_tools import RenderChessOptional, get_move, get_move_text, capture_text, get_piece_name
 from utils.emoji_groups import NO_YES_EMOJI
 from utils.pillow_tools import Color, get_color_name
-from utils.types import Placement, PlayerDict, TeamDict
+from utils.types import Placement, PlayerDict, PlayerId, Team, TeamDict
 
 logger = get_logger(__name__)
 
@@ -88,7 +87,7 @@ class Chess_War(Team_Base,Chess_Base):
                 self.player_is_ready[player] = False
             await self.show_team_board(team)
     @override
-    async def core_player(self, team: Team, player: Player):
+    async def core_player(self, team: Team, player: PlayerId):
         await super().core_player(team, player)
         def attach_modifier(_:list[str]|None) -> list[str]|None:
             player_squares:set[chess.Square] = self.player_owned_squares[player].copy()
@@ -332,7 +331,7 @@ class Chess_War(Team_Base,Chess_Base):
         def wrapper(_:list[str]|None) -> list[str]|None:
             return [self.make_team_board(team,extra_args)]
         return wrapper
-    def sync_call(self,id:Player,completed:bool) -> bool:
+    def sync_call(self,id:PlayerId,completed:bool) -> bool:
         self.player_is_ready[id] = completed
         if self.all_ready:
             return True
@@ -341,7 +340,7 @@ class Chess_War(Team_Base,Chess_Base):
             self.all_ready = True
             return True
         return False
-    def get_player(self,team:Team,to_square:chess.Square) -> tuple[Player|None, chess.Square|None]:
+    def get_player(self,team:Team,to_square:chess.Square) -> tuple[PlayerId|None, chess.Square|None]:
         try:
             move = self.team_moves[team].get_move_to(to_square)
         except IndexError:

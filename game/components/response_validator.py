@@ -1,11 +1,11 @@
-from typing import Any, Optional, Protocol, Generic, TypeVar
+from typing import Any, Callable, Optional, Literal
 
 from profanity_check import predict_prob
 
 from config.config import config
-from game.components.participant import ParticipantVar, Participant
+from utils.types import PlayerDict, PlayerId
+from utils.grammar import wordify_iterable
 
-T = TypeVar('T')
 type Validation = tuple[bool,str|None]
 """
 a tuple with values bool, and str or None
@@ -14,13 +14,34 @@ the bool determines whether a given response was valid, true for allowed, false 
 
 the str|None determines the feedback given; None results in no feedback, otherwise the str is returned as feedback to the player
 """
+type ResponseValidator[DataType] = Callable[[PlayerId,DataType|None],Validation]
 
-class ResponseValidator(Generic[T,ParticipantVar],Protocol): # type: ignore
-    def __call__(self, participant:ParticipantVar, value:T|None,/) -> Validation:
-        ...
-
-def not_none(participant:Participant,data:Any) -> Validation:
+def not_none(player:PlayerId,data:Any) -> Validation:
     return data is not None , None
+
+def make_set_validator[T](
+        individual_validator:ResponseValidator[T],
+        mode:Literal['any','all','always','never'] = 'all') -> ResponseValidator[set[T]]:
+    def validator(player:PlayerId,value:Optional[set[T]]) -> Validation:
+        if value is None:
+            return (False,None)
+        valid:bool = True
+        feedback:str = ""
+        validations = list(individual_validator(player,v) for v in value)
+        feedback = '\n'.join(feedback for _,feedback in validations if feedback is not None)
+        match(mode):
+            case 'any':
+                valid = any(valid for valid,_ in validations)
+            case 'all':
+                valid = all(valid for valid,_ in validations)
+            case 'always':
+                valid = True
+            case 'never':
+                valid = False
+        if feedback == "":
+            return (valid,None)
+        return (valid,feedback)
+    return validator
 
 def text_validator_maker(
         is_substr_of:Optional[str] = None,
@@ -41,7 +62,7 @@ def text_validator_maker(
         
 ) -> ResponseValidator[str]:
     """creates a response validator for str's matching given validation, and with feedback given on problems with the input"""
-    def validator(participant:Any,value:Optional[str]) -> Validation:
+    def validator(player:PlayerId,value:Optional[str]) -> Validation:
         if value is None:
             return (False,None)
         if check_lower_case:
@@ -98,4 +119,21 @@ def text_validator_maker(
         return (True,None)
     return validator
 
+def single_choice_validator_maker(
+        player_limits:PlayerDict[set[int]],
+        option_repr:Optional[list[str]] = None
+) -> ResponseValidator[int]:
+    def str_opt(opt:int) -> str:
+        if option_repr is not None:
+            return option_repr[opt]
+        else:
+            return "Option : " + str(opt + 1)
+    def validator(player:PlayerId,data:int|None) -> Validation:
+        if data is None:
+            return (False,None)
+        if player in player_limits:
+            if data not in player_limits[player]:
+                return (False,f"your choice of {str_opt(data)} is not allowed, you are only permitted to choose amongst {wordify_iterable(str_opt(val) for val in player_limits[player])}")
+        return (True,None)
+    return validator
 default_text_validator:ResponseValidator = text_validator_maker()

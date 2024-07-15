@@ -2,33 +2,35 @@ from typing import Optional, Unpack
 
 import utils.emoji_groups
 from game.components.game_interface import Game_Interface
-from game.components.participant import Player, PlayerDictOptional, PlayersIds
 from game.components.player_input import (
     Player_Single_Selection_Input,
     Player_Text_Input,
 )
-from game.components.player_input.response_validator import (
+from game.components.response_validator import (
     ResponseValidator,
     default_text_validator,
     not_none,
 )
-from game.components.send import Address, MakeSendableArgs, Option, make_sendable
 from game.components.send.old_message import Old_Message
+from game.components.send import Option, Address, make_sendable, MakeSendableArgs
 from game.components.send.sendable.sendables import Text_Only, Text_With_Text_Field
-from smart_text import TextLike
 from utils.common import arg_fix_grouping
 from utils.types import (
+    ChannelId,
     Grouping,
+    PlayerDictOptional,
+    PlayerId,
+    PlayersIds,
 )
-
+from smart_text import TextLike
 
 class Interface_Component():
     def __init__(self,gi:Game_Interface):
         self.gi = gi
         self.sender = self.gi.get_sender()
-        self.all_players:tuple[Player,...] = tuple(self.gi.get_players())
+        self.all_players:tuple[PlayerId,...] = tuple(self.gi.get_players())
     async def _basic_text_response(
-            self,content:str,who_chooses:Optional[Player|PlayersIds] = None,
+            self,content:str,who_chooses:Optional[PlayerId|PlayersIds] = None,
             channel_id:Optional[ChannelId] = None, allow_answer_change:bool = True,
             response_validator:ResponseValidator[str] = default_text_validator) -> PlayerDictOptional[str]:
         """
@@ -61,7 +63,7 @@ class Interface_Component():
 
         return player_input.responses
     async def _basic_multiple_choice(
-            self,content:Optional[str] = None,options:list[str] = [],who_chooses:Optional[PlayersIds|Player] = None,
+            self,content:Optional[str] = None,options:list[str] = [],who_chooses:Optional[PlayersIds|PlayerId] = None,
             emojis:Optional[list[str]] = None, channel_id:Optional[ChannelId] = None, 
             allow_answer_change:bool = True, response_validator:ResponseValidator[int] = not_none) -> PlayerDictOptional[int]:
         """
@@ -120,7 +122,7 @@ class Interface_Component():
         await player_input.run()
 
         return player_input.responses
-    def format_players_md(self,players:Grouping[Player]) -> str:
+    def format_players_md(self,players:Grouping[PlayerId]) -> str:
             """
             returns the senders formatting of a list of players with markdown
             """

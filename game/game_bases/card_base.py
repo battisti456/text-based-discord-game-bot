@@ -7,7 +7,6 @@ from typing import override
 import PIL.Image
 import PIL.ImageOps
 
-from game.components.participant import Player
 import utils.emoji_groups
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
@@ -16,7 +15,7 @@ from game.components.send import Address
 from game.game import Game
 from utils.common import arg_fix_grouping
 from utils.grammar import temp_file_path, wordify_iterable
-from utils.types import GS, Grouping, PlayerDict
+from utils.types import GS, Grouping, PlayerDict, PlayerId
 
 POKER_HAND_NAMES = ["high card","pair","two pair","three of a kind","straight","flush","full house","four of a kind","straight flush","royal flush"]
 SUIT_NAMES = ["spades","hearts","diamonds","clubs"]
@@ -299,7 +298,7 @@ class Card_Base(Game):
         path = temp_file_path(".png")
         image.save(path)
         return path
-    async def update_hand(self,player:Player,add_text:str = ""):
+    async def update_hand(self,player:PlayerId,add_text:str = ""):
         contents = add_text
         hand = self.hands[player]
         assert hand is not None
@@ -315,8 +314,8 @@ class Card_Base(Game):
             attach_files=(self.ch_to_attachment(hand),),
             text=contents
         ),self.hand_addresses[player])
-    async def player_draw(self,player:Player|Grouping[Player],num:int = 1):
-        players:Grouping[Player] = arg_fix_grouping(self.unkicked_players,player)
+    async def player_draw(self,player:PlayerId|Grouping[PlayerId],num:int = 1):
+        players:Grouping[PlayerId] = arg_fix_grouping(self.unkicked_players,player)
         if players:
             await self.say(f"{self.format_players_md(players)} drew {num} card(s).")
         for _player in players:
@@ -327,7 +326,7 @@ class Card_Base(Game):
             if self.allowed_to_speak():
                 draw_text = f"You drew: {wordify_cards(cards)}."
             await self.update_hand(_player,draw_text)
-    async def player_discard(self,player:Player,num_random:int = 0,cards:int|Card|Grouping[int]|Grouping[Card] = []):
+    async def player_discard(self,player:PlayerId,num_random:int = 0,cards:int|Card|Grouping[int]|Grouping[Card] = []):
         hand = self.hands[player]
         assert hand is not None
         cards = hand.give(self.discard,num_random,cards)

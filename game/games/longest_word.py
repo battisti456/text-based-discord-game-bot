@@ -3,9 +3,9 @@ from typing import override
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
 from game.components.player_input import Player_Text_Input, run_inputs
-from game.components.player_input.response_validator import text_validator_maker
+from game.components.response_validator import text_validator_maker
 from game.game_bases import Game_Word_Base, Rounds_With_Points_Base
-from game.components.participant import Player
+from utils.types import PlayerId
 from game.components.send import sendables
 
 CONFIG = games_config['longest_word']
@@ -34,7 +34,7 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
             "Then you must give the longest valid word that can be made from only those letters.\n" +
             "You will get as many points as the word is long squared.\n" +
             "Then the letters are passed on to the next player.")
-    async def longest_word_question(self,player:Player) -> str:
+    async def longest_word_question(self,player:PlayerId) -> str:
         num_letters_can_refresh = NUM_LETTERS_CAN_REFRESH
         change_letter_address = await self.sender.generate_address()
         choose_word_address = await self.sender.generate_address()

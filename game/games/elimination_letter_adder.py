@@ -10,13 +10,13 @@ from game.components.player_input import (
     run_inputs,
 )
 from game.components.send.sendable.sendables import Text_With_Options_And_Text_Field, Text_With_Text_Field
-from game.components.player_input.response_validator import text_validator_maker
+from game.components.response_validator import text_validator_maker
 from game.components.send.old_message import Old_Message
 from game.game_bases.elimination_base import Elimination_Base
 from game.game_bases.game_word_base import Game_Word_Base
 from game.components.send.option import make_options, NO_YES_OPTIONS
 from utils.emoji_groups import LEFT_RIGHT_EMOJI
-from game.components.participant import Player
+from utils.types import PlayerId
 
 NUM_LETTERS = games_config['elimination_letter_adder']['num_letters']
 START_LETTERS = games_config['elimination_letter_adder']['start_letters']
@@ -25,7 +25,7 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
     def __init__(self,gi:Game_Interface):
         Elimination_Base.__init__(self,gi)
         Game_Word_Base.__init__(self,gi)
-        self.last_player:Player = self.unkicked_players[0]
+        self.last_player:PlayerId = self.unkicked_players[0]
     @override
     async def game_intro(self):
         await self.say(

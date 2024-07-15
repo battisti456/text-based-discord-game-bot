@@ -10,7 +10,7 @@ from config.games_config import games_config
 from game.components.game_interface import Game_Interface
 from game.game_bases import Chess_Base, Elimination_Base
 from utils.chess_tools import get_game_over_text, get_move_text
-from game.components.participant import Player
+from utils.types import PlayerId
 
 CONFIG = games_config['chess_puzzle_elimination']
 
@@ -162,7 +162,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
                     move_options[random.randint(0,NUM_MOVE_OPTIONS-1)] = moves[move_index]
             option_text_list:list[str] = list(get_move_text(self.board,move_option) for move_option in move_options)
             #TODO #8 allowing people to see each other's answers seems to be a particular problem in this game, maybe a candidate for an embedded dropdown?
-            responses:dict[Player,int] = await self.basic_multiple_choice(
+            responses:dict[PlayerId,int] = await self.basic_multiple_choice(
                 f"What is the best move for {player_color_name} in this position?",
                 who_chooses=self.unkicked_players,
                 options = option_text_list

@@ -4,9 +4,8 @@ from typing import Optional, TypedDict
 import pytrivia
 
 from game.components.game_interface import Game_Interface
-from game.components.participant import Player
 from game.game import Game
-from utils.types import Grouping, PlayerDict
+from utils.types import Grouping, PlayerDict, PlayerId
 
 
 class TriviaDict(TypedDict):
@@ -67,10 +66,10 @@ class Trivia_Base(Game):
             raw = self.trivia_client.request(1,**kwargs)
         return raw['results'][0]
     async def basic_ask_trivia(
-            self,players:Grouping[Player],
+            self,players:Grouping[PlayerId],
             category:Optional[pytrivia.Category] = None,
             difficulty:Optional[pytrivia.Diffculty] = None,
-            type_:Optional[pytrivia.Type] = None) -> dict[Player,bool]:
+            type_:Optional[pytrivia.Type] = None) -> dict[PlayerId,bool]:
         question = await self.get_trivia(category,difficulty,type_)
         options:list[str] = []
         if question['type'] == 'multiple':
@@ -83,7 +82,7 @@ class Trivia_Base(Game):
             choices:PlayerDict[int] = await self.basic_no_yes(question['question'],players)
         await self.say(f"The correct answer was '{question['correct_answer']}'.")
         correct_index = options.index(question['correct_answer'])
-        player_correct:dict[Player,bool] = {}
+        player_correct:dict[PlayerId,bool] = {}
         for player in set(players) & set(self.unkicked_players):
             player_correct[player] = choices[player] == correct_index
         return player_correct
