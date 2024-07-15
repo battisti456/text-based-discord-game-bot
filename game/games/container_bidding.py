@@ -13,7 +13,7 @@ from utils.types import PlayerDict, PlayerId
 CONFIG = games_config['container_bidding']
 
 NUM_CONTAINERS = CONFIG['num_containers']
-DATA_PATH = config['data_path'] + '\\' + CONFIG['data_path']
+DATA_PATH = config['data_path'] + '/' + CONFIG['data_path']
 STARTING_MONEY = CONFIG['starting_money']
 PERCENTILE_VAR = CONFIG['percentile_var']
 END_OF_GAME_INTEREST = CONFIG['end_of_game_interest']
