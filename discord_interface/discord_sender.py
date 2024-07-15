@@ -12,7 +12,7 @@ from discord_interface.common import (
     f,
 )
 from discord_interface.custom_views import One_Selectable_View, One_Text_Field_View, Options_And_Text_View
-from game import get_logger
+from utils.logging import get_logger
 from game.components.participant import Player
 from game.components.send import Sendable, Sender
 from game.components.send.sendable.prototype_sendables import (

@@ -4,7 +4,7 @@ from typing import Any, Awaitable, Callable, Optional, Sequence, override
 from uuid import uuid4
 
 from config.config import config
-from game import get_logger, make_player_dict
+from game import make_player_dict
 from game.components.game_interface import Game_Interface
 from game.components.participant import Player
 from game.components.player_input.response_validator import (
@@ -18,6 +18,7 @@ from game.components.send.interaction import Interaction, Select_Options, Send_T
 from game.components.send.old_message import Old_Message, _Old_Message
 from game.components.send.sendable.sendables import Text_Only
 from utils.grammar import nice_time, ordinate
+from utils.logging import get_logger
 from utils.types import GS
 
 type Condition = dict[Player_Input,bool]

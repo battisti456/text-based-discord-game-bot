@@ -6,7 +6,7 @@ import PIL.ImageDraw
 import PIL.ImageFilter
 
 from config.games_config import games_config
-from game import get_logger
+from utils.logging import get_logger
 from game.components.game_interface import Game_Interface
 from game.game_bases import Image_Search_Base, Rounds_With_Points_Base
 from utils.common import random_from, random_in_range

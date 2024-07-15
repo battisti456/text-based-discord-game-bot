@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, override, Generic
+from typing import TYPE_CHECKING, override, Generic, Callable
 
 from typing_extensions import TypeVar
 
-from game import get_logger
+from utils.logging import get_logger
 from utils.grammar import wordify_iterable
 
 if TYPE_CHECKING:
@@ -13,6 +13,12 @@ if TYPE_CHECKING:
     from smart_text import TextLike
 
 logger = get_logger(__name__)
+
+InteractionContentVar = TypeVar('InteractionContentVar', bound='Command|Send_Text|Select_Options')
+InteractionFilter = Callable[['Interaction[InteractionContentVar]'],bool]
+
+def no_filter(_) -> bool:
+    return True
 
 @dataclass(frozen=True)
 class Interaction_Content():
@@ -34,8 +40,6 @@ class Select_Options(Interaction_Content):
     @override
     def to_words(self) -> 'TextLike':
         return f"selected {wordify_iterable(option.text for option in self.options)}"
-
-InteractionContentVar = TypeVar('InteractionContentVar', bound=Command|Send_Text|Select_Options)
 
 @dataclass(frozen = True)
 class Interaction(Generic[InteractionContentVar]):

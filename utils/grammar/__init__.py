@@ -4,6 +4,9 @@ from typing import Any, Iterable
 from utils.types import Number
 from utils.word_tools import Sentence
 
+from smart_text import TextLike
+
+from utils.grammar.pronoun_set import Pronoun_Set, COMMON_PRONOUNS
 
 def nice_sentence(sentence:Sentence) -> str:
     return (" ".join(sentence)).replace('_',' ').capitalize()
@@ -101,3 +104,9 @@ def percentify(value:float,decimal_points:int = 2):
         return f"{nums}.{decimals}%"
     else:
         return f"{nums}%"
+
+def append_s(text:TextLike) -> TextLike:
+    if str(text)[-1] == 's':
+        return text
+    else:
+        return text + 's'

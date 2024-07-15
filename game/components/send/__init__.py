@@ -1,6 +1,6 @@
 import game.components.send.sendable.sendables as sendables
 from game.components.send.address import Address
-from game.components.send.interaction import Interaction, Interaction_Content, InteractionContentVar
+from game.components.send.interaction import Interaction, Interaction_Content, InteractionContentVar, InteractionFilter, no_filter
 from game.components.send.option import Option
 from game.components.send.response import Response
 from game.components.send.sendable import Sendable

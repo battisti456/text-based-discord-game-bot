@@ -5,7 +5,7 @@ from time import time
 
 import pymunk
 
-from game import get_logger
+from utils.logging import get_logger
 from game.components.game_interface import Game_Interface
 from game.game_bases import Physics_Base
 from utils.common import random_in_range

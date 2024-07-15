@@ -1,44 +1,69 @@
-from typing import Generic, TypeVar, TypedDict, Unpack
+import asyncio
+from typing import Generic, Required, Sequence, TypedDict, Unpack, Any
 
-from game.components.interface_component import Interface_Component
+from typing_extensions import TypeVar
+
 from game.components.game_interface import Game_Interface
+from game.components.interface_component import Interface_Component
 from game.components.participant import ParticipantVar
+from game.components.player_input.completion_criteria import (
+    All_Valid_Responded,
+    Completion_Criteria,
+)
 from game.components.player_input.response_validator import ResponseValidator, not_none
 from game.components.player_input.responses import Responses
-from game.components.send import Interaction, InteractionContentVar
+from game.components.player_input.status_display import Status_Display
+from utils.logging import get_logger
+from utils.types import Grouping
+
+logger = get_logger(__name__)
+
+WAIT_UNTIL_DONE_CHECK_TIME = 5
 
 T = TypeVar('T')
+PlayerInputVar = TypeVar('PlayerInputVar',bound='Player_Input[Any,Any]',contravariant=True)
 
 class PlayerInputArgs(
-    Generic[T,ParticipantVar],
+    Generic[T,PlayerInputVar,ParticipantVar],
     TypedDict,
     total = False
     ):
     response_validator:ResponseValidator[T,ParticipantVar]
+    completion_criteria:Completion_Criteria[PlayerInputVar]
+    participants:Required[Grouping[ParticipantVar]]
+    status_displays:Sequence[Status_Display[PlayerInputVar]]
 
 class Player_Input(
     Generic[T,ParticipantVar],
     Interface_Component
     ):
-    def __init__(self,gi:Game_Interface,**kwargs:Unpack[PlayerInputArgs[T,ParticipantVar]]):
+    def __init__(self,gi:Game_Interface,**kwargs:Unpack[PlayerInputArgs[T,'Player_Input[T,ParticipantVar]',ParticipantVar]]):
         Interface_Component.__init__(self,gi)
-        self.responses:Responses[T,ParticipantVar] = Responses(self)
+        self.participants: Grouping[ParticipantVar] = kwargs['participants']
         self.response_validator:ResponseValidator[T,ParticipantVar] = not_none
+        self.completion_criteria:Completion_Criteria = All_Valid_Responded(self)
+        self.status_displays:Sequence[Status_Display] = tuple()
         if 'response_validator' in kwargs:
             self.response_validator = kwargs['response_validator']
-
-class InteractionReceivingPlayerInputArgs(
-    PlayerInputArgs[InteractionContentVar,ParticipantVar],
-    total = False
-):
-    ...
-
-class Interaction_Receiving_Player_Input(
-    Player_Input[InteractionContentVar,ParticipantVar]
-    ):
-    def __init__(
-            self,
-            gi:Game_Interface,
-            **kwargs:Unpack[InteractionReceivingPlayerInputArgs[InteractionContentVar,ParticipantVar]]
-        ):
-        super().__init__(gi,**kwargs)
+        if 'completion_criteria' in kwargs:
+            self.completion_criteria = kwargs['completion_criteria']
+        if 'status_displays' in kwargs:
+            self.status_displays = kwargs['status_displays']
+        self.responses:Responses[T,ParticipantVar] = Responses(self)
+    async def setup(self):
+        logger.info(f"{self} setting up.")
+    async def unsetup(self):
+        logger.info(f"{self} undoing setup.")
+    async def wait_until_done(self):
+        logger.info(f"{self} waiting until is_done.")
+        while not self.is_done():
+            await asyncio.sleep(WAIT_UNTIL_DONE_CHECK_TIME)
+    def is_done(self) -> bool:
+        return self.responses.all_valid()
+    async def run(self):
+        await self.setup()
+        await self.wait_until_done()
+        await self.unsetup()
+    async def update_displays(self):
+        for display in self.status_displays:
+            await display.display(self)

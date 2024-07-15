@@ -8,7 +8,7 @@ from game.components.send import Address
 
 from smart_text import TextLike
 
-from game import get_logger
+from utils.logging import get_logger
 
 logger = get_logger(__name__)
 

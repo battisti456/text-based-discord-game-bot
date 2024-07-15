@@ -15,7 +15,7 @@ import PIL.ImageDraw
 import pymunk
 from color_tools_battisti456 import Color
 
-from game import get_logger
+from utils.logging import get_logger
 from game.components.game_interface import Game_Interface
 from game.game import Game
 from utils.common import is_scale, random_in_range

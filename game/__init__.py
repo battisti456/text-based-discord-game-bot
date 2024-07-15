@@ -3,45 +3,10 @@ from typing import Callable, Iterable, Mapping, Optional, override
 
 from config.config import config
 from game.components.participant import Player
-from utils.types import (
-    KickReason,
-    Number,
-    Placement,
-    PlayerDict,
-    PlayerMapOptional,
-    PlayerPlacement,
-)
 
-class Color_Filter(logging.Filter):
-    start_grey = "\x1b[38;20m"
-    start_yellow = "\x1b[33;20m"
-    start_red = "\x1b[31;20m"
-    start_bold_red = "\x1b[31;1m"
-    color = {
-        logging.DEBUG : start_grey,
-        logging.INFO : start_grey,
-        logging.WARNING : start_yellow,
-        logging.ERROR : start_red,
-        logging.CRITICAL : start_bold_red
-    }
-    color_end = "\x1b[0m"
-    @override
-    def filter(self, record: logging.LogRecord) -> bool | logging.LogRecord:
-        record.start_color = Color_Filter.color[record.levelno]
-        record.end_color = Color_Filter.color_end
-        return record
+import utils.logging
 
-fmt = logging.Formatter('%(start_color)s%(asctime)s::%(levelname)s%(end_color)s::%(name)s::%(message)s')
-flt = Color_Filter()
-h1 = logging.StreamHandler()
-h1.setLevel(config['logging_level'])
-h1.setFormatter(fmt)
-def get_logger(name:str) -> logging.Logger:
-    logger = logging.getLogger(name)
-    logger.addFilter(flt)
-    logger.addHandler(h1)
-    logger.setLevel(config['logging_level'])
-    return logger
+utils.logging.LOGGING_LEVEL = config['logging_level']
 
 #player/players being _______
 kick_text:dict[KickReason,str] = {
