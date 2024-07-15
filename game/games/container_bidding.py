@@ -17,6 +17,7 @@ DATA_PATH = config['data_path'] + '\\' + CONFIG['data_path']
 STARTING_MONEY = CONFIG['starting_money']
 PERCENTILE_VAR = CONFIG['percentile_var']
 END_OF_GAME_INTEREST = CONFIG['end_of_game_interest']
+MONEY_LOSS:float = 0.5
 
 class DescDict(TypedDict):
     starting_bid_range:tuple[int,int]
@@ -58,7 +59,7 @@ class Container_Bidding(Rounds_With_Points_Base):
             "The proportion of the total bid that your contribution takes up determines your share of the valuables inside the container.\n" +
             f"If your cumulative bidding exceeds your starting cash of {moneyfy(int(STARTING_MONEY/len(self.unkicked_players)))}, " +
             f"then you will lose an extra {END_OF_GAME_INTEREST}% at the end of the game for interest for all money spent in excess of that.\n"+
-            "Any money you don't end up spending will be added to your total at the end of the game.\n"
+            f"Any money you don't end up spending will be multiplied by {MONEY_LOSS} and added to your total at the end of the game.\n"
             "**WARNING: Your answers are only evaluated based of the digits they contain. All other characters are ignored. So '$100.00' is '$10000'.**")
     def evaluate_container(self,desc:DescDict) -> tuple[int,list[str]]:
         total_reward:int = 0
@@ -125,6 +126,8 @@ class Container_Bidding(Rounds_With_Points_Base):
         for player in self.unkicked_players:
             if self.money[player] < 0:
                 self.money[player] = int(self.money[player] * (1 + END_OF_GAME_INTEREST/100))
+            else:
+                self.money[player] = int(self.money[player] * MONEY_LOSS)
         self.points_format = lambda x: f"{moneyfy(x)} total"
         await self.score(self.unkicked_players,self.money)
 
