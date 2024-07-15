@@ -1,11 +1,12 @@
 import asyncio
-from typing import Generic, Required, Sequence, TypedDict, Unpack, Any
+from typing import Generic, Required, Sequence, TypedDict, Unpack
 
 from typing_extensions import TypeVar
 
 from game.components.game_interface import Game_Interface
 from game.components.interface_component import Interface_Component
 from game.components.participant import ParticipantVar
+from game.components.player_input._input_names import InputNameVar
 from game.components.player_input.completion_criteria import (
     All_Valid_Responded,
     Completion_Criteria,
@@ -20,36 +21,35 @@ logger = get_logger(__name__)
 
 WAIT_UNTIL_DONE_CHECK_TIME = 5
 
-T = TypeVar('T')
-PlayerInputVar = TypeVar('PlayerInputVar',bound='Player_Input[Any,Any]',contravariant=True)
+InputDataTypeVar = TypeVar('InputDataTypeVar')
 
 class PlayerInputArgs(
-    Generic[T,PlayerInputVar,ParticipantVar],
+    Generic[InputDataTypeVar,InputNameVar,ParticipantVar],
     TypedDict,
     total = False
     ):
-    response_validator:ResponseValidator[T,ParticipantVar]
-    completion_criteria:Completion_Criteria[PlayerInputVar]
+    response_validator:ResponseValidator[InputDataTypeVar,ParticipantVar]
+    completion_criteria:Completion_Criteria[InputDataTypeVar,InputNameVar,ParticipantVar]
     participants:Required[Grouping[ParticipantVar]]
-    status_displays:Sequence[Status_Display[PlayerInputVar]]
+    status_displays:Sequence[Status_Display[InputDataTypeVar,InputNameVar,ParticipantVar]]
 
 class Player_Input(
-    Generic[T,ParticipantVar],
+    Generic[InputDataTypeVar,InputNameVar,ParticipantVar],
     Interface_Component
     ):
-    def __init__(self,gi:Game_Interface,**kwargs:Unpack[PlayerInputArgs[T,'Player_Input[T,ParticipantVar]',ParticipantVar]]):
+    def __init__(self,gi:Game_Interface,**kwargs:Unpack[PlayerInputArgs[InputDataTypeVar,InputNameVar,ParticipantVar]]):
         Interface_Component.__init__(self,gi)
         self.participants: Grouping[ParticipantVar] = kwargs['participants']
-        self.response_validator:ResponseValidator[T,ParticipantVar] = not_none
-        self.completion_criteria:Completion_Criteria = All_Valid_Responded(self)
-        self.status_displays:Sequence[Status_Display] = tuple()
+        self.response_validator:ResponseValidator[InputDataTypeVar,ParticipantVar] = not_none
+        self.completion_criteria:Completion_Criteria[InputDataTypeVar,InputNameVar,ParticipantVar] = All_Valid_Responded(self)
+        self.status_displays:Sequence[Status_Display[InputDataTypeVar,InputNameVar,ParticipantVar]] = tuple()
         if 'response_validator' in kwargs:
             self.response_validator = kwargs['response_validator']
         if 'completion_criteria' in kwargs:
             self.completion_criteria = kwargs['completion_criteria']
         if 'status_displays' in kwargs:
             self.status_displays = kwargs['status_displays']
-        self.responses:Responses[T,ParticipantVar] = Responses(self)
+        self.responses:Responses[InputDataTypeVar,ParticipantVar] = Responses(self)
     async def setup(self):
         logger.info(f"{self} setting up.")
     async def unsetup(self):

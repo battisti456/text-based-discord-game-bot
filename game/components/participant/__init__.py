@@ -7,7 +7,9 @@ from game.components.participant.player import Player
 from game.components.participant.team import Team
 from utils.types import Grouping, Placement
 
-ParticipantVar = TypeVar('ParticipantVar',bound=Participant,default=Player)
+type ParticipantType = Player|Team
+
+ParticipantVar = TypeVar('ParticipantVar',bound=ParticipantType)
 
 type PlayerPlacement = Placement[Player]
 type Players = Grouping[Player]

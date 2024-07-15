@@ -39,7 +39,7 @@ def text_validator_maker(
         min_num_words:Optional[int] = None,
         max_num_words:Optional[int] = None
         
-) -> ResponseValidator[str]:
+) -> ResponseValidator[str,Any]:
     """creates a response validator for str's matching given validation, and with feedback given on problems with the input"""
     def validator(participant:Any,value:Optional[str]) -> Validation:
         if value is None:

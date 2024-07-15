@@ -1,19 +1,18 @@
-from typing import TYPE_CHECKING, Generic, Iterator, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Iterator
 
 from game.components.participant import ParticipantVar
 
 if TYPE_CHECKING:
-    from game.components.player_input.player_input import Player_Input
+    from game.components.player_input.player_input import InputDataTypeVar, Player_Input
 
-T = TypeVar('T')
 
 class Responses(
-    Generic[T,ParticipantVar],
-    dict[ParticipantVar,T|None]
+    Generic[InputDataTypeVar,ParticipantVar],
+    dict[ParticipantVar,InputDataTypeVar|None]
 ):
-    def __init__(self,pi:'Player_Input[T,ParticipantVar]'):
+    def __init__(self,pi:'Player_Input[InputDataTypeVar,Any,ParticipantVar]'):
         dict.__init__(self)
-        self.pi: 'Player_Input[T, ParticipantVar]' = pi
+        self.pi: 'Player_Input[InputDataTypeVar, Any, ParticipantVar]' = pi
         for participant in self.pi.participants:
             self[participant] = None
     def did_not_respond(self) -> Iterator[ParticipantVar]:
@@ -26,13 +25,13 @@ class Responses(
             if self.pi.response_validator(participant,response)[0]
             and response is not None
             )
-    def responses(self) -> Iterator[tuple[ParticipantVar,T]]:
+    def responses(self) -> Iterator[tuple[ParticipantVar,InputDataTypeVar]]:
         return (
             (participant,response)
             for participant,response in self.items()
             if response is not None
         )
-    def valid_responses(self) -> Iterator[tuple[ParticipantVar,T]]:
+    def valid_responses(self) -> Iterator[tuple[ParticipantVar,InputDataTypeVar]]:
         return (
             (participant,response)
             for participant,response in self.items()
