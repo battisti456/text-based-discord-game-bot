@@ -1,4 +1,4 @@
-from game.components.input_.player_input import Input
+from game.components.input_.input_ import Input
 from game.components.input_.response_validator import (
     ResponseValidator,
     Validation,

@@ -6,7 +6,7 @@ from game.components.participant import ParticipantVar
 from game.components.input_._input_names import InputNameVar
 
 if TYPE_CHECKING:
-    from game.components.input_.player_input import Input, InputDataTypeVar
+    from game.components.input_.input_ import Input, InputDataTypeVar
 
 @dataclass(frozen=True)
 class Status_Display(Generic['InputDataTypeVar',InputNameVar,ParticipantVar]):

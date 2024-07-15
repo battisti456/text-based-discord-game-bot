@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING, override, Generic, Any
 
-from game.components.input_.player_input import Input, InputDataTypeVar
+from game.components.input_.input_ import Input, InputDataTypeVar
 from game.components.input_._input_names import InputNameVar
 from game.components.participant import ParticipantVar
 
 if TYPE_CHECKING:
-    from game.components.input_.player_input import Input
+    from game.components.input_.input_ import Input
 
 class Completion_Criteria(Generic[InputDataTypeVar,InputNameVar,ParticipantVar]):
     def __init__(self,pi:Input[InputDataTypeVar,InputNameVar,ParticipantVar]):
