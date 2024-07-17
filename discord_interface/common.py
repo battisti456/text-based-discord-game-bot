@@ -1,6 +1,7 @@
 from typing import TypedDict, Sequence, Union
 from dataclasses import dataclass, field
 import uuid
+from game.components.participant import Player
 
 import discord
 
@@ -67,6 +68,25 @@ class Discord_Message():
 class Discord_Address(Address):
     messages:list[Discord_Message] = field(hash=False,compare=False)
     id:uuid.UUID = field(default_factory=uuid.uuid4,init=False)
+
+@dataclass(frozen=True)
+class Discord_Player(Player):
+    id:int = field(kw_only=True)
+    @classmethod
+    def make(cls,client:discord.Client,channel_id:int,id:int) -> 'Discord_Player':
+        user = client.get_user(id)
+        assert user is not None
+        channel = client.get_channel(channel_id)
+        assert isinstance(channel,CompatibleChannels)
+        member = channel.guild.get_member(id)
+        assert member is not None
+        return Discord_Player(
+            name = member.display_name,
+            user_name = user.name,
+            mention=user.mention,
+            id=id
+        )
+
 
 
 

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Iterable, override
+from typing import TYPE_CHECKING, override
 
 import discord
 
@@ -27,11 +27,9 @@ from game.components.send.sendable.sendables import (
     Text_With_Options_And_Text_Field,
     Text_With_Text_Field,
 )
-from utils.grammar import wordify_iterable
 
 if TYPE_CHECKING:
     from discord_interface.discord_interface import Discord_Game_Interface
-    from utils.types import ChannelId
 
 logger = get_logger(__name__)
 
@@ -56,7 +54,7 @@ class Discord_Sender(Sender[Discord_Address]):
     @override
     async def generate_address(
         self, 
-        channel_id: 'ChannelId | None|Discord_Address' = None,
+        channel_id: 'int | None|Discord_Address' = None,
         for_players:frozenset['Player'] = frozenset(),*,
         length:int = 1) -> 'Discord_Address':
         if channel_id is None or (isinstance(channel_id,Discord_Address) and len(channel_id.messages) == 0):
@@ -160,17 +158,3 @@ class Discord_Sender(Sender[Discord_Address]):
                 await self.client.wait_until_ready()
                 await discord_message.edit(**kwargs)
         return address
-    @override
-    def format_players_md(self, players: 'Iterable[Player]') -> str:
-        return wordify_iterable(f"<@{player}>" for player in players)
-    @override
-    def format_players(self,players:'Iterable[Player]') -> str:
-        player_names:list[str] = []
-        for player in players:
-            assert isinstance(player,int)
-            user = self.client.get_user(player)
-            if user is not None:
-                player_names.append(user.display_name)
-            else:
-                player_names.append(str(player))
-        return wordify_iterable(player_names)

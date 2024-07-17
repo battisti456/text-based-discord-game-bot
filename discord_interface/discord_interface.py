@@ -8,17 +8,16 @@ import discord.types.emoji
 from time import time
 
 from discord_interface.discord_sender import Discord_Sender
-from discord_interface.common import Discord_Message, CompatibleChannels, Discord_Address
+from discord_interface.common import Discord_Message, CompatibleChannels, Discord_Address, Discord_Player
 
 from utils.logging import get_logger
 from game.components.game_interface import (
     Game_Interface,
 )
-from game.components.participant import Player
+from game.components.participant import Player, name_participants
 from game.components.send import Interaction, Address
 from game.components.send.interaction import Send_Text
 from game.components.send import sendables
-from utils.types import ChannelId
 
 from utils.types import Grouping
 
@@ -29,10 +28,9 @@ logger = get_logger(__name__)
 THREAD_MESSAGE_EXPIRATION = 60
 
 class Discord_Game_Interface(Game_Interface):
-    def __init__(self,channel_id:ChannelId,players:list[Player]):
+    def __init__(self,channel_id:int,player_ids:list[int]):
         Game_Interface.__init__(self)
         self.channel_id = channel_id
-        self.players = players
         
         intents = discord.Intents.default()
         intents.message_content = True
@@ -41,10 +39,16 @@ class Discord_Game_Interface(Game_Interface):
         self.client = discord.Client(intents = intents)
         self.default_sender = Discord_Sender(self)
 
+        self.players = list(Discord_Player.make(
+            client=self.client,
+            channel_id=channel_id,
+            id = player_id
+        ) for player_id in player_ids)
+
         self.first_initialization = True
         self.on_start_callbacks:list[AsyncCallback] = []
 
-        self.who_can_see_dict:dict[frozenset[Player],ChannelId] = {}
+        self.who_can_see_dict:dict[frozenset[Player],int] = {}
 
         self.last_thread_message:tuple[float,str,Discord_Address]|None = None
         #region 
@@ -113,8 +117,7 @@ class Discord_Game_Interface(Game_Interface):
                 logger.error(f"failed to find message {message}")
             except discord.HTTPException:
                 logger.error(f"failed to fetch message {message}")
-    @override
-    async def _new_channel(self, name: Optional[str], who_can_see: Optional[Iterable[Player]]) -> ChannelId:
+    async def _new_channel(self, name: Optional[str], who_can_see: Optional[Iterable[Player]]) -> int:
         assert isinstance(self.channel_id,int)
         main_channel = self.client.get_channel(self.channel_id)
         assert isinstance(main_channel,discord.TextChannel)
@@ -154,17 +157,17 @@ class Discord_Game_Interface(Game_Interface):
     def on_start(self,callback:AsyncCallback) -> AsyncCallback:
         self.on_start_callbacks.append(callback)
         return callback
-    async def who_can_see_channel(self,players:Grouping[Player]) -> ChannelId:
+    async def who_can_see_channel(self,players:Grouping[Player]) -> int:
         """
         creates a ChannelId that only players can see, or returns one that it already made
         """
         fr_players = frozenset(players)
-        channel_id:ChannelId
+        channel_id:int
         if fr_players in self.who_can_see_dict:
             channel_id = self.who_can_see_dict[fr_players]
         else:
-            channel_id = await self.new_channel(
-                f"{self.default_sender.format_players(players)}'s Private Channel",
+            channel_id = await self._new_channel(
+                f"{name_participants(players)}'s Private Channel",
                 players
             )
             self.who_can_see_dict[fr_players] = channel_id

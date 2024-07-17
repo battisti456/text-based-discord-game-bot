@@ -62,7 +62,7 @@ class Interaction_Handler():
             with_sendable=self.cv.sendable,
             by_player=discord_interaction.user.id,#type:ignore
             at_time=time(),
-            content = content
+            content = content#type:ignore
         ))
         self.cv.last_responses[Interaction_Handler] = response
         await self.cv.give_feedback(discord_interaction)
