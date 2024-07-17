@@ -276,10 +276,10 @@ class Game(Interface_Component):
                 place += 1
 
         return await self.say(f"The placements are: {wordify_iterable(text_list,comma=';')}.")
-    async def kick_none_response(self,*args:PlayerMapOptional[R]|Input[R,Any,Any],reason:KickReason='timeout'):
+    async def kick_none_response(self,*args:PlayerMapOptional[Any]|Input[Any,Any,Any],reason:KickReason='timeout'):
         none_responders = set()
         for arg in args:
-            responses:PlayerMapOptional[R]
+            responses:PlayerMapOptional[Any]
             if isinstance(arg,Input):
                 responses = arg.responses
             else:

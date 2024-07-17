@@ -4,11 +4,16 @@ from typing import Any, TypedDict, override
 
 from config.config import config
 from config.games_config import games_config
-from game import correct_int, make_player_dict, merge_placements, score_to_placement
+from game import make_player_dict, merge_placements, score_to_placement
 from game.components.game_interface import Game_Interface
 from game.components.input_ import Input
 from game.components.input_.response_validator import Validation
-from game.components.participant import Player, PlayerDict, PlayerPlacement, mention_participants
+from game.components.participant import (
+    Player,
+    PlayerDict,
+    PlayerPlacement,
+    mention_participants,
+)
 from game.components.send.interaction import Select_Options
 from game.components.send.option import make_options
 from game.components.send.sendable.sendables import (
@@ -116,9 +121,7 @@ class The_Great_Kitten_Race(Game):
         #TODO #7 make inputs actually update each other or relax restrictions on stat inputs
         all_inputs = list(stat_input_dict[stat] for stat in self.kitten_config['stats']) + [name_input]
         
-        await self.im.run(
-            all_inputs
-        )
+        await self.im.run(*all_inputs)
         
         await self.kick_none_response(*all_inputs)
         

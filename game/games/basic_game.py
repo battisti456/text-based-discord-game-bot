@@ -33,11 +33,11 @@ class Basic_Game(Rounds_With_Points_Base):
         )
         await inpt.run()
         await self.kick_none_response(inpt)
-        responses:PlayerDict[str] = self.clean_player_dict(inpt.responses)
+        responses = self.clean_player_dict(inpt.responses)
 
         await self.score(
             self.unkicked_players,
-            {player:int(responses[player]) for player in self.unkicked_players}
+            {player:int(responses[player].text) for player in self.unkicked_players}
         )
 
         return

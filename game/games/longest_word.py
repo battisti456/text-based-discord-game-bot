@@ -1,11 +1,12 @@
-from typing import override
+from typing import Any, override
 
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
+from game.components.input_ import Status_Display
 from game.components.input_.response_validator import text_validator_maker
-from game.game_bases import Game_Word_Base, Rounds_With_Points_Base
 from game.components.participant import Player
-from game.components.send import sendables, Address
+from game.components.send import Address, sendables
+from game.game_bases import Game_Word_Base, Rounds_With_Points_Base
 
 CONFIG = games_config['longest_word']
 
@@ -50,23 +51,26 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
             response_validator=lambda x,y: text_validator_maker(is_strictly_composed_of=self.current_letters,check_lower_case=True)(x,y),
             interaction_filter=choose_word_address.get_filter()
         )
-        @change_letter_input.on_update
-        @choose_word_input.on_update
-        async def update_display():
-            await self.sender(sendables.Text_With_Text_Field(
-                text = f"**Which letters in '{self.current_letters}' would you like to swap, if any? You can swap {num_letters_can_refresh} letters.**"
-            ),change_letter_address)
-            await self.sender(sendables.Text_With_Text_Field(
-                text = f"**What word will you spell with '{self.current_letters}'?**"
-            ),choose_word_address)
+        class _(Status_Display[Any,Any,Any]):
+            @override
+            async def display(*_):
+                await self.sender(sendables.Text_With_Text_Field(
+                    text = f"**Which letters in '{self.current_letters}' would you like to swap, if any? You can swap {num_letters_can_refresh} letters.**"
+                ),change_letter_address)
+                await self.sender(sendables.Text_With_Text_Field(
+                    text = f"**What word will you spell with '{self.current_letters}'?**"
+                ),choose_word_address)
+        status_display = (_(change_letter_address),)
+        change_letter_input.status_displays = status_display
+        choose_word_input.status_displays = status_display
         
         chosen_word:None|str = None
         while chosen_word is None:
-            await update_display()#type:ignore
+            await status_display[0].display()
             if num_letters_can_refresh:
                 change_letter_input.reset()
                 choose_word_input.reset()
-                await run_inputs([change_letter_input,choose_word_input],[{change_letter_input},{choose_word_input}])
+                await self.im.run(change_letter_input,choose_word_input,completion_sets=[{change_letter_input},{choose_word_input}])
             else:
                 choose_word_input.reset()
                 await choose_word_input.run()
@@ -74,10 +78,10 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
                 if not num_letters_can_refresh or change_letter_input.responses[player] is None:
                     await self.kick_players([player],reason='timeout')
                     return ""
-            if choose_word_input.has_received_all_responses():
-                chosen_word = choose_word_input.responses[player]
+            if choose_word_input.is_done():
+                chosen_word = choose_word_input.responses[player].text#type:ignore
             else:
-                change_letters = change_letter_input.responses[player] 
+                change_letters = change_letter_input.responses[player].text#type:ignore
                 if change_letters is not None:
                     list_letters = list(self.current_letters)
                     for letter in change_letters:

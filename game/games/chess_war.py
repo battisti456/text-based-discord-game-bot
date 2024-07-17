@@ -1,5 +1,4 @@
 #UNFINISHED
-
 import dataclasses
 import json
 from typing import Callable, Iterator, Optional, overload, override

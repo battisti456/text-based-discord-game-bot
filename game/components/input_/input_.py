@@ -81,3 +81,5 @@ class Input(
     async def update_displays(self):
         for display in self.status_displays:
             await display.display(self)
+    def reset(self):
+        self.responses = Responses(self)

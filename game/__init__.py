@@ -1,10 +1,15 @@
 import logging
 from typing import Callable, Iterable, Mapping, Optional, override
 
-from config.config import config
-from game.components.participant import Player
-
 import utils.logging
+from config.config import config
+from game.components.participant import (
+        Player,
+        PlayerDict,
+        PlayerMapOptional,
+        PlayerPlacement,
+)
+from utils.types import KickReason, Number, Placement
 
 utils.logging.LOGGING_LEVEL = config['logging_level']
 
@@ -80,11 +85,11 @@ def _merge_placements(pl1:PlayerPlacement,pl2:PlayerPlacement):
     i:int = 0
     while i < len(pl1):
         if len(pl1[i]) > 1:
-            seperated:list[list[Player]] = []
+            separated:list[list[Player]] = []
             for group in pl2:
                 new = list(player for player in pl1[i] if player in group)
                 if new:#if there were any relevant players in that group
-                    seperated.append(new)
+                    separated.append(new)
             pl1 = (
                 pl1[0:i] + 
                 tuple(
@@ -92,13 +97,13 @@ def _merge_placements(pl1:PlayerPlacement,pl2:PlayerPlacement):
                     for group in pl2 
                     if any(player in group for player in pl1[i])) + 
                 pl1[i+1:-1])
-            i += len(seperated)
+            i += len(separated)
         else:
             i += 1
     return pl1
 def merge_placements(*args:PlayerPlacement)-> PlayerPlacement:
     """
-    merges placements with highes priority placements being eralier in the order
+    merges placements with highest priority placements being earlier in the order
     """
 
     #add code to deal with players not being in all placements
