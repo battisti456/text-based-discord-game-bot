@@ -6,7 +6,7 @@ from discord_interface import Discord_Game_Interface
 from game.components.game_operator import Game_Operator
 
 if __name__ == "__main__":
-    gi = Discord_Game_Interface(config['main_channel_id'],config['players'])
+    gi = Discord_Game_Interface(discord_config['main_channel_id'],discord_config['player_ids'])
     @gi.on_start
     async def on_ready():
         await gi.reset()

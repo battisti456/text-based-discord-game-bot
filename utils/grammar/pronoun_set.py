@@ -4,7 +4,7 @@ from smart_text import TextLike, join
 
 from typing import Optional, Iterator
 
-from utils.grammar import append_s
+from .common import append_s
 
 DEFAULT_PRONOUN_STRING_LENGTH = 3
 
