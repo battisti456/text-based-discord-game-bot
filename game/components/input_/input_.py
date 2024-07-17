@@ -81,5 +81,5 @@ class Input(
     def reset(self):
         self.responses = Responses(self)
 
-from game.components.input_.completion_criteria import All_Valid_Responded
-from game.components.input_.responses import Responses
+from game.components.input_.completion_criteria import All_Valid_Responded  # noqa: E402
+from game.components.input_.responses import Responses  # noqa: E402
