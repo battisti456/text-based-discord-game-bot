@@ -6,7 +6,6 @@ from game.games.basic_game import Basic_Game
 from game.games.chess_puzzle_elimination import Chess_Puzzle_Elimination
 from game.games.container_bidding import Container_Bidding
 from game.games.elimination_blackjack import Elimination_Blackjack
-from game.games.elimination_letter_adder import Elimination_Letter_Adder
 from game.games.elimination_rock_paper_scissors import Elimination_Rock_Paper_Scissors
 from game.games.elimination_trivia import Elimination_Trivia
 from game.games.emoji_communication import Emoji_Communication
@@ -21,7 +20,6 @@ from game.games.letter_physics import Letter_Physics
 valid_games:list[type[Game]] = [
     Elimination_Blackjack,
     Elimination_Trivia,
-    Elimination_Letter_Adder,
     Longest_Word,
     Tricky_Trivia,
     Guess_The_Word,
@@ -62,7 +60,6 @@ def name_comparison(game_name:str,name:str) -> bool:
 __all__ = (
     'Elimination_Blackjack',
     'Elimination_Trivia',
-    'Elimination_Letter_Adder',
     'Longest_Word',
     'Tricky_Trivia',
     'Guess_The_Word',

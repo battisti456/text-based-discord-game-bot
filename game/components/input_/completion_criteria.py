@@ -1,14 +1,12 @@
-from typing import TYPE_CHECKING, override, Generic, Any
+from typing import Any, Generic, override
 
 from game.components.input_.input_ import Input, InputDataTypeVar
 from game.components.input_.input_name import InputNameVar
 from game.components.participant import ParticipantVar
 
-if TYPE_CHECKING:
-    from game.components.input_.input_ import Input
 
 class Completion_Criteria(Generic[InputDataTypeVar,InputNameVar,ParticipantVar]):
-    def __init__(self,pi:Input[InputDataTypeVar,InputNameVar,ParticipantVar]):
+    def __init__(self,pi:Input['InputDataTypeVar',InputNameVar,ParticipantVar]):
         self.pi = pi
     def __call__(self) -> bool:
         raise NotImplementedError()

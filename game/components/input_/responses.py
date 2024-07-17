@@ -1,9 +1,7 @@
-from typing import TYPE_CHECKING, Any, Generic, Iterator
+from typing import Any, Generic, Iterator
 
+from game.components.input_.input_ import Input, InputDataTypeVar
 from game.components.participant import ParticipantVar
-
-if TYPE_CHECKING:
-    from game.components.input_.input_ import InputDataTypeVar, Input
 
 
 class Responses(

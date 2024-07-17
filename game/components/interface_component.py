@@ -1,7 +1,6 @@
-from typing import Optional, Unpack
+from typing import Optional, Unpack, TYPE_CHECKING
 
 import utils.emoji_groups
-from game.components.game_interface import Game_Interface
 from game.components.input_.response_validator import (
     ResponseValidator,
     default_text_validator,
@@ -21,9 +20,12 @@ from game.components.send.sendable.sendables import Text_Only, Text_With_Text_Fi
 from smart_text import TextLike
 from utils.common import arg_fix_grouping, get_first, no_filter
 
+if TYPE_CHECKING:
+    from game.components.game_interface import Game_Interface
+
 
 class Interface_Component():
-    def __init__(self,gi:Game_Interface):
+    def __init__(self,gi:'Game_Interface'):
         self.gi = gi
         self.im = self.gi.im
         self.sender = self.gi.get_sender()

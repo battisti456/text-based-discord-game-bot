@@ -14,9 +14,6 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-InteractionContentVar = TypeVar('InteractionContentVar', bound='Command|Send_Text|Select_Options')
-InteractionFilter = Callable[['Interaction[InteractionContentVar]'],bool]
-
 def no_filter(_) -> bool:
     return True
 
@@ -41,6 +38,8 @@ class Select_Options(Interaction_Content):
     def to_words(self) -> 'TextLike':
         return f"selected {wordify_iterable(option.text for option in self.options)}"
 
+InteractionContentVar = TypeVar('InteractionContentVar', bound=Command|Send_Text|Select_Options)
+
 @dataclass(frozen = True)
 class Interaction(Generic[InteractionContentVar]):
     at_address:'Address|None'
@@ -53,20 +52,20 @@ class Interaction(Generic[InteractionContentVar]):
     def to_text(self) -> 'TextLike':
         return "interaction of " + self.content.to_words()
 
-def address_filter(address:Address) -> InteractionFilter[Any]:
+def address_filter(address:'Address') -> 'InteractionFilter[Any]':
     def _(interaction:Interaction):
         return interaction.at_address == address
     return _
 
-def all_filter(*args:InteractionFilter[InteractionContentVar]) -> InteractionFilter[InteractionContentVar]:
+def all_filter(*args:'InteractionFilter[InteractionContentVar]') -> 'InteractionFilter[InteractionContentVar]':
     def _(interaction:Interaction[InteractionContentVar]) -> bool:
         return all(arg(interaction) for arg in args)
     return _
 
-def selection_limit_filter(*,min:int=1,max:int=1) -> InteractionFilter[Select_Options]:
+def selection_limit_filter(*,min:int=1,max:int=1) -> 'InteractionFilter[Select_Options]':
     def _(interaction:Interaction[Select_Options]) -> bool:
         num = len(interaction.content.options)
         return num <= max and num >= min
     return _
 
-
+InteractionFilter = Callable[[Interaction[InteractionContentVar]],bool]
