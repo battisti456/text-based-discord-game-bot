@@ -1,4 +1,5 @@
 from game.components.input_.input_ import Input
+from game.components.input_.input_maker import Input_Maker
 from game.components.input_.interaction_input import (
     Command_Input,
     Select_Input,

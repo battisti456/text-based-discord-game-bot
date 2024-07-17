@@ -6,6 +6,7 @@ from functools import wraps
 from utils.logging import get_logger
 from game.components.participant import Player
 from game.components.send import Sender, Interaction, InteractionCallback, Response, InteractionFilter, no_filter
+from game.components.input_ import Input_Maker
 from utils.types import ChannelId, Grouping
 from config.config import config
 
@@ -20,6 +21,7 @@ class Game_Interface(object):
     def __init__(self):
         self.actions:dict[Any,set[InteractionCallback]] = {}
         self.default_sender = Sender()
+        self.im:Input_Maker = Input_Maker(self)
     def watch(self,filter:InteractionFilter = no_filter,owner:Any = None):
         def decorator(func:InteractionCallback):
             if iscoroutinefunction(func):

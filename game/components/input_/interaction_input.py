@@ -1,15 +1,14 @@
-from typing import Literal, Unpack, override
+from typing import TYPE_CHECKING, Literal, Unpack, override
 
 from typeguard import check_type
 
 import game.components.send.interaction as interactions
-from game.components.game_interface import Game_Interface
-from game.components.participant import Player
-from game.components.input_.input_name import InputNameVar
 from game.components.input_.input_ import (
     Input,
     InputArgs,
 )
+from game.components.input_.input_name import InputNameVar
+from game.components.participant import Player
 from game.components.send import (
     Interaction,
     InteractionContentVar,
@@ -17,6 +16,9 @@ from game.components.send import (
     no_filter,
 )
 from utils.logging import get_logger
+
+if TYPE_CHECKING:
+    from game.components.game_interface import Game_Interface
 
 logger= get_logger(__name__)
 
@@ -33,7 +35,7 @@ class Interaction_Receiving_Player_Input(
     ):
     def __init__(
             self,
-            gi:Game_Interface,
+            gi:'Game_Interface',
             **kwargs:Unpack[InteractionReceivingPlayerInputArgs[
                 InteractionContentVar,
                 InputNameVar]]
@@ -73,19 +75,19 @@ class TextInputArgs(InteractionReceivingPlayerInputArgs[interactions.Send_Text,L
     ...
 
 class Text_Input(Interaction_Receiving_Player_Input[interactions.Send_Text,Literal['Text_Input']]):
-    def __init__(self, gi: Game_Interface, **kwargs: Unpack[TextInputArgs]):
+    def __init__(self, gi: 'Game_Interface', **kwargs: Unpack[TextInputArgs]):
         super().__init__(gi, **kwargs)
 
 class SelectInputArgs(InteractionReceivingPlayerInputArgs[interactions.Select_Options,Literal['Select_Input']]):
     ...
 
 class Select_Input(Interaction_Receiving_Player_Input[interactions.Select_Options,Literal['Select_Input']]):
-    def __init__(self, gi: Game_Interface, **kwargs: Unpack[SelectInputArgs]):
+    def __init__(self, gi: 'Game_Interface', **kwargs: Unpack[SelectInputArgs]):
         super().__init__(gi, **kwargs)
 
 class CommandInputArgs(InteractionReceivingPlayerInputArgs[interactions.Command,Literal['Command_Input']]):
     ...
 
 class Command_Input(Interaction_Receiving_Player_Input[interactions.Command,Literal['Command_Input']]):
-    def __init__(self, gi: Game_Interface, **kwargs: Unpack[CommandInputArgs]):
+    def __init__(self, gi: 'Game_Interface', **kwargs: Unpack[CommandInputArgs]):
         super().__init__(gi, **kwargs)

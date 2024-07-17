@@ -1,21 +1,23 @@
 import asyncio
-from typing import Generic, Required, Sequence, TypedDict, Unpack
+from typing import TYPE_CHECKING, Generic, Required, Sequence, TypedDict, Unpack
 
 from typing_extensions import TypeVar
 
-from game.components.game_interface import Game_Interface
-from game.components.interface_component import Interface_Component
-from game.components.participant import ParticipantVar
-from game.components.input_.input_name import InputNameVar
 from game.components.input_.completion_criteria import (
     All_Valid_Responded,
     Completion_Criteria,
 )
+from game.components.input_.input_name import InputNameVar
 from game.components.input_.response_validator import ResponseValidator, not_none
 from game.components.input_.responses import Responses
 from game.components.input_.status_display import Status_Display
+from game.components.interface_component import Interface_Component
+from game.components.participant import ParticipantVar
 from utils.logging import get_logger
 from utils.types import Grouping
+
+if TYPE_CHECKING:
+    from game.components.game_interface import Game_Interface
 
 logger = get_logger(__name__)
 
@@ -33,11 +35,18 @@ class InputArgs(
     participants:Required[Grouping[ParticipantVar]]
     status_displays:Sequence[Status_Display[InputDataTypeVar,InputNameVar,ParticipantVar]]
 
+class RunArgs(
+    TypedDict,
+    total = False
+):
+    max_time:float
+    notification_times:tuple[float,...]
+
 class Input(
     Generic[InputDataTypeVar,InputNameVar,ParticipantVar],
     Interface_Component
     ):
-    def __init__(self,gi:Game_Interface,**kwargs:Unpack[InputArgs[InputDataTypeVar,InputNameVar,ParticipantVar]]):
+    def __init__(self,gi:'Game_Interface',**kwargs:Unpack[InputArgs[InputDataTypeVar,InputNameVar,ParticipantVar]]):
         Interface_Component.__init__(self,gi)
         self.participants: Grouping[ParticipantVar] = kwargs['participants']
         self.response_validator:ResponseValidator[InputDataTypeVar,ParticipantVar] = not_none
