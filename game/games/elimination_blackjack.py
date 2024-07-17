@@ -5,9 +5,8 @@ from typing import override
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
 from game.components.participant import Player
-from game.components.send.old_message import Old_Message
 from game.game_bases import Card_Base, Elimination_Base
-from utils.types import PlayerDict
+from game.components.participant import PlayerDict, mention_participants
 
 HAND_LIMIT = games_config['elimination_blackjack']["hand_limit"]
 NUM_PLAYERS_PER_DECK = games_config['elimination_blackjack']['num_players_per_deck']
@@ -69,20 +68,12 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
             player_score = self.player_points(player)
             hand = self.hands[player]
             assert hand is not None
-            message = Old_Message(
-                text = f"{self.format_players_md([player])} had a hand worth {player_score}.",
-                attach_files=[self.ch_to_attachment(hand)]
+            await self.send(
+                text = f"{mention_participants([player])} had a hand worth {player_score}.",
+                attach_files=(self.ch_to_attachment(hand),)
             )
-            await self.sender(message)
             scores[player] = player_score
         score_list:list[int] = list(set(scores[player] for player in scores))
         score_list.sort()
         low_score:int = score_list[0]
         await self.eliminate(list(player for player in self.unkicked_players if scores[player] == low_score))
-        
-
-
-
-
-        
-

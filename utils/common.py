@@ -3,6 +3,8 @@ from typing import Iterable, Mapping, Optional, Any
 
 from utils.types import Grouping, GroupingSafeVar
 
+def no_filter(*args:Any,**kwargs:Any) -> bool:
+    return True
 
 def get_first[T](grouping:Iterable[T]) -> T:
     for item in grouping:

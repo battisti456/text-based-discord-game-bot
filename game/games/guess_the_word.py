@@ -3,19 +3,18 @@ from typing import override
 
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
-from game.components.participant import Player
+from game.components.participant import Player, PlayerDict, mention_participants
+from game.components.send import Address, sendables
 from game.game_bases import (
     Game_Word_Base,
     Rounds_With_Points_Base,
 )
 from utils.grammar import wordify_iterable
-from utils.types import PlayerDict
 from utils.word_tools import (
     DefinitionList,
     SimplePartOfSpeech,
     definition_dict_to_list,
 )
-from game.components.send import Address, sendables
 
 CONFIG = games_config['guess_the_word']
 
@@ -77,7 +76,7 @@ class Guess_The_Word(Game_Word_Base, Rounds_With_Points_Base):
                                 feedback += secret_word[j]
                             else:
                                 feedback += "\\_"
-                        address:Address = await self.sender.generate_address(for_players=frozenset([player]))
+                        address:Address = await self.sender.generate_address(for_participants=frozenset([player]))
                         await self.sender(sendables.Text_Only(text=f"Your current feedback is '{feedback}'."),address)
             responses:PlayerDict[str] = await self.basic_text_response(
                 who_chooses=players_not_guessed,
@@ -109,7 +108,7 @@ class Guess_The_Word(Game_Word_Base, Rounds_With_Points_Base):
                     await self.say("Not a single person got new feedback this round, so I will be providing everyone some.\n" + 
                                     f"Our current public feedback is '{slot_text}'.")
             if any(correct_players):
-                await self.say(f"{self.format_players_md(correct_players)} got it correct!")
+                await self.say(f"{mention_participants(correct_players)} got it correct!")
                 players_not_guessed = list(set(responses.keys()) - set(correct_players))
                 await self.announce_and_receive_score(correct_players,NUM_DEFINITIONS-sub_round)
             else:

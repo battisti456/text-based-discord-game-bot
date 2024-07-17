@@ -62,7 +62,7 @@ class Game_Word_Base(Game):
     def random_balanced_letters(cls,num:int = 5) -> str:
         letter_list = random.choices(LETTERS,LETTER_WEIGHTS,k = num)
         return "".join(letter_list)
-    def _definintion_string(self,defs_list:DefinitionList) -> str:
+    def _definition_string(self,defs_list:DefinitionList) -> str:
         formatted_strings:list[str] = []
         for _def in defs_list:
             formatted_strings.append(
@@ -71,9 +71,9 @@ class Game_Word_Base(Game):
         return '\n'.join(formatted_strings)
     def definition_string(self,value:DefinitionList|DefinitionDict) -> str:
         if isinstance(value,list):
-            return self._definintion_string(value)
+            return self._definition_string(value)
         else:
-            return self._definintion_string(definition_dict_to_list(value))
+            return self._definition_string(definition_dict_to_list(value))
     def random_valid_word(self,length:int = 5) -> str:
         letters = self.random_balanced_letters(length*2)
         words = scrabble.anagram(letters)

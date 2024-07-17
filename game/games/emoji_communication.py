@@ -5,15 +5,15 @@ import emoji
 
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
-from game.components.participant import Player
+from game.components.participant import Player, PlayerDict, mention_participants
+from game.components.send import sendables
+from game.components.send.interaction import Send_Text
 from game.game_bases import (
     Game_Word_Base,
     Rounds_With_Points_Base,
 )
 from utils.grammar import nice_sentence
-from utils.types import PlayerDict
 from utils.word_tools import find_random_related_sentences
-from game.components.send import sendables
 
 #region config
 CONFIG = games_config['emoji_communications']
@@ -53,9 +53,10 @@ def is_only_emoji(text:str) -> bool:
         for token in emoji.analyze("".join(text.split()),True,True)
         )
 
-def emoji_response_validator(player:Player,value:str|None) -> tuple[bool,str|None]:
-    if value is None:
+def emoji_response_validator(player:Player,raw_value:Send_Text|None) -> tuple[bool,str|None]:
+    if raw_value is None:
         return (False,None)
+    value = raw_value.text
     if not is_only_emoji(value):
         return (False,f"response '{value}' contains non-emoji characters")
     if num_emoji(value) > MAX_EMOJI:
@@ -108,7 +109,7 @@ class Emoji_Communication(Rounds_With_Points_Base,Game_Word_Base):
                 for sentence in opt_str[current_player][1:]:
                     avoid_text += sentence + '\n'
             player_questions[current_player] = f"Please do your best to convey this sentence through emoji.\n'{opt_str[current_player][0]}'{avoid_text}"
-            address = await self.sender.generate_address(for_players=frozenset([current_player]))
+            address = await self.sender.generate_address(for_participants=frozenset([current_player]))
             await self.sender(sendables.Text_Only(text=player_questions[current_player]),address)
 
         emoji_responses = await self.basic_text_response(
@@ -125,7 +126,7 @@ class Emoji_Communication(Rounds_With_Points_Base,Game_Word_Base):
             random.shuffle(options)
 
             responses = await self.basic_multiple_choice(
-                f"{self.format_players_md([current_player])} emoted '{emoji_prompts[current_player]}' to convey their sentence.\n" +
+                f"{mention_participants([current_player])} emoted '{emoji_prompts[current_player]}' to convey their sentence.\n" +
 
                 "Which sentence was it?",
                 options,
@@ -138,7 +139,7 @@ class Emoji_Communication(Rounds_With_Points_Base,Game_Word_Base):
             elif len(correct_players) == len(players_to_ask):#all right
                 await self.say(
                     f"{correct_text}Since everyone got it right, each player only gets " +
-                    f"{POINTS_FOR_ALL_GUESS}, except {self.format_players_md([current_player])} who gets none.")
+                    f"{POINTS_FOR_ALL_GUESS}, except {mention_participants([current_player])} who gets none.")
                 await self.score(correct_players,POINTS_FOR_ALL_GUESS,mute = True)
             else:
                 points = POINTS_PER_GUESSER*len(correct_players)
@@ -148,8 +149,8 @@ class Emoji_Communication(Rounds_With_Points_Base,Game_Word_Base):
                     bonus_text = f", and achieving the bonus for using less than {BONUS_NUM} emojis,"
 
                 await self.say(
-                    f"{correct_text}{self.format_players_md(correct_players)} got it right each earning {POINTS_FOR_GUESS} point(s).\n" +
-                    f"For guiding them so well{bonus_text} {self.format_players_md([current_player])} earned {points} point(s)."
+                    f"{correct_text}{mention_participants(correct_players)} got it right each earning {POINTS_FOR_GUESS} point(s).\n" +
+                    f"For guiding them so well{bonus_text} {mention_participants([current_player])} earned {points} point(s)."
 
                 )
                 await self.score(correct_players,POINTS_FOR_GUESS,mute = True)

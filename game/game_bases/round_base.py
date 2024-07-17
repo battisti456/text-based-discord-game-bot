@@ -4,9 +4,9 @@ import asyncio
 from game.game import Game_Interface
 from game.game_bases.participant_base import Participant_Base
 
-from utils.types import Participant
+from game.components.participant import ParticipantVar
 
-class Rounds_Base(Participant_Base[Participant]):
+class Rounds_Base(Participant_Base[ParticipantVar]):
     def __init__(self,gi:Game_Interface):
         Participant_Base.__init__(self,gi)#type:ignore
         if Rounds_Base not in self.initialized_bases:
@@ -31,7 +31,7 @@ class Rounds_Base(Participant_Base[Participant]):
         ...
     async def end_round(self):
         ...
-    async def participant_round(self,participant:Participant):
+    async def participant_round(self,participant:ParticipantVar):
         ...
     @override
     async def _run(self):

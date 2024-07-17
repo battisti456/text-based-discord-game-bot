@@ -2,12 +2,12 @@ from typing import override
 
 from game.components.game_interface import Game_Interface
 from game.components.send.sendable.sendables import Text_Only
-from game.components.input_ import Player_Text_Input
 from game.components.input_.response_validator import text_validator_maker
 from game.game_bases import Rounds_With_Points_Base
 from utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
 from utils.grammar import s
-from utils.types import PlayerDict
+from game.components.participant import PlayerDict
+from game.components.send.interaction import address_filter
 
 validator = text_validator_maker(
     is_digit=True
@@ -25,13 +25,11 @@ class Basic_Game(Rounds_With_Points_Base):
     @override
     async def core_round(self):
         question_address = await self.sender(Text_Only(text = "Respond here with how many points you would like!"))
-        inpt = Player_Text_Input(
-            "this point score question",
-            self.gi,
-            self.sender,
-            self.unkicked_players,
+        inpt = self.im.text(
+            identifier="this point score question",
+            participants=self.unkicked_players,
             response_validator=validator,
-            question_address=question_address
+            interaction_filter=address_filter(question_address)
         )
         await inpt.run()
         await self.kick_none_response(inpt)

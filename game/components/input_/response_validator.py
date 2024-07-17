@@ -1,9 +1,10 @@
-from typing import Any, Optional, Protocol, Generic, TypeVar
+from typing import Any, Generic, Iterable, Mapping, Optional, Protocol, TypeVar
 
 from profanity_check import predict_prob
 
 from config.config import config
-from game.components.participant import ParticipantVar, Participant
+from game.components.participant import Participant, ParticipantVar
+from game.components.send.interaction import Select_Options, Send_Text
 
 T = TypeVar('T')
 type Validation = tuple[bool,str|None]
@@ -39,11 +40,12 @@ def text_validator_maker(
         min_num_words:Optional[int] = None,
         max_num_words:Optional[int] = None
         
-) -> ResponseValidator[str,Any]:
+) -> ResponseValidator[Send_Text,Any]:
     """creates a response validator for str's matching given validation, and with feedback given on problems with the input"""
-    def validator(participant:Any,value:Optional[str]) -> Validation:
-        if value is None:
+    def validator(participant:Any,raw_value:Optional[Send_Text]) -> Validation:
+        if raw_value is None:
             return (False,None)
+        value = raw_value.text
         if check_lower_case:
             value = value.lower()
         if predict_prob([value])[0] >= config['profanity_threshold']:
@@ -97,5 +99,26 @@ def text_validator_maker(
                 return (False,f"given value '{value}' contains {num_words} word(s) which is more than the maximum of {min_num_words} words")
         return (True,None)
     return validator
+def select_validation_maker(
+        *,
+        can_select:Optional[Mapping[ParticipantVar,Iterable[int]]] = None,
+        min_select:Optional[int] = None,
+        max_select:Optional[int] = None
+) -> ResponseValidator[Select_Options,ParticipantVar]:
+    def validator(participant:ParticipantVar,raw_value:Optional[Select_Options]) -> Validation:
+        if raw_value is None:
+            return (False,None)
+        if can_select is not None:
+            for index,option in zip(raw_value.indices,raw_value.options):
+                if index not in can_select[participant]:
+                    return (False,f"given value '{option.text}' is not selectable by {participant}")
+        if min_select is not None:
+            if len(raw_value.indices) < min_select:
+                return (False,f"you must submit at least {min_select} values")
+        if max_select is not None:
+            if len(raw_value.indices) > max_select:
+                return (False,f"you can only select, at most, {max_select} values")
+        return (True,None)
+    return validator
 
-default_text_validator:ResponseValidator = text_validator_maker()
+default_text_validator:ResponseValidator[Send_Text,Any] = text_validator_maker()

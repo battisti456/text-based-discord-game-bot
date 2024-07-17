@@ -3,11 +3,15 @@ from typing import override
 
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
-from game.components.participant import Player
-from game.components.input_.response_validator import single_choice_validator_maker
+from game.components.participant import (
+    Player,
+    PlayerDict,
+    mention_participants,
+    name_participants,
+)
 from game.game_bases import Elimination_Base
 from utils.emoji_groups import ROCK_PAPER_SCISSORS_EMOJI
-from utils.types import PlayerDict
+from game.components.input_.response_validator import select_validation_maker
 
 
 class Elimination_Rock_Paper_Scissors(Elimination_Base):
@@ -41,9 +45,9 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
                 if num_guns == 0:
                     s = ""
                 if len(gun_owners[num_guns]) == 1:
-                    gun_text_list.append(f"{self.format_players(gun_owners[num_guns])} has {num_guns + 1} gun{s}.")
+                    gun_text_list.append(f"{name_participants(gun_owners[num_guns])} has {num_guns + 1} gun{s}.")
                 elif gun_owners[num_guns]:
-                    gun_text_list.append(f"{self.format_players(gun_owners[num_guns])} have {num_guns + 1} gun{s} each.")
+                    gun_text_list.append(f"{name_participants(gun_owners[num_guns])} have {num_guns + 1} gun{s} each.")
             gun_text= '\n'.join(gun_text_list)
             #gun_text = f"\n{gun_text}\nRemember that if you choose gun without having one, you lose!\n"
         responses:PlayerDict[int] = await self.basic_multiple_choice(
@@ -51,9 +55,9 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
             options = options,
             who_chooses=self.unkicked_players,
             emojis=list(ROCK_PAPER_SCISSORS_EMOJI),
-            response_validator=single_choice_validator_maker(
-                {player:set(range(3)) for player in self.unkicked_players if player not in players_with_guns},
-                list(ROCK_PAPER_SCISSORS_EMOJI)))
+            response_validator=select_validation_maker(
+                can_select = {player:set(range(3)) for player in self.unkicked_players if player not in players_with_guns})
+            )
         my_pick = random.randint(0,2)
         players_eliminated:list[Player] = []
         players_who_won_guns:list[Player] = []
@@ -74,7 +78,7 @@ class Elimination_Rock_Paper_Scissors(Elimination_Base):
         await self.say(f"Everyone ready? One..., two..., ||three! I pick {ROCK_PAPER_SCISSORS_EMOJI[my_pick]}||.")
         if players_who_won_guns and len(self.unkicked_players) - len(players_eliminated) > 1:
             await self.say(
-                f"{self.format_players_md(players_who_won_guns)} picked {ROCK_PAPER_SCISSORS_EMOJI[(my_pick+1)%3]} " +
+                f"{mention_participants(players_who_won_guns)} picked {ROCK_PAPER_SCISSORS_EMOJI[(my_pick+1)%3]} " +
                 "thereby defeating me and winning a gun!")
             if not self.announced_guns:
                 self.announced_guns = True

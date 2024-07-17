@@ -1,8 +1,8 @@
 from typing import override
 
 from game.components.game_interface import Game_Interface
+from game.components.participant import PlayerDict
 from game.game_bases import Elimination_Base, Trivia_Base
-from utils.types import PlayerDict
 
 
 class Elimination_Trivia(Elimination_Base,Trivia_Base):

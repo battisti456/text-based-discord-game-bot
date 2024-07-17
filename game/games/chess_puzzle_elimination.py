@@ -10,7 +10,7 @@ from config.games_config import games_config
 from game.components.game_interface import Game_Interface
 from game.game_bases import Chess_Base, Elimination_Base
 from utils.chess_tools import get_game_over_text, get_move_text
-from game.components.participant import Player
+from game.components.participant import Player, mention_participants
 
 CONFIG = games_config['chess_puzzle_elimination']
 
@@ -175,7 +175,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
             best_move_text = f"The best move in this position for {player_color_name} is {get_move_text(self.board,moves[move_index])}."
 
             if correct_players:
-                move_right_text = f"{self.format_players_md(correct_players)} got the move correct!"
+                move_right_text = f"{mention_participants(correct_players)} got the move correct!"
             
             self.board.push_uci(moves[move_index])
             end_text = ""

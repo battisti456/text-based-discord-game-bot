@@ -10,7 +10,7 @@ from utils.grammar.pronoun_set import Pronoun_Set, COMMON_PRONOUNS
 
 def nice_sentence(sentence:Sentence) -> str:
     return (" ".join(sentence)).replace('_',' ').capitalize()
-def wordify_iterable(values:Iterable[str|Any],operator:str = 'and',comma:str = ",") -> str:
+def wordify_iterable(values:Iterable[TextLike],operator:TextLike = 'and',comma:TextLike = ",") -> TextLike:
     """
     takes an iterable of values, turns it into a list ad formats it into a ___, ___, and __ string;
     if values is of length one, it returns the value unchanged;
@@ -20,7 +20,7 @@ def wordify_iterable(values:Iterable[str|Any],operator:str = 'and',comma:str = "
 
     comma: replaces ',' eg. ';'
     """
-    to_return = ""
+    to_return:TextLike = ""
     if not isinstance(values,list):
         values = list(values)
     if len(values) == 0:
@@ -28,13 +28,13 @@ def wordify_iterable(values:Iterable[str|Any],operator:str = 'and',comma:str = "
     elif len(values) == 1:
         return values[0]
     elif len(values) == 2:
-        return f"{values[0]} {operator} {values[1]}"
+        return values[0] + ' ' + operator + ' ' + values[1]
     for i in range(len(values)):
         if i != 0:
             if i == len(values) -1:#is last
-                to_return += f"{comma} {operator} "
+                to_return += comma + ' ' + operator
             else:
-                to_return += f"{comma} "
+                to_return += comma + ' '
         if isinstance(values[i],str):
             to_return += values[i]
         else:
@@ -42,7 +42,7 @@ def wordify_iterable(values:Iterable[str|Any],operator:str = 'and',comma:str = "
     return to_return
 def ordinate(num:Number|str) -> str:
     """
-    takes a number and returns a string with the appropriate 'st', 'nd', 'rd', or 'th' apennded to that number
+    takes a number and returns a string with the appropriate 'st', 'nd', 'rd', or 'th' appended to that number
     """
     num = str(num)
     ordinal = ""

@@ -4,21 +4,15 @@ from typing_extensions import TypeVar
 
 from game import score_to_placement
 from game.components.game_interface import Game_Interface
-from game.components.participant import Player
+from game.components.participant import ParticipantVar, Player, PlayerPlacement
 from game.game_bases.round_base import Rounds_Base
 from utils.common import arg_fix_grouping, arg_fix_map
 from utils.grammar import s
-from utils.types import (
-    Grouping,
-    Number,
-    Participant,
-    Placement,
-    PlayerPlacement,
-)
+from utils.types import Grouping, Number, Placement
 
 PointType = TypeVar('PointType',bound = Number, default=int)
 
-class Rounds_With_Points_Framework(Generic[Participant,PointType],Rounds_Base[Participant]):
+class Rounds_With_Points_Framework(Generic[ParticipantVar,PointType],Rounds_Base[ParticipantVar]):
     def __init__(self,gi:Game_Interface):
         Rounds_Base.__init__(self,gi)#type:ignore
         if Rounds_With_Points_Framework not in self.initialized_bases:
@@ -30,18 +24,18 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Rounds_Base[Pa
             self.reverse_points:bool = False
     @override
     def _configure_participants(self):
-        self.point_totals:dict[Participant,PointType] = {
+        self.point_totals:dict[ParticipantVar,PointType] = {
             participant:self.zero_score for participant in self._participants
         }
     async def announce_score(
             self,
-            who:Optional[Participant|Grouping[Participant]] = None,
-            amount:Optional[PointType|Mapping[Participant,PointType]] = None
+            who:Optional[ParticipantVar|Grouping[ParticipantVar]] = None,
+            amount:Optional[PointType|Mapping[ParticipantVar,PointType]] = None
             ):
         w = arg_fix_grouping(self._participants,who)
         if len(w) == 0:
             return
-        a:Mapping[Participant,PointType] = arg_fix_map(w,self.zero_score,amount)
+        a:Mapping[ParticipantVar,PointType] = arg_fix_map(w,self.zero_score,amount)
         participant_lines:list[str]
         if amount is None:
             participant_lines = list(
@@ -59,17 +53,17 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Rounds_Base[Pa
         return f"{num} {self.point_word}{s(num)}"
     def receive_score(
             self,
-            who:Optional[Participant|Grouping[Participant]] = None,
-            amount:Optional[PointType|Mapping[Participant,PointType]] = None
+            who:Optional[ParticipantVar|Grouping[ParticipantVar]] = None,
+            amount:Optional[PointType|Mapping[ParticipantVar,PointType]] = None
             ):
         w = arg_fix_grouping(self._participants,who)
-        a:Mapping[Participant,PointType] = arg_fix_map(w,self.zero_score,amount)
+        a:Mapping[ParticipantVar,PointType] = arg_fix_map(w,self.zero_score,amount)
         for participant in w:
             self.point_totals[participant] += a[participant]#type: ignore
     async def announce_and_receive_score(
         self,
-        who:Optional[Participant|Grouping[Participant]] = None,
-        amount:Optional[PointType|Mapping[Participant,PointType]] = None
+        who:Optional[ParticipantVar|Grouping[ParticipantVar]] = None,
+        amount:Optional[PointType|Mapping[ParticipantVar,PointType]] = None
         ):
         await self.announce_score(who,amount)
         self.receive_score(who,amount)
@@ -77,7 +71,7 @@ class Rounds_With_Points_Framework(Generic[Participant,PointType],Rounds_Base[Pa
     async def end_round(self):
         await self.announce_score()
     @override
-    def _generate_participant_placements(self) -> Placement[Participant]:
+    def _generate_participant_placements(self) -> Placement[ParticipantVar]:
         return score_to_placement(self.point_totals,self._participants,not self.reverse_points)
 
 
@@ -87,7 +81,7 @@ class Rounds_With_Points_Base(Rounds_With_Points_Framework[Player,int]):
         if Rounds_With_Points_Base not in self.initialized_bases:
             self.initialized_bases.append(Rounds_With_Points_Base)
             self._participants = self.all_players
-            self._part_str = lambda player: self.format_players([player])
+            self._part_str = lambda player: player.name
     @override
     def generate_placements(self) -> PlayerPlacement:
         return self._generate_participant_placements()

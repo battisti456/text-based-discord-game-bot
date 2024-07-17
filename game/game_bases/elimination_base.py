@@ -1,7 +1,7 @@
 from typing import Optional, override
 
 from game.components.game_interface import Game_Interface
-from game.components.participant import Player
+from game.components.participant import  Player, PlayerPlacement, ParticipantVar
 from game.game_bases.round_base import Rounds_Base
 from utils.common import arg_fix_grouping
 from utils.exceptions import GameEndElimination
@@ -9,28 +9,26 @@ from utils.grammar import wordify_iterable
 from utils.types import (
     Grouping,
     KickReason,
-    Participant,
     Placement,
-    PlayerPlacement,
 )
 
-class Elimination_Framework(Rounds_Base[Participant]):
+class Elimination_Framework(Rounds_Base[ParticipantVar]):
     def __init__(self,gi:Game_Interface):
         Rounds_Base.__init__(self,gi)#type:ignore
         if Elimination_Framework not in self.initialized_bases:
             self.initialized_bases.append(Elimination_Framework)
     @override
     def _configure_participants(self):
-        self.elimination_order:Placement[Participant] = tuple()
+        self.elimination_order:Placement[ParticipantVar] = tuple()
     @property
-    def eliminated(self) -> frozenset[Participant]:
+    def eliminated(self) -> frozenset[ParticipantVar]:
         return frozenset(set().union(*(set(rank) for rank in self.elimination_order)))
     @property
-    def not_eliminated(self) -> frozenset[Participant]:
+    def not_eliminated(self) -> frozenset[ParticipantVar]:
         return frozenset(self._participants) - self.eliminated
-    async def announce_eliminate(self,participants:Grouping[Participant]|Participant):
+    async def announce_eliminate(self,participants:Grouping[ParticipantVar]|ParticipantVar):
         participants = arg_fix_grouping(self._participants,participants)
-        to_eliminate:frozenset[Participant] = frozenset(participants) - frozenset(self.eliminated)
+        to_eliminate:frozenset[ParticipantVar] = frozenset(participants) - frozenset(self.eliminated)
         num_left:int = len(self.not_eliminated)
         message_text:str = f"{wordify_iterable(map(self._part_str,to_eliminate))} "
         if len(to_eliminate) == 0:
@@ -47,18 +45,18 @@ class Elimination_Framework(Rounds_Base[Participant]):
         else:
             message_text += '.'
         await self.say(message_text)
-    def eliminate_participants(self,participants:Grouping[Participant]|Participant):
+    def eliminate_participants(self,participants:Grouping[ParticipantVar]|ParticipantVar):
         """
         attempts to eliminate participants; returns True if successful, False if not
         """
         participants = arg_fix_grouping(self._participants,participants)
-        to_eliminate:frozenset[Participant] = frozenset(participants) - frozenset(self.eliminated)
+        to_eliminate:frozenset[ParticipantVar] = frozenset(participants) - frozenset(self.eliminated)
         if to_eliminate != set(self.not_eliminated) and len(to_eliminate) > 0:
             self.elimination_order += (tuple(to_eliminate),)
         if len(self.not_eliminated) == 1:
             raise GameEndElimination(f"all but one {self._participant_name} being eliminated")
     @override
-    def _generate_participant_placements(self) -> Placement[Participant]:
+    def _generate_participant_placements(self) -> Placement[ParticipantVar]:
         return tuple(reversed(self.elimination_order))
         
 class Elimination_Base(Elimination_Framework[Player]):
@@ -66,7 +64,7 @@ class Elimination_Base(Elimination_Framework[Player]):
         Elimination_Framework.__init__(self,gi)
         if Elimination_Base not in self.initialized_bases:
             self.initialized_bases.append(Elimination_Base)
-            self._part_str = lambda player: self.sender.format_players((player,))
+            self._part_str = lambda player: player.name
             self._participant_name = "player"
             self._participants = self.all_players
     async def eliminate(self,players:Player|Grouping[Player]):

@@ -6,8 +6,8 @@ import PIL.ImageDraw
 import PIL.ImageFilter
 
 from config.games_config import games_config
-from utils.logging import get_logger
 from game.components.game_interface import Game_Interface
+from game.components.participant import PlayerDict
 from game.game_bases import Image_Search_Base, Rounds_With_Points_Base
 from utils.common import random_from, random_in_range
 from utils.grammar import temp_file_path
@@ -25,7 +25,7 @@ from utils.image_modification_functions import (
     zoom_crop,
 )
 from utils.image_search import ImageSearchException
-from utils.types import PlayerDict
+from utils.logging import get_logger
 
 logger = get_logger(__name__)
 

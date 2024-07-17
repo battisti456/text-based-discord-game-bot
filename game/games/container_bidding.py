@@ -1,3 +1,4 @@
+#VERY BUGGY
 import json
 import random
 from typing import TypedDict, override
@@ -9,7 +10,7 @@ from game.components.game_interface import Game_Interface
 from game.components.participant import Player
 from game.game_bases import Rounds_With_Points_Base
 from utils.grammar import wordify_iterable, moneyfy
-from utils.types import PlayerDict
+from game.components.participant import PlayerDict, mention_participants
 
 CONFIG = games_config['container_bidding']
 
@@ -101,9 +102,9 @@ class Container_Bidding(Rounds_With_Points_Base):
         total_bid:int = sum(player_bids[player] for player in player_bids)
         if total_bid >= total_bid_threshold:
             total_reward, reward_text = self.evaluate_container(desc)
-            player_split_text = f"It will be split {len(player_bids)} way(s) between {self.format_players_md(list(player_bids))} according to the amounts they contributed to the bid."
+            player_split_text = f"It will be split {len(player_bids)} way(s) between {mention_participants(list(player_bids))} according to the amounts they contributed to the bid."
             if len(player_bids) == 1:
-                player_split_text = f"{self.format_players_md(list(player_bids))} has won the whole amount."
+                player_split_text = f"{mention_participants(list(player_bids))} has won the whole amount."
             await self.say(
                 f"Your total bid of {moneyfy(total_bid)} exceeded our bid threshold of {moneyfy(total_bid_threshold)}.\n" +
                 "\n".join(reward_text) + '\n' +
@@ -121,7 +122,7 @@ class Container_Bidding(Rounds_With_Points_Base):
     async def game_cleanup(self):
         await self.say(
             "That was our last container, so, at the end of the game: "+
-            f"{self.format_players_md(self.unkicked_players)} had {wordify_iterable(moneyfy(self.money[player]) for player in self.unkicked_players)} leftover respectively." +
+            f"{mention_participants(self.unkicked_players)} had {wordify_iterable(moneyfy(self.money[player]) for player in self.unkicked_players)} leftover respectively." +
             f"This remaining money will be added to your final money score, but any negatives will be charged an extra {END_OF_GAME_INTEREST}% in interest.")
         for player in self.unkicked_players:
             if self.money[player] < 0:

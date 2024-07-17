@@ -11,6 +11,7 @@ from utils.chess_tools import get_move, get_square_name, render_chess, RenderChe
 from utils.common import get_first
 from utils.grammar import temp_file_path, wordify_iterable
 from utils.types import Grouping
+from game.components.send.interaction import Send_Text
 
 CONFIG = game_bases_config['chess_base']
 
@@ -22,10 +23,11 @@ def chess_move_validator_maker(
         move_in:Optional[Sequence[chess.Move]] = None,
         move_not_in:Optional[Sequence[chess.Move]] = None,
         is_legal_on_any:Optional[Sequence[chess.Board]] = None,
-        allow_implicit_assignment:bool = True) -> ResponseValidator[str]:
-    def validator(player:Player,content:str|None) -> Validation:
-        if content is None:
+        allow_implicit_assignment:bool = True) -> ResponseValidator[Send_Text,Player]:
+    def validator(player:Player,raw_content:Send_Text|None) -> Validation:
+        if raw_content is None:
             return (False,None)
+        content = raw_content.text
         move:chess.Move|None = get_move(
             content,
             None if (not from_squares) or (not allow_implicit_assignment) else get_first(from_squares),

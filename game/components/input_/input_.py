@@ -15,6 +15,7 @@ from game.components.interface_component import Interface_Component
 from game.components.participant import ParticipantVar
 from utils.logging import get_logger
 from utils.types import Grouping
+from smart_text import TextLike
 
 if TYPE_CHECKING:
     from game.components.game_interface import Game_Interface
@@ -34,6 +35,7 @@ class InputArgs(
     completion_criteria:Completion_Criteria[InputDataTypeVar,InputNameVar,ParticipantVar]
     participants:Required[Grouping[ParticipantVar]]
     status_displays:Sequence[Status_Display[InputDataTypeVar,InputNameVar,ParticipantVar]]
+    identifier:TextLike
 
 class RunArgs(
     TypedDict,
@@ -52,12 +54,15 @@ class Input(
         self.response_validator:ResponseValidator[InputDataTypeVar,ParticipantVar] = not_none
         self.completion_criteria:Completion_Criteria[InputDataTypeVar,InputNameVar,ParticipantVar] = All_Valid_Responded(self)
         self.status_displays:Sequence[Status_Display[InputDataTypeVar,InputNameVar,ParticipantVar]] = tuple()
+        self.identifier:TextLike|None = None
         if 'response_validator' in kwargs:
             self.response_validator = kwargs['response_validator']
         if 'completion_criteria' in kwargs:
             self.completion_criteria = kwargs['completion_criteria']
         if 'status_displays' in kwargs:
             self.status_displays = kwargs['status_displays']
+        if 'identifier' in kwargs:
+            self.identifier = kwargs['identifier']
         self.responses:Responses[InputDataTypeVar,ParticipantVar] = Responses(self)
     async def setup(self):
         logger.info(f"{self} setting up.")

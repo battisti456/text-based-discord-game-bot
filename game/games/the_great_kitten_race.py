@@ -1,25 +1,24 @@
 import json
 import random
-from typing import TypedDict, override
+from typing import Any, TypedDict, override
 
 from config.config import config
 from config.games_config import games_config
 from game import correct_int, make_player_dict, merge_placements, score_to_placement
 from game.components.game_interface import Game_Interface
-from game.components.participant import Player
-from game.components.input_ import (
-    Input,
-    Player_Single_Selection_Input,
-    Player_Text_Input,
-    run_inputs,
-)
-from game.components.send.option import make_options
+from game.components.input_ import Input
 from game.components.input_.response_validator import Validation
-from game.components.send.sendable.sendables import Text_With_Options, Text_With_Text_Field
+from game.components.participant import Player, PlayerDict, PlayerPlacement, mention_participants
+from game.components.send.interaction import Select_Options
+from game.components.send.option import make_options
+from game.components.send.sendable.sendables import (
+    Text_With_Options,
+    Text_With_Text_Field,
+)
 from game.game import Game
+from utils.common import get_first
 from utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
 from utils.grammar import ordinate, wordify_iterable
-from utils.types import PlayerDict, PlayerPlacement
 
 CONFIG = games_config['the_great_kitten_race']
 
@@ -75,7 +74,7 @@ class The_Great_Kitten_Race(Game):
             "\n".join(obstacle_text_list) + '\n' + 
             "So let's have you introduce your kittens!")
         
-        stat_input_dict:dict[str,Input] = {}
+        stat_input_dict:dict[str,Input[Select_Options,Any,Player]] = {}
 
         bp = make_options(
             list(str(num) for num in range(self.kitten_config['stat_limit']+1)),
@@ -88,40 +87,37 @@ class The_Great_Kitten_Race(Game):
                 with_options= bp
             )
             address = await self.sender(sendable)
-            input = Player_Single_Selection_Input(
-                name = f"choice of {stat} stat",
-                players=self.unkicked_players,
-                gi = self.gi,
-                sender = self.sender,
-                question_address=address
+            input = self.im.select(
+                identifier= f"choice of {stat} stat",
+                participants=self.unkicked_players,
+                interaction_filter=address.get_filter()
             )
             stat_input_dict[stat] = input
-        def verify_points(player:Player,value:int|None) -> Validation:
-            if value is None:
-                return (False,None)
-            num_points = sum(correct_int(stat_input_dict[stat].responses[player]) for stat in self.kitten_config['stats'])
+        def verify_points(player:Player,raw_value:Select_Options|None) -> Validation:
+            num_points = sum(
+                0 if input.responses[player] is None else 
+                get_first(input.responses[player].indices) #type:ignore
+                for input in stat_input_dict.values())
             if num_points > self.kitten_config['point_limit']:
                 return (False,f"with a total of '{num_points}', exceeded the point limit of '{self.kitten_config['point_limit']}'")
             if num_points < self.kitten_config['point_limit']:
                 return (False,f"with a total of '{num_points}', fell short of the point limit of '{self.kitten_config['point_limit']}'")
             return (True,None)
         for stat in self.kitten_config['stats']:
-            stat_input_dict[stat]._response_validator = verify_points
-        name_input = Player_Text_Input(
-            name = "kitten name",
-            players=self.unkicked_players,
-            gi = self.gi,
-            sender = self.sender,
-            question_address=await self.sender(Text_With_Text_Field(
+            stat_input_dict[stat].response_validator = verify_points
+        name_input = self.im.text(
+            identifier= "kitten name",
+            participants=self.unkicked_players,
+            interaction_filter=(await self.sender(Text_With_Text_Field(
                 text = "What would you like to name your kitten?",
                 hint_text="Psst. Go with Archibald."
-            ))
+            ))).get_filter()
         )
         #TODO #7 make inputs actually update each other or relax restrictions on stat inputs
         all_inputs = list(stat_input_dict[stat] for stat in self.kitten_config['stats']) + [name_input]
         
-        await run_inputs(
-            all_inputs,codependent=True
+        await self.im.run(
+            all_inputs
         )
         
         await self.kick_none_response(*all_inputs)
@@ -132,11 +128,11 @@ class The_Great_Kitten_Race(Game):
         for player in self.unkicked_players:
             name = name_input.responses[player]
             assert name is not None
-            kittens[player]['name'] = name
+            kittens[player]['name'] = name.text
             for stat in self.kitten_config['stats']:
-                value = stat_input_dict[stat].responses[player]
-                assert value is not None
-                kittens[player]['stats'][stat] = value
+                raw_value = stat_input_dict[stat].responses[player]
+                assert raw_value is not None
+                kittens[player]['stats'][stat] = get_first(raw_value.indices)
             total:int = sum(kittens[player]["stats"][stat] for stat in self.kitten_config["stats"])
             ratio:float = self.kitten_config['point_limit']/total
             for stat in self.kitten_config['stats']:
@@ -166,7 +162,7 @@ class The_Great_Kitten_Race(Game):
 
         cross_finish_text_list:list[str] = list(
             f"Crossing {ordinate(i+1)} we have __*{kittens[order[i]]['name']}*__ " + 
-            f"racing for {self.format_players_md([order[i]])} with a final time of " +
+            f"racing for {mention_participants([order[i]])} with a final time of " +
             f"{kittens[order[i]]['time']} seconds!" for i in range(len(order)))
         await self.say(
             "Anxiously we await at the finish line. Who will be first? Then coming over the hill we see...\n"+

@@ -3,8 +3,7 @@ from typing import Optional, override
 
 from game import kick_text
 from game.components.game_interface import Game_Interface
-from game.components.participant import Player, Team
-from game.components.send.old_message import Old_Message
+from game.components.participant import Player, Team, TeamDict, PlayerPlacement, name_participants
 from game.game_bases.elimination_base import Elimination_Framework
 from game.game_bases.round_base import Rounds_Base
 from game.game_bases.rounds_with_points_base import Rounds_With_Points_Framework
@@ -12,12 +11,9 @@ from utils.common import arg_fix_grouping
 from utils.exceptions import GameEndInsufficientTeams
 from utils.grammar import wordify_iterable
 from utils.types import (
-    ChannelId,
     Grouping,
     KickReason,  # noqa: F811
     Placement,
-    PlayerPlacement,
-    TeamDict,
 )
 from utils.word_tools import word_generator
 
@@ -25,7 +21,8 @@ from utils.word_tools import word_generator
 def random_team_name() -> Team:
     adj:str = word_generator.word(include_categories=['adjective'])
     noun:str = word_generator.word(include_categories=['noun'])
-    return Team(f"The {adj.capitalize()} {noun.capitalize()}s")
+    name = f"The {adj.capitalize()} {noun.capitalize()}s"
+    return Team(name,name,name)
 
 def team_to_player_placements(team_placement:Placement[Team],team_players:TeamDict[frozenset[Player]]) -> PlayerPlacement:
     working_placement:list[tuple[Player,...]] = []
@@ -69,15 +66,9 @@ class Team_Base(Rounds_Base[Team]):
             self.all_teams[i]:frozenset(self.unkicked_players[i::self.num_teams])
             for i in range(self.num_teams)
         }
-        self.team_channel_id:TeamDict[ChannelId] = {
-            team:await self.gi.new_channel(
-                f"{str(team)}'s Team Channel",
-                self.team_players[team]
-            ) for team in self.all_teams
-        }
         for team in self.all_teams:
             await self.say(
-                f"On team '{team}' we have {self.sender.format_players(self.team_players[team])}!"
+                f"On team '{team}' we have {name_participants(self.team_players[team])}!"
             )
     async def basic_send_team(
             self,
@@ -95,11 +86,11 @@ class Team_Base(Rounds_Base[Team]):
         """
         teams = arg_fix_grouping(self.all_teams,teams)
         for team in teams:
-            await self.sender(Old_Message(
-                text=content,
-                attach_files=attachments_data,
-                on_channel=self.team_channel_id[team]
-            ))
+            await self.send(
+                text=team.name if content is None else content,
+                attach_files=tuple(attachments_data),
+                address=await self.sender.generate_address(for_participants=frozenset((team,)))
+            )
     async def kick_teams(
             self,
             teams:Grouping[Team],

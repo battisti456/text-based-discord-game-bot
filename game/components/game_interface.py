@@ -1,14 +1,20 @@
-from typing import Awaitable, Callable, Hashable, Optional, Any
 import os
-from inspect import iscoroutinefunction
 from functools import wraps
+from inspect import iscoroutinefunction
+from typing import Any, Awaitable, Hashable
 
-from utils.logging import get_logger
-from game.components.participant import Player
-from game.components.send import Sender, Interaction, InteractionCallback, Response, InteractionFilter, no_filter
-from game.components.input_ import Input_Maker
-from utils.types import ChannelId, Grouping
 from config.config import config
+from game.components.input_ import Input_Maker
+from game.components.participant import Player
+from game.components.send import (
+    Interaction,
+    InteractionCallback,
+    InteractionFilter,
+    Response,
+    Sender,
+    no_filter,
+)
+from utils.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -95,16 +101,3 @@ class Game_Interface(object):
         should be implemented in child classes
         """
         return frozenset()
-    async def _new_channel(self,name:Optional[str],who_can_see:Optional[Grouping[Player]]) -> ChannelId:
-        raise NotImplementedError()
-    async def new_channel(self,name:Optional[str] = None, who_can_see:Optional[Grouping[Player]] = None) -> ChannelId:
-        """
-        returns the ChannelId of a channel
-        
-        name: if specified, titles the channel with it
-        
-        who_can_see: if specified, only these players have access to the channel, if not specified should assume all players
-        """
-        channel_id:ChannelId = await self._new_channel(name,who_can_see)
-        logger.info(f"created new channel with name = {name}, player_ids = {who_can_see}, channel_id = {channel_id}")
-        return channel_id

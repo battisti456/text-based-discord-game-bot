@@ -2,11 +2,10 @@ from typing import override
 
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
-from game.components.input_ import Player_Text_Input, run_inputs
 from game.components.input_.response_validator import text_validator_maker
 from game.game_bases import Game_Word_Base, Rounds_With_Points_Base
 from game.components.participant import Player
-from game.components.send import sendables
+from game.components.send import sendables, Address
 
 CONFIG = games_config['longest_word']
 
@@ -36,24 +35,20 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
             "Then the letters are passed on to the next player.")
     async def longest_word_question(self,player:Player) -> str:
         num_letters_can_refresh = NUM_LETTERS_CAN_REFRESH
-        change_letter_address = await self.sender.generate_address()
-        choose_word_address = await self.sender.generate_address()
+        change_letter_address:Address = await self.sender.generate_address()
+        choose_word_address:Address = await self.sender.generate_address()
 
-        change_letter_input = Player_Text_Input(
-            "change letter",
-            self.gi,
-            self.sender,
-            [player],
+        change_letter_input = self.im.text(
+            identifier="change letter",
+            participants=[player],
             response_validator=lambda x,y: text_validator_maker(is_strictly_composed_of=self.current_letters,max_length=num_letters_can_refresh,check_lower_case=True)(x,y),
-            question_address=change_letter_address
+            interaction_filter=change_letter_address.get_filter()
         )
-        choose_word_input = Player_Text_Input(
-            "choose word",
-            self.gi,
-            self.sender,
-            [player],
+        choose_word_input = self.im.text(
+            identifier="choose word",
+            participants=[player],
             response_validator=lambda x,y: text_validator_maker(is_strictly_composed_of=self.current_letters,check_lower_case=True)(x,y),
-            question_address=choose_word_address
+            interaction_filter=choose_word_address.get_filter()
         )
         @change_letter_input.on_update
         @choose_word_input.on_update

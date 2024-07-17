@@ -8,14 +8,14 @@ import PIL.Image
 
 from utils.logging import get_logger
 from game.components.game_interface import Game_Interface
-from game.components.participant import Player
-from game.components.input_ import Player_Text_Input
+from game.components.participant import Player, mention_participants, name_participants
 from game.components.input_.response_validator import text_validator_maker
 from game.game_bases import Game_Word_Base, Physics_Base, Rounds_With_Points_Base
 from utils.common import random_in_range
 from utils.pillow_tools import center_draw_text, get_font
 from utils.types import Tuple9
 from utils.grammar import temp_file_path
+from game.components.send.interaction import address_filter, Send_Text
 
 logger = get_logger(__name__)
 
@@ -458,11 +458,11 @@ class Letter_Physics(Physics_Base, Game_Word_Base,Rounds_With_Points_Base):
         await super().participant_round(participant)
         self.reset()
         self.___current_word_network:frozenset['Letter_RO']|None = None
-        def validator(_,text:str|None) -> tuple[bool,str|None]:
-            pre = pre_validator(_,text)
+        def validator(_,raw_content:Send_Text|None) -> tuple[bool,str|None]:
+            pre = pre_validator(_,raw_content)
             if not pre[0]:
                 return pre
-            assert text is not None
+            text = raw_content.text#type:ignore
             if not self.is_valid_word(text):
                 return (False,f'{text} is not a acceptable word')
             self.___current_word_network = self.match_word(text)
@@ -470,15 +470,13 @@ class Letter_Physics(Physics_Base, Game_Word_Base,Rounds_With_Points_Base):
                 return (False,f'{text} could not be found on screen')
             return (True,None)
         address = await self.send(
-            text = f"Come on, {self.sender.format_players_md((participant,))},  give me a word!",
+            text = f"Come on, {mention_participants((participant,))},  give me a word!",
             hint_text="Input your word here.",
         )
-        inpt = Player_Text_Input(
-            "choice of word",
-            self.gi,
-            self.gi.default_sender,
-            (participant,),
-            question_address=address,
+        inpt = self.im.text(
+            identifier="choice of word",
+            participants=(participant,),
+            interaction_filter=address_filter(address),
             response_validator=validator
         )
         await inpt.run()
@@ -486,7 +484,7 @@ class Letter_Physics(Physics_Base, Game_Word_Base,Rounds_With_Points_Base):
             await self.kick_players((participant,),reason='timeout')
             return
         self.pop_network(self.___current_word_network,'word')
-        display_text:str=  f"{self.format_players((participant,))}'s choice of '{inpt.responses[participant]}' resulted in:"
+        display_text:str=  f"{name_participants((participant,))}'s choice of '{inpt.responses[participant]}' resulted in:"
         display_address = await self.send(
             text=display_text,
             attach_files=(LOADING_PATH,)

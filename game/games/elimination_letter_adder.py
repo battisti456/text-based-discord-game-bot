@@ -1,22 +1,19 @@
-#NEEDS TO BE TESTED
+#VERY BUGGY
 import random
 from typing import override
 
 from config.games_config import games_config
 from game.components.game_interface import Game_Interface
-from game.components.input_ import (
-    Player_Single_Selection_Input,
-    Player_Text_Input,
-    run_inputs,
-)
-from game.components.send.sendable.sendables import Text_With_Options_And_Text_Field, Text_With_Text_Field
 from game.components.input_.response_validator import text_validator_maker
-from game.components.send.old_message import Old_Message
+from game.components.participant import Player
+from game.components.send.option import NO_YES_OPTIONS, make_options
+from game.components.send.sendable.sendables import (
+    Text_With_Options_And_Text_Field,
+    Text_With_Text_Field,
+)
 from game.game_bases.elimination_base import Elimination_Base
 from game.game_bases.game_word_base import Game_Word_Base
-from game.components.send.option import make_options, NO_YES_OPTIONS
 from utils.emoji_groups import LEFT_RIGHT_EMOJI
-from game.components.participant import Player
 
 NUM_LETTERS = games_config['elimination_letter_adder']['num_letters']
 START_LETTERS = games_config['elimination_letter_adder']['start_letters']

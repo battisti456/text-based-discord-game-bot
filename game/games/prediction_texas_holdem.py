@@ -3,7 +3,7 @@ from typing import override
 from config.games_config import games_config
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
-from game.components.participant import Player
+from game.components.participant import Player, PlayerDict, mention_participants
 from game.game_bases import Card_Base, Rounds_With_Points_Base
 from game.game_bases.card_base import (
     Card_Holder,
@@ -13,7 +13,6 @@ from game.game_bases.card_base import (
 )
 from utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
 from utils.grammar import ordinate
-from utils.types import PlayerDict
 
 CONFIG = games_config['prediction_texas_holdem']
 
@@ -83,15 +82,15 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
             player_diffs[player] = diff
         for player in self.unkicked_players:
             await self.send(
-                text=f"{self.format_players_md([player])}'s hand was:",
+                text=f"{mention_participants([player])}'s hand was:",
                 attach_files=(self.ch_to_attachment(self.hands[player]),)
             )
             await self.send(
-                text=f"Meaning {self.format_players_md([player])}'s best poker hand with the shared cards was:",
+                text=f"Meaning {mention_participants([player])}'s best poker hand with the shared cards was:",
                 attach_files=(self.ch_to_attachment(players_best_poker_hands[player]),)
             )
             await self.say(
-                f"This placed {self.format_players_md([player])} {ordinate(1+ranking.index(player))} "+
+                f"This placed {mention_participants([player])} {ordinate(1+ranking.index(player))} "+
                 f"in the hand rankings with a {name_poker_hand_by_rank(player_hand_ranks[player])}, "+
                 f"and they predicted they would be {ordinate(responses[player]+1)}."
             )

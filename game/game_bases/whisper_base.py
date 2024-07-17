@@ -13,8 +13,8 @@ class Whisper_Base(Game):
         if Whisper_Base not in self.initialized_bases:
             self.initialized_bases.append(Whisper_Base)
     async def w_say(self,text:TextLike,player:Player):
-        address = await self.sender.generate_address(for_players=frozenset((player,)))
+        address = await self.sender.generate_address(for_participants=frozenset((player,)))
         await self.say(text,address)
     async def w_send(self,player:Player,**kwargs:Unpack[MakeSendableArgs]):
-        address = await self.sender.generate_address(for_players=frozenset((player,)))
+        address = await self.sender.generate_address(for_participants=frozenset((player,)))
         await self.send(address=address,**kwargs)

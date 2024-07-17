@@ -1,25 +1,27 @@
-import json
-from typing import Callable, override, overload, Optional, Iterator
+#UNFINISHED
+
 import dataclasses
+import json
+from typing import Callable, Iterator, Optional, overload, override
 
 import chess
 
-from utils.logging import get_logger
-from game.components.participant import Player, Team
-from game.components.send.option import Option
 from game.components.game_interface import Game_Interface
-from game.components.input_ import (
-    Player_Single_Selection_Input,
-    run_inputs,
-)
-from game.components.send.old_message import Old_Message, _Old_Message
+from game.components.participant import Placement, Player, PlayerDict, Team, TeamDict
+from game.components.send.option import Option
 from game.game_bases import Chess_Base, Team_Base
-from utils.grammar import wordify_iterable
+from utils.chess_tools import (
+    RenderChessOptional,
+    capture_text,
+    get_move,
+    get_move_text,
+    get_piece_name,
+)
 from utils.common import get_first
-from utils.chess_tools import RenderChessOptional, get_move, get_move_text, capture_text, get_piece_name
 from utils.emoji_groups import NO_YES_EMOJI
+from utils.grammar import wordify_iterable
+from utils.logging import get_logger
 from utils.pillow_tools import Color, get_color_name
-from utils.types import Placement, PlayerDict, TeamDict
 
 logger = get_logger(__name__)
 

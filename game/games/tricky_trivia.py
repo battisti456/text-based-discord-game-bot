@@ -5,12 +5,12 @@ from config.games_config import games_config
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
 from game.components.input_.response_validator import text_validator_maker
+from game.components.participant import PlayerDict, mention_participants
 from game.game_bases import (
     Rounds_With_Points_Base,
     Trivia_Base,
 )
 from game.game_bases.trivia_base import TriviaDict
-from utils.types import PlayerDict
 
 CONFIG = games_config['tricky_trivia']
 
@@ -59,13 +59,13 @@ class Tricky_Trivia(Trivia_Base,Rounds_With_Points_Base):
             players_who_gave = list(player for player in self.unkicked_players if responses[player] == option)
             players_who_chose = list(player for player in self.unkicked_players if options[choices[player]] == option and player not in players_who_gave)
             if not players_who_chose == []:
-                await self.say(f"{self.format_players_md(players_who_gave)} provided the answer:\n'{option}'\n and fooled {self.format_players_md(players_who_chose)}.")
+                await self.say(f"{mention_participants(players_who_gave)} provided the answer:\n'{option}'\n and fooled {mention_participants(players_who_chose)}.")
                 await self.score(players_who_gave,len(players_who_chose)*POINTS_FOOL)
         correct_answer_text = f"The correct answer was:\n'{trivia_dict['correct_answer']}'"
         correct_choice_index = options.index(trivia_dict['correct_answer'])
         correct_players = list(player for player in self.unkicked_players if choices[player] == correct_choice_index)
         if correct_players:
-            await self.say(f"{correct_answer_text}\n{self.format_players_md(correct_players)} got the answer right!")
+            await self.say(f"{correct_answer_text}\n{mention_participants(correct_players)} got the answer right!")
             point_dict = make_player_dict(correct_players,POINTS_GUESS)
             await self.score(correct_players,point_dict)
         else:

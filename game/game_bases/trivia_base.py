@@ -4,9 +4,9 @@ from typing import Optional, TypedDict
 import pytrivia
 
 from game.components.game_interface import Game_Interface
-from game.components.participant import Player
+from game.components.participant import Player, PlayerDict
 from game.game import Game
-from utils.types import Grouping, PlayerDict
+from utils.types import Grouping
 
 
 class TriviaDict(TypedDict):

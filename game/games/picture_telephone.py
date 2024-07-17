@@ -1,12 +1,14 @@
 from typing import override
 
 from game.components.game_interface import Game_Interface
-from game.components.participant import Player
-from game.components.send.old_message import Old_Message, _Old_Message
-from game.components.input_ import Player_Text_Input, run_inputs
 from game.components.input_.response_validator import text_validator_maker
+from game.components.participant import (
+    Player,
+    PlayerDict,
+    PlayerDictOptional,
+    mention_participants,
+)
 from game.game_bases import Image_Search_Base, Rounds_With_Points_Base
-from utils.types import PlayerDict, PlayerDictOptional
 
 NUM_ROUNDS = 1
 MIN_NUM_WORDS = 1
@@ -70,7 +72,7 @@ class Picture_Telephone(Rounds_With_Points_Base, Image_Search_Base):
                 limit_players_who_can_see=[player]
             )
             inputs[player] = Player_Text_Input(
-                name = f"{self.sender.format_players_md([player])}",
+                name = f"{mention_participants([player])}",
                 gi = self.gi,
                 sender = self.sender,
                 players = [player],

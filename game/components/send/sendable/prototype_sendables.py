@@ -21,9 +21,11 @@ class With_Options(Sendable, is_prototype = True):
     with_options:'tuple[Option,...]' = field(kw_only=True)
     min_selectable:'Optional[int]' = field(default=None,kw_only=True)
     max_selectable:'Optional[int]' = field(default=None,kw_only=True)
+
 @dataclass(frozen = True)
 class With_Text_Field(Sendable, is_prototype = True):
     hint_text:Optional['TextLike'] = field(default=None,kw_only=True)
+
 @dataclass(frozen=True)
 class Reference_Message(Sendable, is_prototype = True):
     reference_message:'Address' = field(kw_only=True)
