@@ -39,11 +39,7 @@ class Discord_Game_Interface(Game_Interface):
         self.client = discord.Client(intents = intents)
         self.default_sender = Discord_Sender(self)
 
-        self.players = list(Discord_Player.make(
-            client=self.client,
-            channel_id=channel_id,
-            id = player_id
-        ) for player_id in player_ids)
+        self.players:list[Discord_Player] = []
 
         self.first_initialization = True
         self.on_start_callbacks:list[AsyncCallback] = []
@@ -55,6 +51,12 @@ class Discord_Game_Interface(Game_Interface):
         @self.client.event
         async def on_ready():#triggers when client is logged into discord
             if self.first_initialization:
+                for player_id in player_ids:
+                    self.players.append(await Discord_Player.make(
+                        client = self.client,
+                        channel_id=channel_id,
+                        id=player_id
+                    ))
                 for callback in self.on_start_callbacks:
                     await callback()
                 self.first_initialization = False
@@ -173,6 +175,3 @@ class Discord_Game_Interface(Game_Interface):
             self.who_can_see_dict[fr_players] = channel_id
         logger.info(f"channel limited game interface changing channel to id = {channel_id} so player_ids = {players} can see")
         return channel_id
-
-        
-        

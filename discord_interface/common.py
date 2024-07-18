@@ -73,12 +73,15 @@ class Discord_Address(Address):
 class Discord_Player(Player):
     id:int = field(kw_only=True)
     @classmethod
-    def make(cls,client:discord.Client,channel_id:int,id:int) -> 'Discord_Player':
-        user = client.get_user(id)
+    async def make(cls,client:discord.Client,channel_id:int,id:int) -> 'Discord_Player':
+        await client.wait_until_ready()
+        user = await client.fetch_user(id)
         assert user is not None
-        channel = client.get_channel(channel_id)
+        await client.wait_until_ready()
+        channel = await client.fetch_channel(channel_id)
         assert isinstance(channel,CompatibleChannels)
-        member = channel.guild.get_member(id)
+        await client.wait_until_ready()
+        member = await channel.guild.fetch_member(id)
         assert member is not None
         return Discord_Player(
             name = member.display_name,
