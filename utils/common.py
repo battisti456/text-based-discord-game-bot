@@ -1,7 +1,12 @@
 import random
-from typing import Iterable, Mapping, Optional, Any
+from typing import Iterable, Mapping, Optional, Any, TypeVar
 
-from utils.types import Grouping, GroupingSafeVar
+from utils.types import Grouping, GroupingSafeVar, SimpleCallback
+
+T = TypeVar('T')
+
+async def run_simple_callback(callback:SimpleCallback[T],val:T):
+    ...
 
 def no_filter(*args:Any,**kwargs:Any) -> bool:
     return True

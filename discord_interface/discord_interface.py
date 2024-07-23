@@ -16,10 +16,13 @@ from game.components.game_interface import (
 )
 from game.components.participant import Player, name_participants
 from game.components.send import Interaction, Address
-from game.components.send.interaction import Send_Text
+from game.components.send.interaction import Send_Text, Command
 from game.components.send import sendables
 
+from utils.common import get_first
 from utils.types import Grouping
+from config.discord_config import discord_config
+from config.config import config
 
 type AsyncCallback = Callable[[],Awaitable[None]]
 
@@ -65,6 +68,15 @@ class Discord_Game_Interface(Game_Interface):
         @self.client.event
         async def on_message(payload:discord.Message):#triggers when client
             address:Address|None
+            if payload.author.id in discord_config["command_ids"] and payload.content.startswith(config['command_prefix']):
+                await self.interact(Interaction(
+                    at_address=None,
+                    with_sendable=None,
+                    by_player=self.find_player(payload.author.id),
+                    at_time=time(),
+                    content=Command(payload.content)
+                ))
+                return
             if payload.author.id not in self.players:
                 return
             try:
@@ -81,7 +93,7 @@ class Discord_Game_Interface(Game_Interface):
             await self.interact(Interaction(
                 at_address=address,
                 with_sendable=None,
-                by_player=payload.author.id,#type:ignore
+                by_player=self.find_player(payload.author.id),
                 at_time=time(),
                 content = Send_Text(payload.content)
             ))
@@ -90,6 +102,8 @@ class Discord_Game_Interface(Game_Interface):
             if payload.cached_message is not None:
                 await on_message(payload.cached_message)
         #endregion
+    def find_player(self,player_id:int) -> Player:
+        return get_first(player for player in self.players if player.id == player_id)
     @override
     async def reset(self):
         await super().reset()

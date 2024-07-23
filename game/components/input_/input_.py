@@ -1,5 +1,6 @@
 import asyncio
-from typing import TYPE_CHECKING, Generic, Required, Sequence, TypedDict, Unpack
+from inspect import iscoroutinefunction
+from typing import TYPE_CHECKING, Generic, Iterable, Required, TypedDict, Unpack
 
 from typing_extensions import TypeVar
 
@@ -9,7 +10,7 @@ from game.components.interface_component import Interface_Component
 from game.components.participant import ParticipantVar
 from smart_text import TextLike
 from utils.logging import get_logger
-from utils.types import Grouping
+from utils.types import Grouping, SimpleCallback
 
 if TYPE_CHECKING:
     from game.components.game_interface import Game_Interface
@@ -23,6 +24,7 @@ WAIT_UNTIL_DONE_CHECK_TIME = 5
 
 InputDataTypeVar = TypeVar('InputDataTypeVar')
 
+
 class InputArgs(
     Generic[InputDataTypeVar,InputNameVar,ParticipantVar],
     TypedDict,
@@ -31,7 +33,7 @@ class InputArgs(
     response_validator:ResponseValidator[InputDataTypeVar,ParticipantVar]
     completion_criteria:'Completion_Criteria[InputDataTypeVar,InputNameVar,ParticipantVar]'
     participants:Required[Grouping[ParticipantVar]]
-    status_displays:Sequence['Status_Display[InputDataTypeVar,InputNameVar,ParticipantVar]']
+    on_updates:Iterable['SimpleCallback[Input[InputDataTypeVar,InputNameVar,ParticipantVar]]']
     identifier:TextLike
 
 class RunArgs(
@@ -50,14 +52,18 @@ class Input(
         self.participants: Grouping[ParticipantVar] = kwargs['participants']
         self.response_validator:ResponseValidator[InputDataTypeVar,ParticipantVar] = not_none
         self.completion_criteria:'Completion_Criteria[InputDataTypeVar,InputNameVar,ParticipantVar]' = All_Valid_Responded(self)
-        self.status_displays:Sequence['Status_Display[InputDataTypeVar,InputNameVar,ParticipantVar]'] = tuple()
+        self.on_updates:set['SimpleCallback[Input[InputDataTypeVar,InputNameVar,ParticipantVar]]'] = set()
         self.identifier:TextLike|None = None
         if 'response_validator' in kwargs:
             self.response_validator = kwargs['response_validator']
         if 'completion_criteria' in kwargs:
             self.completion_criteria = kwargs['completion_criteria']
-        if 'status_displays' in kwargs:
-            self.status_displays = kwargs['status_displays']
+        if 'on_updates' in kwargs:
+            self.on_updates.update(kwargs['on_updates'])
+        else:
+            self.on_updates.add(
+                Status_Display[InputDataTypeVar,InputNameVar,ParticipantVar]()
+            )
         if 'identifier' in kwargs:
             self.identifier = kwargs['identifier']
         self.responses:Responses[InputDataTypeVar,ParticipantVar] = Responses(self)
@@ -75,11 +81,17 @@ class Input(
         await self.setup()
         await self.wait_until_done()
         await self.unsetup()
-    async def update_displays(self):
-        for display in self.status_displays:
-            await display.display(self)
+    async def update_on_updates(self):
+        for on_update in self.on_updates:
+            if iscoroutinefunction(on_update):
+                await on_update(self)
+            else:
+                on_update(self)
+    def on_update(self,callback:'SimpleCallback[Input[InputDataTypeVar,InputNameVar,ParticipantVar]]'):
+        self.on_updates.add(callback)
     def reset(self):
         self.responses = Responses(self)
 
 from game.components.input_.completion_criteria import All_Valid_Responded  # noqa: E402
 from game.components.input_.responses import Responses  # noqa: E402
+from game.components.input_.status_display import Status_Display # noqa: E402

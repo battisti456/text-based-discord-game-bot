@@ -61,8 +61,8 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
                     text = f"**What word will you spell with '{self.current_letters}'?**"
                 ),choose_word_address)
         status_display = (_(change_letter_address),)
-        change_letter_input.status_displays = status_display
-        choose_word_input.status_displays = status_display
+        change_letter_input.on_updates = status_display
+        choose_word_input.on_updates = status_display
         
         chosen_word:None|str = None
         while chosen_word is None:

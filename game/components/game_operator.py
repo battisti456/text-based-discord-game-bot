@@ -24,8 +24,7 @@ from utils.logging import get_logger
 from game.components.game_interface import Game_Interface
 from game.components.interface_operator import Interface_Operator
 from game.components.send import Interaction
-from game.components.send.interaction import Send_Text
-from game.components.send.sendable.sendables import Text_Only
+from game.components.send.interaction import Command
 from game.game import Game
 from game.games import random_game, search_games, valid_games
 from utils.common import get_first
@@ -130,7 +129,9 @@ class Game_Operator(Interface_Operator):
         self.state:GameOperatorState = 'idle'
         self.game:Optional[Game] = None
         self.run_task:Optional[asyncio.Task] = None
-        self.bind()
+        self.input = self.im.command(participants=list(
+            player for player in self.all_players if player.command_user
+        ))
     @command
     async def help(self,command:Optional[str]):
         """responds with the doc-string of the respective command, or with the overall commands if not command is given
@@ -173,7 +174,7 @@ class Game_Operator(Interface_Operator):
             StateIncompatibility: if game is not 'idle' and ready to play
             ArgumentError: if the game could not be found
         """
-        if not self.state == 'idle':
+        if self.state != 'idle':
             raise StateIncompatibility(self.state,GAME_OPERATOR_STATES - set(('idle',)))
         game_type:type[Game]
         if name is None:
@@ -194,7 +195,6 @@ class Game_Operator(Interface_Operator):
             await self.say("There has been an error in generating your placements. Many apologies.")
             logger.error(f"Game '{self.game}' errored trying to generate placements : {e}.")
         await self.gi.reset()
-        self.bind()#re-add this function to game_interface's on action list
         self.state = 'idle'
     @command
     async def force_idle(self):
@@ -283,23 +283,23 @@ class Game_Operator(Interface_Operator):
                 raise ArgumentError(f"Containing '{CP}' in your content is not permitted.")
         await self.gi._trigger_action(interaction)
     def bind(self):
-        @self.gi.watch(filter=lambda interaction: isinstance(interaction.content,Send_Text),owner = self)
-        async def recv_command(interaction:Interaction):
-            assert isinstance(interaction.content,Send_Text)
-            if interaction.content.text.startswith(config['command_prefix']):
-                if interaction.at_address is None:
-                    async def send(content:str):
-                        await self.sender(Text_Only(text=content))
-                    try:
-                        command_data = docopt(COMMAND_DOCSTRING,list(shlex.shlex(interaction.content.text[len(CP):],punctuation_chars=True)),default_help=False)
-                    except DocoptExit as e:
-                        await send(
-                            "Our interpreter was unable to interpret this command of:\n" +
-                            f"'{interaction.content.text}'\n" +
-                            e.__str__()
-                        )
-                        return
-                    try:
-                        await self.command_structure.launch_commands(command_data)
-                    except CommandExit as e:
-                        await send(e.args[0])
+        @self.gi.watch(owner=self)
+        async def _(interaction:Interaction):
+            if interaction.by_player.command_user and isinstance(interaction.content,Command):
+                await self.recv_command(interaction.content)
+    async def recv_command(self,command:Command):
+        async def send(content:str):
+            await self.send(text=content)
+        try:
+            command_data = docopt(COMMAND_DOCSTRING,list(shlex.shlex(command.text[len(CP):],punctuation_chars=True)),default_help=False)
+        except DocoptExit as e:
+            await send(
+                "Our interpreter was unable to interpret this command of:\n" +
+                f"'{command.text}'\n" +
+                e.__str__()
+            )
+            return
+        try:
+            await self.command_structure.launch_commands(command_data)
+        except CommandExit as e:
+            await send(e.args[0])

@@ -10,6 +10,7 @@ from game.components.send import Address
 from smart_text import TextLike
 
 from utils.logging import get_logger
+from config.discord_config import discord_config
 
 logger = get_logger(__name__)
 
@@ -87,7 +88,8 @@ class Discord_Player(Player):
             name = member.display_name,
             user_name = user.name,
             mention=user.mention,
-            id=id
+            id=id,
+            command_user=id in discord_config['command_ids']
         )
 
 
