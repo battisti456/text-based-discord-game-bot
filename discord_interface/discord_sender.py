@@ -11,8 +11,12 @@ from discord_interface.common import (
     edit_to_send,
     f,
 )
-from discord_interface.custom_views import One_Selectable_View, One_Text_Field_View, Options_And_Text_View
-from utils.logging import get_logger
+from discord_interface.custom_views import (
+    Button_Select_View,
+    One_Selectable_View,
+    One_Text_Field_View,
+    Options_And_Text_View,
+)
 from game.components.participant import Player
 from game.components.send import Sendable, Sender
 from game.components.send.sendable.prototype_sendables import (
@@ -27,6 +31,7 @@ from game.components.send.sendable.sendables import (
     Text_With_Options_And_Text_Field,
     Text_With_Text_Field,
 )
+from utils.logging import get_logger
 
 if TYPE_CHECKING:
     from discord_interface.discord_interface import Discord_Game_Interface
@@ -84,9 +89,14 @@ class Discord_Sender(Sender[Discord_Address]):
                 'content' : f(sendable.text)
             })
         elif isinstance(sendable,Text_With_Options):
+            view:discord.ui.View
+            if len(sendable.with_options) == 2 and sendable.max_selectable == 1:
+                view = Button_Select_View(self.gi,address,sendable)
+            else:
+                view = One_Selectable_View(self.gi,address,sendable)
             edit_kwargs.append({
                 'content' : f(sendable.text),
-                'view' : One_Selectable_View(self.gi,address,sendable)
+                'view' : view
             })
         elif isinstance(sendable,Text_With_Text_Field):
             edit_kwargs.append({
