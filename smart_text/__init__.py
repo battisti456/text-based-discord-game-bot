@@ -1,12 +1,10 @@
 from typing import Iterable
 
-type TextLike = 'str|Smart_Text'
-
 class Smart_Text(str):
     ...
 
-def join(values:Iterable,join:TextLike = '') -> TextLike:
-    cumulative:TextLike = ""
+def join(values:Iterable,join:'TextLike' = '') -> 'TextLike':
+    cumulative:'TextLike' = ""
     first = True
     for value in values:
         if not first:
@@ -14,3 +12,5 @@ def join(values:Iterable,join:TextLike = '') -> TextLike:
         first = False
         cumulative += value
     return cumulative
+
+TextLike = str|Smart_Text

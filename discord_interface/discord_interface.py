@@ -14,7 +14,7 @@ from utils.logging import get_logger
 from game.components.game_interface import (
     Game_Interface,
 )
-from game.components.participant import Player, name_participants
+from game.components.participant import Player, name_participants, Team
 from game.components.send import Interaction, Address
 from game.components.send.interaction import Send_Text, Command
 from game.components.send import sendables
@@ -133,7 +133,7 @@ class Discord_Game_Interface(Game_Interface):
                 logger.error(f"failed to find message {message}")
             except discord.HTTPException:
                 logger.error(f"failed to fetch message {message}")
-    async def _new_channel(self, name: Optional[str], who_can_see: Optional[Iterable[Player]]) -> int:
+    async def _new_channel(self, name: Optional[str], who_can_see: Optional[Iterable[Player|Team]]) -> int:
         assert isinstance(self.channel_id,int)
         main_channel = self.client.get_channel(self.channel_id)
         assert isinstance(main_channel,discord.TextChannel)
@@ -148,8 +148,8 @@ class Discord_Game_Interface(Game_Interface):
                 )
         if who_can_see is not None:
             for player in who_can_see:
-                assert isinstance(player,int)
-                user = self.client.get_user(player)
+                assert isinstance(player,Discord_Player)
+                user = self.client.get_user(player.id)
                 assert user is not None#user not found
                 await self.client.wait_until_ready()
                 await thread.add_user(user)

@@ -1,6 +1,5 @@
 import asyncio
-from inspect import iscoroutinefunction
-from typing import TYPE_CHECKING, Generic, Iterable, Required, TypedDict, Unpack
+from typing import TYPE_CHECKING, Generic, Iterable, Required, TypedDict, Unpack, override
 
 from typing_extensions import TypeVar
 
@@ -69,8 +68,10 @@ class Input(
         self.responses:Responses[InputDataTypeVar,ParticipantVar] = Responses(self)
     async def setup(self):
         logger.info(f"{self} setting up.")
+        await self.update_on_updates()
     async def unsetup(self):
         logger.info(f"{self} undoing setup.")
+        await self.update_on_updates()
     async def wait_until_done(self):
         logger.info(f"{self} waiting until is_done.")
         while not self.is_done():
@@ -83,14 +84,22 @@ class Input(
         await self.unsetup()
     async def update_on_updates(self):
         for on_update in self.on_updates:
-            if iscoroutinefunction(on_update):
-                await on_update(self)
-            else:
-                on_update(self)
+            val = on_update(self)
+            try:
+                await val#type:ignore
+            except TypeError:
+                ...
     def on_update(self,callback:'SimpleCallback[Input[InputDataTypeVar,InputNameVar,ParticipantVar]]'):
         self.on_updates.add(callback)
     def reset(self):
         self.responses = Responses(self)
+    @override
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__}({"" if self.identifier is None else self.identifier})'
+    @override
+    def __repr__(self) -> str:
+        return str(self)
+
 
 from game.components.input_.completion_criteria import All_Valid_Responded  # noqa: E402
 from game.components.input_.responses import Responses  # noqa: E402

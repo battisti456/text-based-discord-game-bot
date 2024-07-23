@@ -1,10 +1,9 @@
-from typing import TYPE_CHECKING, Generic
+from typing import TYPE_CHECKING, Generic, Hashable
 
 from typing_extensions import TypeVar
 
 from utils.logging import get_logger
 from game.components.send.address import Address
-from game.components.participant import Participant
 
 if TYPE_CHECKING:
     from game.components.send.sendable import Sendable
@@ -24,5 +23,5 @@ class Sender(Generic[SenderSendAddress]):
         """lowest level definition of the default Sender's sending capabilities"""
         logger.info(f"Sent {sendable} at {address}.")
         return await self.generate_address()
-    async def generate_address(self,*,for_participants:frozenset[Participant] = frozenset()) -> SenderSendAddress:
+    async def generate_address(self,*args:Hashable) -> SenderSendAddress:
         raise NotImplementedError()

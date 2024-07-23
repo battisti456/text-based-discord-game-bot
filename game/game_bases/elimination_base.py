@@ -81,7 +81,6 @@ class Elimination_Base(Elimination_Framework[Player]):
         self.eliminate_participants(players)
     @override
     def generate_placements(self) -> PlayerPlacement:
-        print(self._generate_participant_placements())
         return (tuple(self.not_eliminated),) + self._generate_participant_placements()
             
             

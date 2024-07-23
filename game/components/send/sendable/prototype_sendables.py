@@ -19,8 +19,8 @@ class Attach_Files(Sendable, is_prototype = True):
 @dataclass(frozen=True)
 class With_Options(Sendable, is_prototype = True):
     with_options:'tuple[Option,...]' = field(kw_only=True)
-    min_selectable:'Optional[int]' = field(default=None,kw_only=True)
-    max_selectable:'Optional[int]' = field(default=None,kw_only=True)
+    min_selectable:'Optional[int]' = field(default=1,kw_only=True)
+    max_selectable:'Optional[int]' = field(default=1,kw_only=True)
 
 @dataclass(frozen = True)
 class With_Text_Field(Sendable, is_prototype = True):

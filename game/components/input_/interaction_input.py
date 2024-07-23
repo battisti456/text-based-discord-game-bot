@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Literal, Unpack, override
 
-from typeguard import check_type
+from typeguard import check_type, TypeCheckError
 
 import game.components.send.interaction as interactions
 from game.components.input_.input_ import (
@@ -49,7 +49,7 @@ class Interaction_Receiving_Player_Input(
             self.allow_edits = kwargs['allow_edits']
     def interaction_filter(self,interaction:Interaction) -> bool:
         try:
-            check_type(interaction,InteractionContentVar)
+            check_type(interaction.content,InteractionContentVar)
             if not self._interaction_filter(interaction):
                 logger.debug(f"{self} rejected {interaction} for failing the provided interaction filter.")
                 return False
@@ -57,11 +57,12 @@ class Interaction_Receiving_Player_Input(
                 logger.debug(f"{self} rejected {interaction} because edits are not currently allowed, and {interaction.by_player} already has a valid response of {self.responses[interaction.by_player]}")
                 return False
             return True
-        except TypeError:
-            logger.debug(f"{self} rejected {interaction} for failing the content type check.")
+        except TypeCheckError as e:
+            logger.debug(f"{self} rejected {interaction} for failing the content type check. {str(e)}")
             return False
     async def on_interact(self,interaction:Interaction[InteractionContentVar]):
         self.responses[interaction.by_player] = interaction.content
+        await self.update_on_updates()
     @override
     async def setup(self):
         await super().setup()

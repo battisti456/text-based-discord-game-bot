@@ -111,7 +111,7 @@ class Interface_Component():
         await player_input.run()
 
         return {player:(
-            None if player_input.responses[player] is None else get_first(player_input.responses[player])#type:ignore
+            None if player_input.responses[player] is None else get_first(player_input.responses[player].indices)#type:ignore
         ) for player in wc}
     async def send(self,address:Address|None=None,**kwargs:Unpack[MakeSendableArgs]) -> Address:
         sendable = make_sendable(**kwargs)

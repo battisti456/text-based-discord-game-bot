@@ -290,7 +290,7 @@ class Card_Base(Game):
             self.hands[player] = Hand()
         for player in self.unkicked_players:
             if self.hand_addresses[player] is None:#if first time
-                address = await self.gi.default_sender.generate_address(for_participants=frozenset((player,)))
+                address = await self.gi.default_sender.generate_address(player,player.name +"'s Hand")
                 self.hand_addresses[player] = address
             await self.update_hand(player)
     def ch_to_attachment(self,ch:Card_Holder) -> str:
@@ -309,7 +309,6 @@ class Card_Base(Game):
                 contents += f"Your hand contains the {hand.string_contents()}"
             else:
                 contents += "Your hand is empty."
-        print(self.hand_addresses[player])
         await self.sender(Text_With_Files(
             attach_files=(self.ch_to_attachment(hand),),
             text=contents

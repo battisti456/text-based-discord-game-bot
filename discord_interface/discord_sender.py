@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, Hashable, Iterable, override
 
 import discord
 
@@ -10,6 +10,7 @@ from discord_interface.common import (
     DiscordEditArgs,
     edit_to_send,
     f,
+    pre_process,
 )
 from discord_interface.custom_views import (
     Button_Select_View,
@@ -17,7 +18,7 @@ from discord_interface.custom_views import (
     One_Text_Field_View,
     Options_And_Text_View,
 )
-from game.components.participant import Player
+from game.components.participant import ParticipantType, name_participants
 from game.components.send import Sendable, Sender
 from game.components.send.sendable.prototype_sendables import (
     Text,
@@ -31,6 +32,8 @@ from game.components.send.sendable.sendables import (
     Text_With_Options_And_Text_Field,
     Text_With_Text_Field,
 )
+from smart_text import TextLike
+from utils.common import get_first
 from utils.logging import get_logger
 
 if TYPE_CHECKING:
@@ -47,7 +50,8 @@ class Discord_Sender(Sender[Discord_Address]):
     SUPPORTED_PROTOTYPES:tuple[type[Sendable],...] = (
         Text,
         With_Options,
-        With_Text_Field
+        With_Text_Field,
+        Attach_Files
     )
     def __init__(self,gi:'Discord_Game_Interface'):
         Sender.__init__(self)
@@ -56,22 +60,35 @@ class Discord_Sender(Sender[Discord_Address]):
         self.default_channel = gi.channel_id
 
         self.cached_addresses:dict[Discord_Message,Discord_Address] = {}
+        self.threads:dict[Hashable,int] = {frozenset():self.default_channel}
     @override
     async def generate_address(
         self, 
-        channel_id: 'int | None|Discord_Address' = None,
-        for_players:frozenset['Player'] = frozenset(),*,
+        *args:Hashable,
         length:int = 1) -> 'Discord_Address':
-        if channel_id is None or (isinstance(channel_id,Discord_Address) and len(channel_id.messages) == 0):
-            if len(for_players) == 0:
-                channel_id = self.default_channel
-            else:
-                channel_id = await self.gi.who_can_see_channel(for_players)
-        if isinstance(channel_id,Discord_Address):
-            for_players = channel_id.for_players
-            channel_id = channel_id.messages[-1].channel_id#type:ignore
-        assert isinstance(channel_id,int)
-        return Discord_Address(for_players=for_players, messages=list(Discord_Message(message_id=None,channel_id = channel_id) for _ in range(length)))
+        key = frozenset(args)
+        if key not in self.threads.keys():
+            name:TextLike|None = None
+            try:
+                name = get_first(val for val in key if isinstance(val,TextLike))
+            except IndexError:
+                ...
+            participants:set[ParticipantType] = set()
+            for val in key:
+                if isinstance(val,ParticipantType):
+                    participants.add(val)
+                if isinstance(val,Iterable):
+                    for p in val:
+                        if isinstance(p,ParticipantType):
+                            participants.add(p)
+            if name is None:
+                if len(participants) == 0:
+                    name = "Private Channel"
+                else:
+                    name = name_participants(participants) +"'s private channel"
+            thread_id = await self.gi._new_channel(name,participants)
+            self.threads[key] = thread_id
+        return Discord_Address(messages=list(Discord_Message(message_id=None,channel_id = self.threads[key]) for _ in range(length)), key = key)
     async def extend_address(self,address:Discord_Address, num:int):
         to_add = await self.generate_address(
             None if len(address.messages) == 0 else address.messages[-1].channel_id,#type:ignore
@@ -109,7 +126,9 @@ class Discord_Sender(Sender[Discord_Address]):
                 'view' : Options_And_Text_View(self.gi,address,sendable)
             })
         else:#unknown type, just go by subtypes
-            logger.warning(f"Type of {sendable} not supported by {self}, attempting to send primitives but {sendable.prototypes()-set(self.SUPPORTED_PROTOTYPES)} are not supported.")
+            unsupported = sendable.prototypes()-set(self.SUPPORTED_PROTOTYPES)
+            if unsupported:
+                logger.warning(f"Type of {sendable} not supported by {self}, attempting to send primitives but {unsupported} are not supported.")
             num_views:int = sum(int(isinstance(sendable,prototype)) for prototype in (
                 With_Text_Field,
                 With_Options
@@ -151,7 +170,7 @@ class Discord_Sender(Sender[Discord_Address]):
             kwargs:DiscordEditArgs
             message = address.messages[i]
             if i >= len(edit_kwargs):
-                kwargs = {"content" : BLANK_TEXT}
+                kwargs = {}
             else:
                 kwargs = edit_kwargs[i]
             channel = self.client.get_channel(message.channel_id)
@@ -166,5 +185,5 @@ class Discord_Sender(Sender[Discord_Address]):
                 await self.client.wait_until_ready()
                 discord_message = await partial_message.fetch()
                 await self.client.wait_until_ready()
-                await discord_message.edit(**kwargs)
+                await discord_message.edit(**pre_process(kwargs))
         return address

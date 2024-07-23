@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 
 MESSAGE_MAX_LENGTH = 1800#actually 2000, but I leave extra for split indicators
 SLEEP429 = 10
-BLANK_TEXT = "--blank--"
+BLANK_TEXT = "_ _"#should appear blank
 
 class DiscordEditArgs(TypedDict, total = False):
     content:str
@@ -36,7 +36,15 @@ class DiscordSendArgs(TypedDict,total = False):
     reference:Union[discord.Message, discord.MessageReference, discord.PartialMessage]
     view:discord.ui.View
     silent:bool
+def pre_process(kw_args:DiscordEditArgs) -> DiscordEditArgs:
+    to_return = kw_args.copy()
+    if 'content' in kw_args and not (kw_args['content'].isspace() or kw_args['content'] == ''):
+        to_return['content'] = kw_args['content']
+    else:
+        to_return['content'] = BLANK_TEXT
+    return to_return
 def edit_to_send(kw_args:DiscordEditArgs) -> DiscordSendArgs:
+    kw_args = pre_process(kw_args)
     to_return:DiscordSendArgs = {}
     if 'content' in kw_args:
         to_return['content'] = kw_args['content']
@@ -44,7 +52,7 @@ def edit_to_send(kw_args:DiscordEditArgs) -> DiscordSendArgs:
         to_return['embed'] = kw_args['embed']
     if 'attachments' in kw_args:
         filtered = tuple(item for item in kw_args['attachments'] if isinstance(item,discord.File))
-        if len(filtered) != kw_args['attachments']:
+        if len(filtered) != len(kw_args['attachments']):
             logger.error(f"Discord attachments ignored in {kw_args['attachments']}")
         to_return['files'] = filtered
     if 'suppress' in kw_args:
@@ -67,7 +75,7 @@ class Discord_Message():
 
 @dataclass(frozen=True)
 class Discord_Address(Address):
-    messages:list[Discord_Message] = field(hash=False,compare=False)
+    messages:list[Discord_Message] = field(hash=False,compare=False,kw_only=True)
     id:uuid.UUID = field(default_factory=uuid.uuid4,init=False)
 
 @dataclass(frozen=True)
@@ -91,7 +99,6 @@ class Discord_Player(Player):
             id=id,
             command_user=id in discord_config['command_ids']
         )
-
 
 
 

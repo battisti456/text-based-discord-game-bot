@@ -189,7 +189,6 @@ class Letter_RO(Physics_Base.Render_Object):
         if len(to_return) == 0:
             return None
         else:
-            print(to_return)
             return frozenset(to_return)
     @override
     def insert(self, image: PIL.Image.Image) -> PIL.Image.Image:

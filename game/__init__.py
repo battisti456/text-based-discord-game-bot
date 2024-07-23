@@ -11,7 +11,7 @@ from game.components.participant import (
 )
 from utils.types import KickReason, Number, Placement
 
-utils.logging.LOGGING_LEVEL = config['logging_level']
+utils.logging.set_logging_level(config['logging_level'])
 
 #player/players being _______
 kick_text:dict[KickReason,str] = {

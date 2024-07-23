@@ -47,7 +47,6 @@ def main():
         values[color] = {}
         for num_players in range(MIN_PLAYERS,MAX_PLAYERS+1):
             values[color][num_players] = generate_sharing(generate_board_value(board,color),chess.SQUARES,num_players)
-    print(values)
     with open(OUT_FILE,'w') as file:
         json.dump(values,file,indent=4)
 

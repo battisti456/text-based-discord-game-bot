@@ -26,11 +26,11 @@ class Status_Display(Generic[InputDataTypeVar,InputNameVar,ParticipantVar]):
             return to_return
         to_return += (
             self.identify_input(inpt) + 
-            'has been completed' if is_done else
-            'is not yet completed'
+            (' has been completed' if is_done else
+            ' is not yet completed')
         )
         to_return += '.\n'
-        to_return.capitalize()
+        to_return = to_return.capitalize()
         return to_return
     def make_participant_status(self,inpt:Input[InputDataTypeVar,InputNameVar,ParticipantVar],participant:ParticipantVar):
         to_return:TextLike = ''
@@ -38,14 +38,15 @@ class Status_Display(Generic[InputDataTypeVar,InputNameVar,ParticipantVar]):
         valid:bool
         feedback:TextLike|None
         valid,feedback = inpt.response_validator(participant,value)
-        if self.show_input_completion_status:
+        show_completed = self.show_input_completion_status and not (valid and self.hide_completed)
+        if show_completed:
             to_return += (
-                ' has ' + '' if valid else 'not' +
+                ' has ' + ('' if valid else 'not ') +
                 'submitted a valid response to ' +
                 self.identify_input(inpt)
             )
         if self.show_participant_feedback and feedback is not None:
-            if self.show_input_completion_status:
+            if show_completed:
                 to_return += ' and'
             to_return += (
                 ' has received the feedback ' +
@@ -67,8 +68,6 @@ class Status_Display(Generic[InputDataTypeVar,InputNameVar,ParticipantVar]):
         return to_return
     async def __call__(self,inpt:Input[InputDataTypeVar,InputNameVar,ParticipantVar]):
         new_text = self.make_text(inpt)
-        if new_text == '':
-            return
         if new_text == self.__last_test:
             return
         self.__last_test = new_text

@@ -1,7 +1,6 @@
 import os
-from functools import wraps
-from inspect import iscoroutinefunction
-from typing import Any, Awaitable, Hashable
+from dataclasses import dataclass
+from typing import Any, Hashable
 
 from config.config import config
 from game.components.input_ import Input_Maker
@@ -18,6 +17,17 @@ from utils.logging import get_logger
 
 logger = get_logger(__name__)
 
+@dataclass
+class TriggerStat():
+    attempts:int = 0
+    triggers:int = 0
+    filtered:int = 0
+    def add(self,success:bool):
+        self.attempts += 1
+        if success:
+            self.triggers += 1
+        else:
+            self.filtered += 1
 
 class Game_Interface(object):
     """
@@ -25,42 +35,34 @@ class Game_Interface(object):
     this is a base class meant to be overwritten
     """
     def __init__(self):
-        self.actions:dict[Any,set[InteractionCallback]] = {}
+        self.actions:dict[Any,set[tuple[InteractionFilter[Any],InteractionCallback]]] = {}
         self.default_sender = Sender()
         self.im:Input_Maker = Input_Maker(self)
-    def watch(self,filter:InteractionFilter = no_filter,owner:Any = None):
+    def watch(self,filter:InteractionFilter[Any] = no_filter,owner:Any = None):
         def decorator(func:InteractionCallback):
-            if iscoroutinefunction(func):
-                @wraps(func)
-                async def async_wrapper(interaction:Interaction) -> Response|None:
-                    if filter(interaction):
-                        return func(interaction)#type:ignore
-                if owner not in self.actions.keys():
-                    self.actions[owner] = set()
-                self.actions[owner].add(async_wrapper)
-                return async_wrapper
-            else:
-                @wraps(func)
-                def wrapper(interaction:Interaction) -> Response|None:
-                    if filter(interaction):
-                        return func(interaction)#type:ignore
-                if owner not in self.actions.keys():
-                    self.actions[owner] = set()
-                self.actions[owner].add(wrapper)
-                return wrapper
+            if owner not in self.actions.keys():
+                self.actions[owner] = set()
+            self.actions[owner].add((filter,func))
+            return func
         return decorator
     async def interact(self,interaction:Interaction) -> tuple[Response,...]:
         responses = []
-        for action_set in tuple(self.actions.values()):
-            for action in action_set:
-                if iscoroutinefunction(action):
-                    val = await action(interaction)
-                else:
-                    val = action(interaction)
-                if isinstance(val,Awaitable):
-                    val = await val
+        self.triggers:dict[Hashable,TriggerStat] = {}
+        for owner,filter_callbacks in tuple(self.actions.items()):
+            self.triggers[owner] = TriggerStat()
+            for filter,callback in filter_callbacks:
+                success = filter(interaction)
+                self.triggers[owner].add(success)
+                if not success:
+                    continue
+                val = callback(interaction)
+                try:
+                    val = await val#type:ignore
+                except TypeError:
+                    ...
                 if val is not None:
                     responses.append(val)
+        logger.debug(str(self.triggers))
         return tuple(responses)
     async def reset(self):
         """

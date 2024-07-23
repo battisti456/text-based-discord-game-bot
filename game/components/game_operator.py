@@ -132,6 +132,11 @@ class Game_Operator(Interface_Operator):
         self.input = self.im.command(participants=list(
             player for player in self.all_players if player.command_user
         ))
+        async def reset():
+            await Game_Interface.reset(self.gi)
+            self.bind()
+        self.gi.reset = reset
+        self.bind()
     @command
     async def help(self,command:Optional[str]):
         """responds with the doc-string of the respective command, or with the overall commands if not command is given

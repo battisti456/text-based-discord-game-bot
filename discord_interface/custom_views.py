@@ -1,10 +1,9 @@
 from time import time
-from typing import TYPE_CHECKING,  override, Any
+from typing import TYPE_CHECKING, Any, override
 
 import discord
 
 from discord_interface.common import Discord_Address, f
-from discord_interface.discord_interface import Discord_Game_Interface
 from game.components.send import Interaction, Interaction_Content
 from game.components.send.interaction import Select_Options, Send_Text
 from game.components.send.sendable.prototype_sendables import (
@@ -14,7 +13,6 @@ from game.components.send.sendable.prototype_sendables import (
 from utils.common import get_first
 
 if TYPE_CHECKING:
-    from discord_interface.common import Discord_Address
     from discord_interface.discord_interface import Discord_Game_Interface
     from game.components.send import Option, Response
 
@@ -61,7 +59,7 @@ class Interaction_Handler():
         response = await self.cv.gi.interact(Interaction(
             at_address=self.cv.address,
             with_sendable=self.cv.sendable,
-            by_player=discord_interaction.user.id,#type:ignore
+            by_player=self.cv.gi.find_player(discord_interaction.user.id),
             at_time=time(),
             content = content#type:ignore
         ))
@@ -90,7 +88,6 @@ class Select(discord.ui.Select,Interaction_Handler):
         )
     @override
     async def callback(self, discord_interaction: 'discord.Interaction'):
-        print(discord_interaction.data)
         options:tuple[Option,...] = tuple(
             get_first(option for option in self.cv.sendable.with_options if option.text == value) for 
             value in discord_interaction.data['values']#type:ignore

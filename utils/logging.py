@@ -39,3 +39,12 @@ def get_logger(name:str) -> logging.Logger:
     logger.addHandler(h1)
     logger.setLevel(LOGGING_LEVEL)
     return logger
+
+logger = get_logger(__name__)
+
+def set_logging_level(level:str|int):
+    global LOGGING_LEVEL
+    LOGGING_LEVEL = level
+    h1.setLevel(LOGGING_LEVEL)
+    logger.setLevel(LOGGING_LEVEL)
+    logger.log(logger.level,f"Logging level has been set to {level}.")

@@ -58,7 +58,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
                 have_text = "have"
                 if len(players_eliminated_this_draw) == 1:
                     have_text = "has"
-                await self.say(f"{self.format_players_md(players_eliminated_this_draw)} {have_text} overdrawn.")
+                await self.say(f"{mention_participants(players_eliminated_this_draw)} {have_text} overdrawn.")
                 await self.eliminate(players_eliminated_this_draw)
                 if set(players_eliminated_this_draw) == set(self.not_eliminated):
                     return#restart the round
