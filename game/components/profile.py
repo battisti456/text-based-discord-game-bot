@@ -46,4 +46,3 @@ class Profile():
             return value
         raise LookUpError()
 
-from game.game import Game  # noqa: E402
