@@ -28,7 +28,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
                 sum += num
                 if num == 1:#card is an ace
                     num_aces += 1
-        while num_aces > 0 and sum + 10 < HAND_LIMIT:
+        while num_aces > 0 and sum + 10 <= HAND_LIMIT:
             sum += 10
             num_aces -= 1
         return sum
