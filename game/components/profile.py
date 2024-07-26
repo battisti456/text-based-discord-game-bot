@@ -17,7 +17,7 @@ class LookUpError(Exception):
 class Profile():
     def __init__(self):
         self.settings:dict[str,Any] = {}
-    def look_up_game_setting(self,cls:type['Game'],attr:str,hint:ConfigHint) -> Any:
+    def look_up_game_setting(self,cls:type['Game'],attr:str,hint:'ConfigHint') -> Any:
         tpe:TypeHint = Any
         item:'Game_Config.Item|None' = None
         if len(hint) == 1:
