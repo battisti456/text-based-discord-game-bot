@@ -5,8 +5,10 @@ from typing import (
     Protocol,
     runtime_checkable,
     Callable,
-    Awaitable
+    Awaitable,
+    Annotated
 )
+from types import GenericAlias
 
 from typing_extensions import TypeVar
 
@@ -41,5 +43,6 @@ class Grouping(Protocol[GroupingSafeVar]):
     def __len__(self) -> int:
         ...
 
+type TypeHint = type[GenericAlias]|type[object]|Annotated
 
 type Number = int|float
