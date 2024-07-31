@@ -1,13 +1,14 @@
-from typing import Any, override, Annotated
+from typing import Annotated, override
 
 from config_system_battisti456.config_item import Integer
+
 from config import Config
 from game.components.game_interface import Game_Interface
-from game.components.input_ import Status_Display
 from game.components.input_.response_validator import text_validator_maker
 from game.components.participant import Player
 from game.components.send import Address, sendables
 from game.game_bases import Game_Word_Base, Rounds_With_Points_Base
+
 
 class config(Config):
     num_letters:Annotated[int,Integer(level=1,min_value=1)] = 10
@@ -52,22 +53,19 @@ class Longest_Word(Game_Word_Base,Rounds_With_Points_Base):
             response_validator=lambda x,y: text_validator_maker(is_strictly_composed_of=self.current_letters,check_lower_case=True)(x,y),
             interaction_filter=choose_word_address.get_filter()
         )
-        class _(Status_Display[Any,Any,Any]):
-            @override
-            async def display(*_):
-                await self.sender(sendables.Text_With_Text_Field(
-                    text = f"**Which letters in '{self.current_letters}' would you like to swap, if any? You can swap {num_letters_can_refresh} letters.**"
-                ),change_letter_address)
-                await self.sender(sendables.Text_With_Text_Field(
-                    text = f"**What word will you spell with '{self.current_letters}'?**"
-                ),choose_word_address)
-        status_display = (_(change_letter_address),)
-        change_letter_input.on_updates = status_display
-        choose_word_input.on_updates = status_display
+        @change_letter_input.on_update
+        @choose_word_input.on_update
+        async def display(*_):
+            await self.sender(sendables.Text_With_Text_Field(
+                text = f"**Which letters in '{self.current_letters}' would you like to swap, if any? You can swap {num_letters_can_refresh} letters.**"
+            ),change_letter_address)
+            await self.sender(sendables.Text_With_Text_Field(
+                text = f"**What word will you spell with '{self.current_letters}'?**"
+            ),choose_word_address)
         
         chosen_word:None|str = None
         while chosen_word is None:
-            await status_display[0].display()
+            await display(change_letter_input)#type:ignore
             if num_letters_can_refresh:
                 change_letter_input.reset()
                 choose_word_input.reset()

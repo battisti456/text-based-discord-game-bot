@@ -2,7 +2,7 @@ import random
 from typing import override, Annotated
 
 import emoji
-from config_system_battisti456.config_item import Integer, IntRange, Bool
+from config_system_battisti456.config_item import Integer, IntegerRange, Bool
 from config import Config
 from game.components.game_interface import Game_Interface
 from game.components.participant import Player, PlayerDict, mention_participants
@@ -24,7 +24,7 @@ class config(Config):
     bonus_num:Annotated[int,Integer(level=1)] = 3
     bonus_points_per_guesser:Annotated[int,Integer(level=1)] = 2
     max_emoji:Annotated[int,Integer(level=1,min_value=1)] = 10
-    swap_range:Annotated[tuple[int,int],IntRange(level=1,min_value=1)] = (2,3)
+    swap_range:Annotated[tuple[int,int],IntegerRange(level=1,min_value=1)] = (2,3)
     give_avoid_options:Annotated[bool,Bool(level=1)] = True
 
 #region emoji funcs

@@ -1,5 +1,5 @@
 import asyncio
-from typing import TYPE_CHECKING, Generic, Iterable, Required, TypedDict, Unpack, override
+from typing import TYPE_CHECKING, Generic, Iterable, Required, TypedDict, Unpack, override, overload, Callable, Awaitable
 
 from typing_extensions import TypeVar
 
@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 WAIT_UNTIL_DONE_CHECK_TIME = 5
 
 InputDataTypeVar = TypeVar('InputDataTypeVar')
-
+T = TypeVar('T')
 
 class InputArgs(
     Generic[InputDataTypeVar,InputNameVar,ParticipantVar],
@@ -89,8 +89,15 @@ class Input(
                 await val#type:ignore
             except TypeError:
                 ...
-    def on_update(self,callback:'SimpleCallback[Input[InputDataTypeVar,InputNameVar,ParticipantVar]]'):
+    @overload
+    def on_update(self,callback:Callable[['Input[InputDataTypeVar,InputNameVar,ParticipantVar]'],None]) -> Callable[['Input[InputDataTypeVar,InputNameVar,ParticipantVar]'],None]:
+        ...
+    @overload
+    def on_update(self,callback:Callable[['Input[InputDataTypeVar,InputNameVar,ParticipantVar]'],Awaitable[None]]) -> Callable[['Input[InputDataTypeVar,InputNameVar,ParticipantVar]'],Awaitable[None]]:
+        ...
+    def on_update(self,callback:'SimpleCallback[Input[InputDataTypeVar,InputNameVar,ParticipantVar]]') -> 'SimpleCallback[Input[InputDataTypeVar,InputNameVar,ParticipantVar]]':
         self.on_updates.add(callback)
+        return callback
     def reset(self):
         self.responses = Responses(self)
     @override

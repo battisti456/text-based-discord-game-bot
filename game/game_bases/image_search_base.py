@@ -1,12 +1,12 @@
 import io
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Annotated
+from config_system_battisti456.config_item import String
 
 import PIL.ExifTags as ExifTags
 import PIL.Image
 import PIL.ImageDraw
 import requests
-
-from config.game_bases_config import game_bases_config
+from config import Config
 from game.components.game_interface import Game_Interface
 from game.game import Game
 from utils.grammar import temp_file_path
@@ -19,6 +19,10 @@ from utils.image_search import (
     Unsplash_No_API,
 )
 from utils.pillow_tools import Persistent_Exif_Image, add_accreditation
+
+class config(Config):
+    pixabay_token:Annotated[str|None,String(level=3,optional=True)] = None
+
 
 ATTRIBUTION_HEIGHT = 10
 NUM_RANDOM_SEARCH_TRIES = 10
@@ -44,8 +48,8 @@ class Image_Search_Base(Game):
         if Image_Search_Base not in self.initialized_bases:
             self.initialized_bases.append(Image_Search_Base)
             self.search:Image_Search
-            if game_bases_config['random_image_base']['pixabay_token'] is not None:
-                self.search = Pixabay_API(game_bases_config['random_image_base']['pixabay_token'])
+            if config.pixabay_token is not None:
+                self.search = Pixabay_API(config.pixabay_token)
             else:
                 self.search = Unsplash_No_API()
     def random_search(

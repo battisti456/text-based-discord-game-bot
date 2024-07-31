@@ -18,8 +18,6 @@ from docopt import DocoptExit, docopt
 from typing_extensions import TypeVar
 
 from config import Config
-from config.config_tools import ConfigAction, ConfigError
-from config.config_tools import edit as config_edit
 from utils.logging import get_logger
 from game.components.game_interface import Game_Interface
 from game.components.interface_operator import Interface_Operator
@@ -238,18 +236,7 @@ class Game_Operator(Interface_Operator):
             Response: confirmation message
             ArgumentError: if config cannot be edited in the described way
         """
-        cmd:ConfigAction = 'set'
-        if mode == 'r':
-            cmd = 'remove'
-        elif mode == 'a':
-            cmd = 'add'
-        try:
-            config_edit(list(keys),cmd,val)
-            raise Response("Successfully edited config.")
-        except ConfigError as e:
-            raise ArgumentError(
-                f"Failed to edit config:\n{e}"
-            )
+        raise Response("Not currently implemented.")
     @command
     async def manual_interaction(self,keys_and_values:Sequence[str]):
         """creates an interaction and sends it to the game interface

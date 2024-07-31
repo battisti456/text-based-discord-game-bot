@@ -2,37 +2,45 @@ import dataclasses
 import random
 from collections import Counter
 from itertools import combinations
-from typing import override
+from typing import Annotated, override
 
 import PIL.Image
 import PIL.ImageOps
+from color_tools_battisti456 import Color
+from config_system_battisti456.config_item import Integer, Path, Ratio, Bool
 
-from game.components.participant import Player, PlayerDict, mention_participants
 import utils.emoji_groups
+from config import Config
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
-from game.components.send.sendable.sendables import Text_With_Files
+from game.components.participant import Player, PlayerDict, mention_participants
 from game.components.send import Address
+from game.components.send.sendable.sendables import Text_With_Files
 from game.game import Game
 from utils.common import arg_fix_grouping
+from utils.config_items import ColorConfigItem
 from utils.grammar import temp_file_path, wordify_iterable
 from utils.types import GS, Grouping
+
+
+class config(Config):
+    card_path:Annotated[str,Path(level=3)] = 'data/cards'
+    card_width:Annotated[int,Integer(level=1,min_value=1)] = 300
+    hand_width:Annotated[int,Integer(level=1,min_value=1)] = 1200
+    hand_padding:Annotated[int,Integer(level=1,min_value=0)] = 20
+    hand_color:Annotated[Color,ColorConfigItem(level=1)] = (0,0,0,0)
+    overlap_ratio:Annotated[float,Ratio(level=1)] = 0.25
+    better_art:Annotated[bool,Bool(level=1)] = True
 
 POKER_HAND_NAMES = ["high card","pair","two pair","three of a kind","straight","flush","full house","four of a kind","straight flush","royal flush"]
 SUIT_NAMES = ["spades","hearts","diamonds","clubs"]
 CARD_NAMES = ["ace","two","three","four","five","six","seven","eight","nine","ten","jack","queen","king"]
 CARD_JOIN = " "
-CARD_PATH = "data/cards"
-CARD_WIDTH = 300
-HAND_WIDTH = 1200
-HAND_PADDING = 20
-HAND_COLOR = (0,0,0,0)
-OVERLAP_RATIO = 0.25
-BETTER_ART = True
+
 #region card stuff
 def card_file_name(suit:int,value:int):
     better_art = ""
-    if ((value == 0 and suit == 0) or value > 9) and BETTER_ART:
+    if ((value == 0 and suit == 0) or value > 9) and config.better_art:
         better_art = "2"
     card_text = CARD_NAMES[value]
     if value > 0 and value < 10:
@@ -55,8 +63,8 @@ class Card(GS):
         return f"{type(self)}({self.string})"
     def emoji(self)->str:
         return utils.emoji_groups.PLAYING_CARD_EMOJI[self.suit*len(CARD_NAMES)+self.value]
-    def image(self,card_width:int = CARD_WIDTH)->PIL.Image.Image:#doen't keep transparent corners....?
-        image = PIL.Image.open(f"{CARD_PATH}/{card_file_name(self.suit,self.value)}")
+    def image(self,card_width:int = config.card_width)->PIL.Image.Image:#doen't keep transparent corners....?
+        image = PIL.Image.open(f"{config.card_path}/{card_file_name(self.suit,self.value)}")
         image = image.convert('RGBA')
         width,height = image.size
         return image.resize((card_width,int(height/width*card_width)))
@@ -78,26 +86,26 @@ class Card_Holder(object):
     def emoji_contents(self) -> str:
         return CARD_JOIN.join(card.emoji() for card in self.cards)
     def image(self) -> PIL.Image.Image:
-        effective_cards_at_max_overlap:float = ((len(self.cards)-1)*OVERLAP_RATIO + 1)
-        card_width = CARD_WIDTH
-        overlap_ratio = OVERLAP_RATIO
+        effective_cards_at_max_overlap:float = ((len(self.cards)-1)*config.overlap_ratio + 1)
+        card_width = config.card_width
+        overlap_ratio = config.overlap_ratio
         offset = 0
-        if effective_cards_at_max_overlap*CARD_WIDTH > HAND_WIDTH:#there are too many cards, need to shrinkpl\
-            card_width = int(HAND_WIDTH/effective_cards_at_max_overlap)
-        elif CARD_WIDTH*len(self.cards) < HAND_WIDTH:#no overlap needed
+        if effective_cards_at_max_overlap*config.card_width > config.hand_width:#there are too many cards, need to shrinkpl\
+            card_width = int(config.hand_width/effective_cards_at_max_overlap)
+        elif config.card_width*len(self.cards) < config.hand_width:#no overlap needed
             overlap_ratio = 1
-            offset = (HAND_WIDTH-CARD_WIDTH*len(self.cards))/2
+            offset = (config.hand_width-config.card_width*len(self.cards))/2
         else:
-            overlap_ratio = (HAND_WIDTH/CARD_WIDTH-1)/(len(self.cards)-1)
+            overlap_ratio = (config.hand_width/config.card_width-1)/(len(self.cards)-1)
         card_images:list[PIL.Image.Image] = list(card.image(card_width) for card in self.cards)
         if card_images:
             hand_height = card_images[0].size[1]
         else:#no cards
             hand_height = 80
-        base = PIL.Image.new('RGBA',(HAND_WIDTH,hand_height),color = HAND_COLOR)
+        base = PIL.Image.new('RGBA',(config.hand_width,hand_height),color = config.hand_color)
         for i in range(len(self.cards)):
             base.paste(card_images[i],(int(offset+i*card_width*overlap_ratio),0),card_images[i])
-        return PIL.ImageOps.expand(base,border = HAND_PADDING,fill =HAND_COLOR)
+        return PIL.ImageOps.expand(base,border = config.hand_padding,fill =config.hand_color)
     def give(self,other:'Card_Holder',num_random_cards:int = 0,cards:int|Card|Grouping[int]|Grouping[Card]= []) -> list[Card]:
         cards_to_remove:set[Card] = set()
         if isinstance(cards,int):
