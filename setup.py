@@ -6,6 +6,7 @@ import sys
 import nltk
 
 TEMP_PATH = 'temp'
+PROFILE_PATH = 'profile'
 LICHESS_URL = "https://database.lichess.org/lichess_db_puzzle.csv.zst"
 LICHESS_PATH = "data/lichess_db_puzzle.csv"
 NLTK_MODULES = [
@@ -23,7 +24,10 @@ setup_logger.addHandler(logging.StreamHandler())
 def setup():
     if not os.path.isdir(TEMP_PATH):
         setup_logger.warning(f"Temp directory not found! making {TEMP_PATH}")
-        os.mkdir('temp')
+        os.mkdir(TEMP_PATH)
+    if not os.path.isdir(PROFILE_PATH):
+        setup_logger.warning(f"Profile directory not found! making {PROFILE_PATH}")
+        os.mkdir(PROFILE_PATH)
     if not os.path.isfile(LICHESS_PATH):
         setup_logger.warning(f"File {LICHESS_PATH} not found!")
         setup_logger.info("Importing required libraries...")

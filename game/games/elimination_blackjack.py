@@ -1,15 +1,18 @@
 #NEEDS TO BE TESTED
 from math import ceil
-from typing import override
+from typing import override, Annotated
 
-from config.games_config import games_config
+from config_system_battisti456.config_item import Integer
+
+from config import Config
 from game.components.game_interface import Game_Interface
 from game.components.participant import Player
 from game.game_bases import Card_Base, Elimination_Base
 from game.components.participant import PlayerDict, mention_participants
 
-HAND_LIMIT = games_config['elimination_blackjack']["hand_limit"]
-NUM_PLAYERS_PER_DECK = games_config['elimination_blackjack']['num_players_per_deck']
+class config(Config):
+    hand_limit:Annotated[int,Integer(level=1)] = 21
+    num_players_per_deck:Annotated[int,Integer(level=1)] = 7
 
 class Elimination_Blackjack(Card_Base,Elimination_Base):
     def __init__(self,gi:Game_Interface):
@@ -28,7 +31,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
                 sum += num
                 if num == 1:#card is an ace
                     num_aces += 1
-        while num_aces > 0 and sum + 10 <= HAND_LIMIT:
+        while num_aces > 0 and sum + 10 <= config.hand_limit:
             sum += 10
             num_aces -= 1
         return sum
@@ -39,12 +42,12 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
             "We will play a round of blackjack, and, at the end, those with the lowest score are eliminated.\n" +
             "On your turn you may either choose to draw or pass. If you draw another card is added to your hand.\n" +
             "The point value of your hand is the sum of the number cards plus 10 for each face card.\n" +
-            f"Aces are worth 11 points, unless that would put you over {HAND_LIMIT} in which case they are worth 1 point.\n" +
-            f"If your score goes above {HAND_LIMIT}, you are immediately eliminated (earlier than if you had just scored lowest in the round).\n" +
-            f"The closer to {HAND_LIMIT} you get, the higher the chance you will defeat your competitors, however.")
+            f"Aces are worth 11 points, unless that would put you over {config.hand_limit} in which case they are worth 1 point.\n" +
+            f"If your score goes above {config.hand_limit}, you are immediately eliminated (earlier than if you had just scored lowest in the round).\n" +
+            f"The closer to {config.hand_limit} you get, the higher the chance you will defeat your competitors, however.")
     @override
     async def core_round(self):
-        await self.setup_cards(ceil(len(self.unkicked_players)/NUM_PLAYERS_PER_DECK))
+        await self.setup_cards(ceil(len(self.unkicked_players)/config.num_players_per_deck))
         await self.player_draw(self.unkicked_players,2)
         players_passed:list[Player] = []
         players_still_drawing = list(self.unkicked_players)
@@ -53,7 +56,7 @@ class Elimination_Blackjack(Card_Base,Elimination_Base):
             players_who_drew:list[Player] = list(player for player in will_draw if will_draw[player])
             players_passed += list(player for player in will_draw if not will_draw[player])
             await self.player_draw(players_who_drew,1)
-            players_eliminated_this_draw:list[Player] = list(player for player in players_who_drew if self.player_points(player) > HAND_LIMIT)
+            players_eliminated_this_draw:list[Player] = list(player for player in players_who_drew if self.player_points(player) > config.hand_limit)
             if players_eliminated_this_draw:
                 have_text = "have"
                 if len(players_eliminated_this_draw) == 1:

@@ -1,10 +1,9 @@
-import os
 from dataclasses import dataclass
 from typing import Any, Hashable
 
-from config.config import config
 from game.components.input_ import Input_Maker
 from game.components.participant import Player
+from config.profile import Profile_Manager
 from game.components.send import (
     Interaction,
     InteractionCallback,
@@ -38,6 +37,7 @@ class Game_Interface(object):
         self.actions:dict[Any,set[tuple[InteractionFilter[Any],InteractionCallback]]] = {}
         self.default_sender = Sender()
         self.im:Input_Maker = Input_Maker(self)
+        self.pm:Profile_Manager = Profile_Manager()
     def watch(self,filter:InteractionFilter[Any] = no_filter,owner:Any = None):
         def decorator(func:InteractionCallback):
             if owner not in self.actions.keys():
@@ -70,13 +70,6 @@ class Game_Interface(object):
         """
         logger.warning("resetting game interface")
         self.clear_actions()
-    def empty_temp(self):
-        """
-        empties the temp folder of all files
-        """
-        for file in os.listdir(config['temp_path']):
-            logger.debug(f"deleting '{config['temp_path']}/{file}'")
-            os.unlink(f"{config['temp_path']}/{file}")
     def clear_actions(self):
         """
         clears all on_actions

@@ -5,25 +5,19 @@ from typing import Optional, TypedDict, override
 import chess
 import pandas
 
-from config.config import config
-from config.games_config import games_config
 from game.components.game_interface import Game_Interface
 from game.game_bases import Chess_Base, Elimination_Base
 from utils.chess_tools import get_game_over_text, get_move_text
 from game.components.participant import Player, mention_participants
+from config import Config
 
-CONFIG = games_config['chess_puzzle_elimination']
-
-DATA_PATH = config['data_path'] + "/" + CONFIG['data_path']
-
-RATING_RANGE = CONFIG['rating_range']
-POPULARITY_RANGE = CONFIG['popularity_range']
-NUM_TO_SAMPLE = CONFIG['num_to_sample']
-
-NUM_MOVE_OPTIONS = CONFIG['num_move_options']
-
-PUZZLE_RATING_CAP_ESCALATION = CONFIG['puzzle_rating_cap_escalation']
-
+class config(Config):
+    data_path:str = 'data/lichess_db_puzzle.csv'
+    rating_range:tuple[int,int]|None = (500,800)
+    popularity_range:tuple[int,int]|None = None
+    num_to_sample:int = 500
+    puzzle_rating_cap_escalation:int = 200
+    num_move_options:int = 5
 
 #PuzzleId,FEN,Moves,Rating,RatingDeviation,Popularity,NbPlays,Themes,GameUrl,OpeningTags
 class ChessPuzzleDict(TypedDict):
@@ -62,7 +56,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
     def __init__(self,gi:Game_Interface):
         Elimination_Base.__init__(self,gi)
         Chess_Base.__init__(self,gi)
-        self.chess_puzzle_data:pandas.DataFrame = pandas.read_csv(f"{DATA_PATH}",dtype = {
+        self.chess_puzzle_data:pandas.DataFrame = pandas.read_csv(f"{config.data_path}",dtype = {
             'PuzzleId' : 'string',
             'FEN' : 'string',
             'Moves' : 'string',
@@ -75,10 +69,10 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
             'OpeningTags' : 'string'
         })
         self.rating_range:tuple[int,int]
-        if RATING_RANGE is None:
+        if config.rating_range is None:
             self.rating_range = (0,50000)#makes the range arbitrary
         else:
-            self.rating_range = RATING_RANGE
+            self.rating_range = config.rating_range
     def random_puzzle(self,rating_range:Optional[tuple[int,int]] = None,popularity_range:Optional[tuple[int,int]] = None) -> ChessPuzzleDict:
         if rating_range is None and popularity_range is None:
             return correct_chess_puzzle(self.chess_puzzle_data.sample().to_dict())
@@ -98,7 +92,7 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
             return (rating_diff,popularity_diff)
         puzzle:ChessPuzzleDict = correct_chess_puzzle(self.chess_puzzle_data.sample().to_dict())
         puzzle_diffs:tuple[int,int] = get_diffs(puzzle)
-        data_sample:pandas.DataFrame = self.chess_puzzle_data.sample(n=NUM_TO_SAMPLE)
+        data_sample:pandas.DataFrame = self.chess_puzzle_data.sample(n=config.num_to_sample)
         for _, row in data_sample.iterrows():
             row_puzzle:ChessPuzzleDict = correct_chess_puzzle(row.to_dict())
             row_diffs:tuple[int,int] = get_diffs(row_puzzle)
@@ -116,16 +110,16 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
         await self.say(
             "# Welcome to a game of elimination chess puzzles!\n" + 
             "In this game you will be presented with chess puzzles.\n" +
-            ("" if RATING_RANGE is None else f"These puzzles will start with a chess rating between {RATING_RANGE[0]} and {RATING_RANGE[1]}, but may escalate if y'all do well.\n") +
-            f"You must then pick the best move for the position out of {NUM_MOVE_OPTIONS} options that I provide you," +
+            ("" if config.rating_range is None else f"These puzzles will start with a chess rating between {config.rating_range[0]} and {config.rating_range[1]}, but may escalate if y'all do well.\n") +
+            f"You must then pick the best move for the position out of {config.num_move_options} options that I provide you," +
             "keeping in mind that this puzzle may extend through a multi-move strategy.\n" +
             "If you pick the wrong move, you are eliminated (unless no one gets it right).\n" +
             "Last player standing wins!"
         )
     @override
     async def core_round(self):
-        puzzle:ChessPuzzleDict = self.random_puzzle(self.rating_range,POPULARITY_RANGE)
-        self.rating_range = (self.rating_range[0],self.rating_range[1]+PUZZLE_RATING_CAP_ESCALATION)
+        puzzle:ChessPuzzleDict = self.random_puzzle(self.rating_range,config.popularity_range)
+        self.rating_range = (self.rating_range[0],self.rating_range[1]+config.puzzle_rating_cap_escalation)
         self.board.set_fen(puzzle['FEN'])
         moves:list[str] = puzzle['Moves'].split(" ")
         opponent_color:str = chess.COLOR_NAMES[self.board.turn]
@@ -153,13 +147,13 @@ class Chess_Puzzle_Elimination(Elimination_Base,Chess_Base):
 
         while len(self.unkicked_players) > 1:
             legal_moves:list[str] = list(move.uci() for move in self.board.legal_moves)
-            if len(legal_moves) < NUM_MOVE_OPTIONS:
+            if len(legal_moves) < config.num_move_options:
                 random.shuffle(legal_moves)
                 move_options = legal_moves
             else:
-                move_options = (random.sample(legal_moves,k=NUM_MOVE_OPTIONS))
+                move_options = (random.sample(legal_moves,k=config.num_move_options))
                 if moves[move_index] not in move_options:
-                    move_options[random.randint(0,NUM_MOVE_OPTIONS-1)] = moves[move_index]
+                    move_options[random.randint(0,config.num_move_options-1)] = moves[move_index]
             option_text_list:list[str] = list(get_move_text(self.board,move_option) for move_option in move_options)
             #TODO #8 allowing people to see each other's answers seems to be a particular problem in this game, maybe a candidate for an embedded dropdown?
             responses:dict[Player,int] = await self.basic_multiple_choice(

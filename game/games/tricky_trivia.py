@@ -1,7 +1,8 @@
 import random
-from typing import override
+from typing import override, Annotated
+from config_system_battisti456.config_item import Integer
 
-from config.games_config import games_config
+from config import Config
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
 from game.components.input_.response_validator import text_validator_maker
@@ -12,25 +13,25 @@ from game.game_bases import (
 )
 from game.game_bases.trivia_base import TriviaDict
 
-CONFIG = games_config['tricky_trivia']
+class config(Config):
+    points_fool:Annotated[int,Integer(level=1)] = 1
+    points_guess:Annotated[int,Integer(level=1)] = 3
+    num_questions:Annotated[int,Integer(level=1,min_value=1)] = 3
 
-POINTS_FOOL = CONFIG['points_fool']
-POINTS_GUESS = CONFIG['points_guess']
-NUM_QUESTIONS = CONFIG['num_questions']
 
 class Tricky_Trivia(Trivia_Base,Rounds_With_Points_Base):
     def __init__(self,gi:Game_Interface):
         Trivia_Base.__init__(self,gi)
         Rounds_With_Points_Base.__init__(self,gi)
-        self.num_rounds = NUM_QUESTIONS
+        self.num_rounds = config.num_questions
     @override
     async def game_intro(self):
         await self.say(
             "# Today we are playing a game of tricky trivia!\n" +
             "In this game you will be presented with trivia questions and each player will secretly craft their own possiple answer.\n" +
             "Then, the trivia question will be asked at large.\n" +
-            f"You get {POINTS_FOOL} point for every person you fool, and {POINTS_GUESS} for getting it right yourself.\n" +
-            f"We will do this for {NUM_QUESTIONS} questions(s).\n" +
+            f"You get {config.points_fool} point for every person you fool, and {config.points_guess} for getting it right yourself.\n" +
+            f"We will do this for {config.num_questions} questions(s).\n" +
             "The real answer will be banned, the game will tell you you are unable to give it for a trick if you try.\n" +
             "The highest points at the end wins!\n" +
             "**WARNING: Sometimes the trivia is phrased in such a way that you can provide an alternative correct answer. Please provide an incorrect answer!**"
@@ -60,13 +61,13 @@ class Tricky_Trivia(Trivia_Base,Rounds_With_Points_Base):
             players_who_chose = list(player for player in self.unkicked_players if options[choices[player]] == option and player not in players_who_gave)
             if not players_who_chose == []:
                 await self.say(f"{mention_participants(players_who_gave)} provided the answer:\n'{option}'\n and fooled {mention_participants(players_who_chose)}.")
-                await self.score(players_who_gave,len(players_who_chose)*POINTS_FOOL)
+                await self.score(players_who_gave,len(players_who_chose)*config.points_fool)
         correct_answer_text = f"The correct answer was:\n'{trivia_dict['correct_answer']}'"
         correct_choice_index = options.index(trivia_dict['correct_answer'])
         correct_players = list(player for player in self.unkicked_players if choices[player] == correct_choice_index)
         if correct_players:
             await self.say(f"{correct_answer_text}\n{mention_participants(correct_players)} got the answer right!")
-            point_dict = make_player_dict(correct_players,POINTS_GUESS)
+            point_dict = make_player_dict(correct_players,config.points_guess)
             await self.score(correct_players,point_dict)
         else:
             await self.say(f"{correct_answer_text}\nNo one got it right :(.")

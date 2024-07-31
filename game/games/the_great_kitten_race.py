@@ -1,9 +1,10 @@
 import json
 import random
-from typing import Any, TypedDict, override
+from typing import Annotated, Any, TypedDict, override
 
-from config.config import config
-from config.games_config import games_config
+from config_system_battisti456.config_item import Integer, Path
+
+from config import Config
 from game import make_player_dict, merge_placements, score_to_placement
 from game.components.game_interface import Game_Interface
 from game.components.input_ import Input
@@ -25,10 +26,11 @@ from utils.common import get_first
 from utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
 from utils.grammar import ordinate, wordify_iterable
 
-CONFIG = games_config['the_great_kitten_race']
 
-DATA_PATH = config['data_path'] + '/' + CONFIG['data_path']
-NUM_OBSTACLES = CONFIG['num_obstacles']
+class config(Config):
+    data_path:Annotated[str,Path(level=3)] = 'data/kitten_race_obstacles.json'
+    num_obstacles:Annotated[int,Integer(level=1,min_value=1)] = 5
+
 
 class Obstacle(TypedDict):
     stat_checks:list[str]
@@ -49,7 +51,7 @@ class Kitten(TypedDict):
 class The_Great_Kitten_Race(Game):
     def __init__(self,gi:Game_Interface):
         Game.__init__(self,gi)
-        with open(DATA_PATH,'r') as file:
+        with open(config.data_path,'r') as file:
             self.kitten_config:KittenConfig = json.load(file)
             self.times:PlayerDict[int] = {}
     @override
@@ -66,7 +68,7 @@ class The_Great_Kitten_Race(Game):
         )
     @override
     async def _run(self):
-        obstacles = random.choices(list(self.kitten_config["obstacles"]),k=NUM_OBSTACLES)
+        obstacles = random.choices(list(self.kitten_config["obstacles"]),k=config.num_obstacles)
         obstacle_text_list:list[str] = []
         for obstacle_name in obstacles:
             obstacle:Obstacle = self.kitten_config['obstacles'][obstacle_name]

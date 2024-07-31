@@ -89,7 +89,7 @@ class Team_Base(Rounds_Base[Team]):
             await self.send(
                 text=team.name if content is None else content,
                 attach_files=tuple(attachments_data),
-                address=await self.sender.generate_address(for_participants=frozenset((team,)))
+                address=await self.sender.generate_address(frozenset((team,)))
             )
     async def kick_teams(
             self,

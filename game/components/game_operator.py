@@ -17,7 +17,7 @@ from typing import (
 from docopt import DocoptExit, docopt
 from typing_extensions import TypeVar
 
-from config.config import config
+from config import Config
 from config.config_tools import ConfigAction, ConfigError
 from config.config_tools import edit as config_edit
 from utils.logging import get_logger
@@ -32,7 +32,7 @@ from utils.grammar import wordify_iterable
 
 logger = get_logger(__name__)
 
-CP = config['command_prefix']
+CP = Config.command_prefix
 COMMAND_DOCSTRING= f"""
 Usage:
     {CP} (h | help) [<command>]

@@ -30,7 +30,7 @@ from utils.types import (
 )
 from game.components.send.interaction import Send_Text, Select_Options
 from game.components.send import Address
-from game.components.profile import Profile
+from game.components.profile.profile import Profile
 
 logger = get_logger(__name__)
 
@@ -52,7 +52,7 @@ class Game(Interface_Component):
 
             self.kicked:PlayerDict[tuple[int,KickReason]] = {}
             self.game_end_exception:Optional[GameEndException] = None
-            self.profile:Profile
+            self.profile:Profile = Profile()
     def is_player_kicked(self,player:Player) -> bool:
         return player in self.kicked
     @property

@@ -1,10 +1,11 @@
 #VERY BUGGY
 import json
 import random
-from typing import TypedDict, override
+from typing import TypedDict, override, Annotated
 
-from config.config import config
-from config.games_config import games_config
+from config_system_battisti456.config_item import Integer, Path
+
+from config import Config
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
 from game.components.participant import Player
@@ -12,13 +13,13 @@ from game.game_bases import Rounds_With_Points_Base
 from utils.grammar import wordify_iterable, moneyfy
 from game.components.participant import PlayerDict, mention_participants
 
-CONFIG = games_config['container_bidding']
+class config(Config):
+    num_container:Annotated[int,Integer(level=1,min_value=1)] = 5
+    data_path:Annotated[str,Path(level=3)] = 'data/container_contents.json'
+    starting_money:Annotated[int,Integer(level=1,min_value=1)] = 1200
+    percentile_var:Annotated[int,Integer(level=1,min_value=0,max_value=100)] = 10
+    end_of_game_interest:Annotated[int,Integer(level=1,min_value=0)] = 20
 
-NUM_CONTAINERS = CONFIG['num_containers']
-DATA_PATH = config['data_path'] + '\\' + CONFIG['data_path']
-STARTING_MONEY = CONFIG['starting_money']
-PERCENTILE_VAR = CONFIG['percentile_var']
-END_OF_GAME_INTEREST = CONFIG['end_of_game_interest']
 
 class DescDict(TypedDict):
     starting_bid_range:tuple[int,int]
@@ -42,24 +43,24 @@ def validate_data(data:DataDict):
 class Container_Bidding(Rounds_With_Points_Base):
     def __init__(self,gi:Game_Interface):
         Rounds_With_Points_Base.__init__(self,gi)
-        self.num_rounds = NUM_CONTAINERS
+        self.num_rounds = config.num_container
         self.round_name = "bidding on container"
         self.point_frmt = lambda num: f"{moneyfy(num)} of valuables"
-        with open(f"{DATA_PATH}",'r') as file:
+        with open(f"{config.data_path}",'r') as file:
             self.data:DataDict = json.load(file)
         validate_data(self.data)
-        self.money:PlayerDict[int] = make_player_dict(self.unkicked_players,int(STARTING_MONEY/len(self.unkicked_players)))
+        self.money:PlayerDict[int] = make_player_dict(self.unkicked_players,int(config.starting_money/len(self.unkicked_players)))
     @override
     async def game_intro(self):
         await self.say(
             "# Welcome to a game of container bidding!\n" + 
-            f"In this game we will have {NUM_CONTAINERS} containers that we look at.\n" +
+            f"In this game we will have {config.num_container} containers that we look at.\n" +
             "For each container my expert evaluator will provide their description.\n" +
             "Then you must each secretly choose how much you would be willing to contribute for it!\n" +
             "All of you are bidding together, but each secretly deciding how much to contribute.\n" +
             "The proportion of the total bid that your contribution takes up determines your share of the valuables inside the container.\n" +
-            f"If your cumulative bidding exceeds your starting cash of {moneyfy(int(STARTING_MONEY/len(self.unkicked_players)))}, " +
-            f"then you will lose an extra {END_OF_GAME_INTEREST}% at the end of the game for interest for all money spent in excess of that.\n"+
+            f"If your cumulative bidding exceeds your starting cash of {moneyfy(int(config.starting_money/len(self.unkicked_players)))}, " +
+            f"then you will lose an extra {config.end_of_game_interest}% at the end of the game for interest for all money spent in excess of that.\n"+
             "Any money you don't end up spending will be added to your total at the end of the game.\n"
             "**WARNING: Your answers are only evaluated based of the digits they contain. All other characters are ignored. So '$100.00' is '$10000'.**")
     def evaluate_container(self,desc:DescDict) -> tuple[int,list[str]]:
@@ -70,7 +71,7 @@ class Container_Bidding(Rounds_With_Points_Base):
         item_dict:dict[str,int] = self.data["container_types"][tier]
         items = random.choices(list(item_dict),list(item_dict[item] for item in item_dict),k = num_items)
         for item in items:
-            var = random.randint(100-PERCENTILE_VAR,100+PERCENTILE_VAR)/100
+            var = random.randint(100-config.percentile_var,100+config.percentile_var)/100
             value = int(self.data['items'][item]*var)
             reward_text.append(f"> {item} evaluated for {moneyfy(value)}")
             total_reward += value
@@ -123,10 +124,10 @@ class Container_Bidding(Rounds_With_Points_Base):
         await self.say(
             "That was our last container, so, at the end of the game: "+
             f"{mention_participants(self.unkicked_players)} had {wordify_iterable(moneyfy(self.money[player]) for player in self.unkicked_players)} leftover respectively." +
-            f"This remaining money will be added to your final money score, but any negatives will be charged an extra {END_OF_GAME_INTEREST}% in interest.")
+            f"This remaining money will be added to your final money score, but any negatives will be charged an extra {config.end_of_game_interest}% in interest.")
         for player in self.unkicked_players:
             if self.money[player] < 0:
-                self.money[player] = int(self.money[player] * (1 + END_OF_GAME_INTEREST/100))
+                self.money[player] = int(self.money[player] * (1 + config.end_of_game_interest/100))
         self.points_format = lambda x: f"{moneyfy(x)} total"
         await self.score(self.unkicked_players,self.money)
 

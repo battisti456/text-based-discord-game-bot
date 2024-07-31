@@ -1,6 +1,8 @@
-from typing import override
+from typing import Annotated, override
 
-from config.games_config import games_config
+from config_system_battisti456.config_item import Integer
+
+from config import Config
 from game import make_player_dict
 from game.components.game_interface import Game_Interface
 from game.components.participant import Player, PlayerDict, mention_participants
@@ -14,12 +16,12 @@ from game.game_bases.card_base import (
 from utils.emoji_groups import NUMBERED_KEYCAP_EMOJI
 from utils.grammar import ordinate
 
-CONFIG = games_config['prediction_texas_holdem']
 
-NUM_ROUNDS = CONFIG['num_rounds']
+class config(Config):
+    num_rounds:Annotated[int,Integer(level=1,min_value=1)] = 3
+    shared_cards:Annotated[int,Integer(level=1,min_value=0)] = 5
+    player_cards:Annotated[int,Integer(level=1,min_value=1)] = 2
 
-PLAYER_CARDS = CONFIG['player_cards']
-SHARED_CARDS = CONFIG['shared_cards']
 
 class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
     def __init__(self,gi:Game_Interface):
@@ -27,13 +29,13 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
         Card_Base.__init__(self,gi)
         self.reverse_points = True
         self.points_format = lambda points: f"{points} penalties"
-        self.num_rounds = NUM_ROUNDS
+        self.num_rounds = config.num_rounds
     @override
     async def game_intro(self):
         await self.say(
             "# Welcome to a game of prediction Texas Holdem!\n" +
             "This isn't going to work like most games of Texas Holdem.\n" +
-            f"In this game, you get {PLAYER_CARDS} to yourself while there are {SHARED_CARDS} shared.\n" +
+            f"In this game, you get {config.player_cards} to yourself while there are {config.shared_cards} shared.\n" +
             "You must then predict (solely based on what cards you have) what your best poker hand's rank would be against the other player's best hands.\n" +
             "Best poker hands are constructed from a combination of your private hand and the shared cards.\n" +
             "The further you are from guessing your rank correctly, the more penalties you accrue.\n" +
@@ -43,8 +45,8 @@ class Prediction_Texas_Holdem(Rounds_With_Points_Base,Card_Base):
     async def core_round(self) -> PlayerDict[int] | None:
         await self.setup_cards()
         shared:Card_Holder = Card_Holder("Shared cards.")
-        await self.player_draw(self.unkicked_players,PLAYER_CARDS)
-        self.deck.give(shared,SHARED_CARDS)
+        await self.player_draw(self.unkicked_players,config.player_cards)
+        self.deck.give(shared,config.shared_cards)
         attachment = self.ch_to_attachment(shared)
         await self.send(
             text="Here are the shared cards:",
