@@ -10,7 +10,7 @@ from game.game_bases import (
     Game_Word_Base,
     Rounds_With_Points_Base,
 )
-from utils.grammar import nice_sentence
+from utils.grammar import nice_sentence, s
 from utils.types import PlayerDict, PlayerId
 from utils.word_tools import find_random_related_scentences
 
@@ -77,9 +77,9 @@ class Emoji_Communication(Basic_Secret_Message_Base,Rounds_With_Points_Base,Game
             "In this game I will give each of you a sentence in secret and you will do your best to translate it into emojis.\n" +
             f"Please note you can only use at max {MAX_EMOJI}, and all non-emoji characters in your responses will be ignored.\n" +
             "Then we will go through each players emoji message, and you will attempt to distiguish its orginating sentence from several false ones.\n" +
-            f"It is {POINTS_FOR_GUESS} for guessing it correct with {POINTS_PER_GUESSER} for the writer per person who guessed it, but" +
-            f"beware! If all players guess it successfully they each get {POINTS_FOR_ALL_GUESS} while the person who wrote it gets none.\n" +
-            f"In addition, if the writer used {BONUS_NUM} or less emojis, they earn {BONUS_POINTS_PER_GUESSER} points per person to guess it, if not all do.\n" +
+            f"It is {POINTS_FOR_GUESS} point{s(POINTS_FOR_GUESS)} for guessing it correct with {POINTS_PER_GUESSER} point{s(POINTS_PER_GUESSER)} for the writer per person who guessed it, but " +
+            f"beware! If all players guess it successfully they each get {POINTS_FOR_ALL_GUESS} point{s(POINTS_FOR_ALL_GUESS)} while the person who wrote it gets none.\n" +
+            f"In addition, if the writer used {BONUS_NUM} or fewer emojis, they earn {BONUS_POINTS_PER_GUESSER} point{s(BONUS_POINTS_PER_GUESSER)} per person to guess it, if not all do.\n" +
             "That's about it. Lets get started!"
         )
     @override
