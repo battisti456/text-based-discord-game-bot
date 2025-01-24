@@ -30,7 +30,7 @@ def wordify_iterable(values:Iterable[TextLike],operator:TextLike = 'and',comma:T
     for i in range(len(values)):
         if i != 0:
             if i == len(values) -1:#is last
-                to_return += comma + ' ' + operator
+                to_return += comma + ' ' + operator + ' '
             else:
                 to_return += comma + ' '
         if isinstance(values[i],str):
