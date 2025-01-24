@@ -76,7 +76,7 @@ class Guess_The_Word(Game_Word_Base, Rounds_With_Points_Base):
                                 feedback += secret_word[j]
                             else:
                                 feedback += "\\_"
-                        address:Address = await self.sender.generate_address(for_participants=frozenset([player]))
+                        address:Address = await self.sender.generate_address(frozenset([player]))
                         await self.sender(sendables.Text_Only(text=f"Your current feedback is '{feedback}'."),address)
             responses:PlayerDict[str] = await self.basic_text_response(
                 who_chooses=players_not_guessed,
