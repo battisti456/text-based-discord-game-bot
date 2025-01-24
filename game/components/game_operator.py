@@ -224,7 +224,7 @@ class Game_Operator(Interface_Operator):
         Raises:
             Response: the list of games
         """
-        raise Response(f"The current play-ready games are: {wordify_iterable(str(game.__class__) for game in valid_games)}.")
+        raise Response(f"The current play-ready games are: {wordify_iterable(str(game.__name__) for game in valid_games)}.")
     @command
     async def edit_config(self,val:str,mode:Literal['s','a','r'],keys:Sequence[str]):
         """edits the saved local config (it will not necessarily apply without a restart)
