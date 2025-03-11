@@ -52,8 +52,8 @@ class Input(
         self.identifier:TextLike|None = None
         self.last_start_time:float|None = None
         self.last_end_time:float|None = None
-        self.timeout:float|None = None
-        self.reminders:Iterator[float] = tuple().__iter__()
+        self.timeout:float|None = 259200#None
+        self.reminders:Iterator[float] = (86400,86400,43200,21600,10800,3600).__iter__()#tuple().__iter__()
         if 'response_validator' in kwargs:
             self.response_validator = kwargs['response_validator']
         if 'completion_criteria' in kwargs:
