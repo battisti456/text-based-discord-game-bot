@@ -87,7 +87,7 @@ class Input(
         if self.timeout is not None:
             end_time = self.last_start_time+self.timeout
             clean_up.append(await self.send(text = f"You will need to have responded <t:{int(end_time)}:R>."))
-            timeout_check = lambda:time()>=end_time
+            timeout_check = lambda:time()<end_time
         try:
             next_reminder = self.last_start_time + next(self.reminders)
         except StopIteration:
