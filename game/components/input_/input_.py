@@ -1,5 +1,6 @@
 import asyncio
-from typing import TYPE_CHECKING, Generic, Iterable, Required, TypedDict, Unpack, override
+from typing import TYPE_CHECKING, Generic, Iterable, Required, TypedDict, Unpack, override, Iterator
+from time import time
 
 from typing_extensions import TypeVar
 
@@ -7,6 +8,7 @@ from game.components.input_.input_name import InputNameVar
 from game.components.input_.response_validator import ResponseValidator, not_none
 from game.components.interface_component import Interface_Component
 from game.components.participant import ParticipantVar
+from game.components.send import make_sendable, Address
 from smart_text import TextLike
 from utils.logging import get_logger
 from utils.types import Grouping, SimpleCallback
@@ -34,13 +36,8 @@ class InputArgs(
     participants:Required[Grouping[ParticipantVar]]
     on_updates:Iterable['SimpleCallback[Input[InputDataTypeVar,InputNameVar,ParticipantVar]]']
     identifier:TextLike
-
-class RunArgs(
-    TypedDict,
-    total = False
-):
-    max_time:float
-    notification_times:tuple[float,...]
+    timeout:float
+    reminders:Iterator[float]
 
 class Input(
     Generic[InputDataTypeVar,InputNameVar,ParticipantVar],
@@ -53,10 +50,20 @@ class Input(
         self.completion_criteria:'Completion_Criteria[InputDataTypeVar,InputNameVar,ParticipantVar]' = All_Valid_Responded(self)
         self.on_updates:set['SimpleCallback[Input[InputDataTypeVar,InputNameVar,ParticipantVar]]'] = set()
         self.identifier:TextLike|None = None
+        self.last_start_time:float|None = None
+        self.last_end_time:float|None = None
+        self.timeout:float|None = None
+        self.reminders:Iterator[float] = tuple().__iter__()
         if 'response_validator' in kwargs:
             self.response_validator = kwargs['response_validator']
         if 'completion_criteria' in kwargs:
             self.completion_criteria = kwargs['completion_criteria']
+        if 'on_updates' in kwargs:
+            self.on_updates.update(kwargs['on_updates'])
+        if 'timeout' in kwargs:
+            self.timeout = kwargs['timeout']
+        if 'reminders' in kwargs:
+            self.reminders = kwargs['reminders']
         if 'on_updates' in kwargs:
             self.on_updates.update(kwargs['on_updates'])
         else:
@@ -74,14 +81,45 @@ class Input(
         await self.update_on_updates()
     async def wait_until_done(self):
         logger.info(f"{self} waiting until is_done.")
-        while not self.is_done():
+        assert self.last_start_time is not None
+        timeout_check = lambda:True
+        clean_up:list[Address] = []
+        if self.timeout is not None:
+            end_time = self.last_start_time+self.timeout
+            clean_up.append(await self.send(text = f"You will need to have responded <t:{int(end_time)}:R>."))
+            timeout_check = lambda:time()>=end_time
+        try:
+            next_reminder = self.last_start_time + next(self.reminders)
+        except StopIteration:
+            next_reminder = None
+        while not self.is_done() and timeout_check():
+            if next_reminder is not None:
+                for participant in self.responses.did_not_respond_valid():
+                    clean_up.append(
+                        await self.send(
+                            address = await self.sender.generate_address((participant,)),
+                            text="We are still waiting for you to respond!"
+                        )
+                    )
+                try:
+                    next_reminder = next_reminder + next(self.reminders)
+                except StopIteration:
+                    next_reminder = None
             await asyncio.sleep(WAIT_UNTIL_DONE_CHECK_TIME)
+        if timeout_check is not None:
+            for address in clean_up:
+                await self.send(
+                    address=address,
+                    text=""
+                )
     def is_done(self) -> bool:
         return self.responses.all_valid()
     async def run(self):
+        self.last_start_time = time()
         await self.setup()
         await self.wait_until_done()
         await self.unsetup()
+        self.last_end_time = time()
     async def update_on_updates(self):
         for on_update in self.on_updates:
             val = on_update(self)

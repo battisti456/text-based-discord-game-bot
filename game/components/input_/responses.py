@@ -32,6 +32,12 @@ class Responses(
             if self.pi.response_validator(participant,response)[0]
             and response is not None
             )
+    def did_not_respond_valid(self) -> Iterator[ParticipantVar]:
+        return (
+            participant for participant,response in self.items()
+            if not (self.pi.response_validator(participant,response)[0]
+            and response is not None)
+            )
     def responses(self) -> Iterator[tuple[ParticipantVar,InputDataTypeVar]]:
         return (
             (participant,response)
