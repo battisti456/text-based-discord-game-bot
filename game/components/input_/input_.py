@@ -12,6 +12,7 @@ from game.components.send import make_sendable, Address
 from smart_text import TextLike
 from utils.logging import get_logger
 from utils.types import Grouping, SimpleCallback
+from game.components.participant import mention_participants
 
 if TYPE_CHECKING:
     from game.components.game_interface import Game_Interface
@@ -99,7 +100,7 @@ class Input(
                         clean_up.append(
                             await self.send(
                                 address = await self.sender.generate_address((participant,)),
-                                text="We are still waiting for you to respond!"
+                                text=f"{mention_participants((participant,))}, we are still waiting for you to respond!" 
                             )
                         )
                     try:
