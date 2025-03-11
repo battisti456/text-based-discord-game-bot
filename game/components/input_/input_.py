@@ -94,17 +94,18 @@ class Input(
             next_reminder = None
         while not self.is_done() and timeout_check():
             if next_reminder is not None:
-                for participant in self.responses.did_not_respond_valid():
-                    clean_up.append(
-                        await self.send(
-                            address = await self.sender.generate_address((participant,)),
-                            text="We are still waiting for you to respond!"
+                if time() >= next_reminder:
+                    for participant in self.responses.did_not_respond_valid():
+                        clean_up.append(
+                            await self.send(
+                                address = await self.sender.generate_address((participant,)),
+                                text="We are still waiting for you to respond!"
+                            )
                         )
-                    )
-                try:
-                    next_reminder = next_reminder + next(self.reminders)
-                except StopIteration:
-                    next_reminder = None
+                    try:
+                        next_reminder = next_reminder + next(self.reminders)
+                    except StopIteration:
+                        next_reminder = None
             await asyncio.sleep(WAIT_UNTIL_DONE_CHECK_TIME)
         if timeout_check is not None:
             for address in clean_up:
