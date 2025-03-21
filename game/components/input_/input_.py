@@ -99,8 +99,8 @@ class Input(
                     for participant in self.responses.did_not_respond_valid():
                         clean_up.append(
                             await self.send(
-                                address = await self.sender.generate_address((participant,)),
-                                text=f"{mention_participants((participant,))}, we are still waiting for you to respond!" 
+                                text=f"{mention_participants((participant,))}, we are still waiting for you to respond!",
+                                direct_message_participant=frozenset((participant,))
                             )
                         )
                     try:
