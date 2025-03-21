@@ -11,6 +11,7 @@ from discord_interface.common import (
     edit_to_send,
     f,
     pre_process,
+    Discord_Player
 )
 from discord_interface.custom_views import (
     Button_Select_View,
@@ -18,12 +19,13 @@ from discord_interface.custom_views import (
     One_Text_Field_View,
     Options_And_Text_View,
 )
-from game.components.participant import ParticipantType, name_participants
+from game.components.participant import ParticipantType, name_participants, get_players
 from game.components.send import Sendable, Sender
 from game.components.send.sendable.prototype_sendables import (
     Text,
     With_Options,
     With_Text_Field,
+    Direct_Message
 )
 from game.components.send.sendable.sendables import (
     Attach_Files,
@@ -99,7 +101,21 @@ class Discord_Sender(Sender[Discord_Address]):
     @override
     async def _send(self, sendable: Sendable, address: Discord_Address|None = None) -> Discord_Address:
         if address is None:
-            address = await self.generate_address()
+            if isinstance(sendable,Direct_Message):
+                players = get_players(sendable.direct_message_participants)
+                if len(players) == 1:
+                    player = get_first(players)
+                    assert isinstance(player,Discord_Player)
+                    user= self.client.get_user(player.id)
+                    assert user is not None
+                    channel = user.dm_channel
+                    if channel is None:
+                        channel = await user.create_dm()
+                    address = Discord_Address(messages=[Discord_Message(message_id=None,channel_id=channel.id)])
+                else:
+                    raise NotImplementedError()
+            else:
+                address = await self.generate_address()
         edit_kwargs:list[DiscordEditArgs] = []
         if isinstance(sendable,Text_Only):
             edit_kwargs.append({

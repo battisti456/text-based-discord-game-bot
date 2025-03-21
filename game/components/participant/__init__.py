@@ -1,4 +1,4 @@
-from typing import Mapping, Optional
+from typing import Mapping, Optional, Iterable
 
 from typing_extensions import TypeVar
 
@@ -19,3 +19,12 @@ type PlayerDict[DataType] = dict[Player,DataType]
 type PlayerMapOptional[DataType] = Mapping[Player,Optional[DataType]]
 type PlayerMap[DataType] = Mapping[Player,DataType]
 type TeamDict[R] = dict[Team,R]
+
+def get_players(participants:Iterable[Participant]) -> frozenset[Player]:
+    players = []
+    for participant in participants:
+        if isinstance(participant,Player):
+            players.append(participant)
+        elif isinstance(participant,Team):
+            raise NotImplementedError()
+    return frozenset(players)
