@@ -2,7 +2,6 @@ from typing import TypedDict, Unpack, TYPE_CHECKING
 import inspect
 import dataclasses
 
-from game.components.send.sendable.flags import Flag
 from game.components.send.sendable.sendable import Sendable, SENDABLES, PROTOTYPE_SENDABLES
 
 if TYPE_CHECKING:
@@ -17,8 +16,6 @@ class MakeSendableArgs(TypedDict, total = False):
     max_selectable:int
     hint_text:'TextLike'
     reference_message:'Address'
-    is_reminder:bool
-    with_flags:frozenset[Flag]
 
 def args_satisfied(prototype:type[Sendable],kwargs:MakeSendableArgs) -> bool:
     sig = inspect.signature(prototype)

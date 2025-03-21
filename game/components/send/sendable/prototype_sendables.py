@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional
 
 from game.components.send.sendable.sendable import Sendable
-from game.components.send.sendable.flags import Flag
 
 if TYPE_CHECKING:
     from game.components.send.option import Option
@@ -30,7 +29,3 @@ class With_Text_Field(Sendable, is_prototype = True):
 @dataclass(frozen=True)
 class Reference_Message(Sendable, is_prototype = True):
     reference_message:'Address' = field(kw_only=True)
-
-@dataclass(frozen = True)
-class With_Flags(Sendable, is_prototype = True):
-    with_flags:frozenset[Flag] = field(kw_only=True)
