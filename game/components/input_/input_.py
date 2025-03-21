@@ -100,8 +100,7 @@ class Input(
                         clean_up.append(
                             await self.send(
                                 address = await self.sender.generate_address((participant,)),
-                                text=f"{mention_participants((participant,))}, we are still waiting for you to respond!",
-                                with_flags=frozenset(('direct_message',))
+                                text=f"{mention_participants((participant,))}, we are still waiting for you to respond!" 
                             )
                         )
                     try:
