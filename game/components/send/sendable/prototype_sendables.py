@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional
 
+from game.components.participant import Participant
 from game.components.send.sendable.sendable import Sendable
 
 if TYPE_CHECKING:
@@ -29,3 +30,7 @@ class With_Text_Field(Sendable, is_prototype = True):
 @dataclass(frozen=True)
 class Reference_Message(Sendable, is_prototype = True):
     reference_message:'Address' = field(kw_only=True)
+
+@dataclass(frozen=True)
+class Direct_Message(Sendable, is_prototype = True):
+    direct_message_participants:frozenset[Participant]

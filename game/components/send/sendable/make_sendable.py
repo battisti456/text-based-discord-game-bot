@@ -2,6 +2,7 @@ from typing import TypedDict, Unpack, TYPE_CHECKING
 import inspect
 import dataclasses
 
+from game.components.participant import Participant
 from game.components.send.sendable.sendable import Sendable, SENDABLES, PROTOTYPE_SENDABLES
 
 if TYPE_CHECKING:
@@ -16,6 +17,7 @@ class MakeSendableArgs(TypedDict, total = False):
     max_selectable:int
     hint_text:'TextLike'
     reference_message:'Address'
+    direct_message_participant:frozenset[Participant]
 
 def args_satisfied(prototype:type[Sendable],kwargs:MakeSendableArgs) -> bool:
     sig = inspect.signature(prototype)
