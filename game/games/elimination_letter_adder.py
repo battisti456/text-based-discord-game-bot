@@ -106,6 +106,8 @@ class Letter_Add_Input(Input[Letter_Add_Input_Type, Literal['Multi_Input'], Play
             )
         )
     async def on_interaction(self,interaction:Interaction):
+        if interaction.by_player != self._player:
+            return
         if self._in_would_you_like_to_challenge_phase:
             if interaction.at_address != self._address0:
                 return
