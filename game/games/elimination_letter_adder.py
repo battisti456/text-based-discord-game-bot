@@ -46,6 +46,7 @@ class Letter_Add_Input(Input[Letter_Add_Input_Type, Literal['Multi_Input'], Play
             participants=(player,),
             identifier=f"{player.user_name}'s choice on '{letters}'."
         )
+    @override
     def is_done(self) -> bool:
         return self._player_is_done or (self._letter is not None and self._left is not None)
     def current_letters_text(self) -> TextLike:
@@ -134,12 +135,14 @@ class Letter_Add_Input(Input[Letter_Add_Input_Type, Literal['Multi_Input'], Play
                 await self.update_on_updates()
             else:
                 return
+    @override
     async def setup(self):
         await super().setup()
         self._address0 = await self.sender(self.challenge_text() if self._can_challenge else self.side())
         if not self._can_challenge:
             self._address1 = await self.sender(self.letter())
         self.gi.watch(owner = self)(self.on_interaction)
+    @override
     async def unsetup(self):
         await super().unsetup()
         self.gi.purge_actions(self)
@@ -186,6 +189,7 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
                 letters = letters,
                 can_challenge= not first_turn
             )
+            await input.run()
             response = input.responses[player]
             if response is None and first_turn:
                 await self.kick_players([player],reason='timeout')
