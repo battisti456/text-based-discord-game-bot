@@ -96,14 +96,13 @@ class Letter_Add_Input(Input[Letter_Add_Input_Type, Literal['Multi_Input'], Play
         )
     def letter(self) -> Sendable:
         return make_sendable(
-            text="Choose a letter:",
             with_options=tuple(
                 Option(
                     text= LOWER_CASE_LETTERS[i],
                     emoji = LETTER_KEYCAP_EMOJI[i],
                     long_text=f"the letter {LOWER_CASE_LETTERS[i]}"
                 )
-                for i in range(len(LOWER_CASE_LETTERS))
+                for i in range(25)#short term fix if it turns out we are only limited to 25 options with current code
             )
         )
     async def on_interaction(self,interaction:Interaction):
