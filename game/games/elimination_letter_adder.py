@@ -1,4 +1,3 @@
-#VERY BUGGY
 import random
 from typing import override, Literal
 
@@ -16,8 +15,8 @@ from game.game_bases.game_word_base import Game_Word_Base
 from utils.grammar.types import Lower_Case_Letter, LOWER_CASE_LETTERS
 from utils.emoji_groups import LETTER_KEYCAP_EMOJI, FIGHT_SURRENDER_EMOJI, LEFT_RIGHT_EMOJI
 from smart_text import TextLike
-from game.components.send.interaction import  Interaction, Select_Options, Option
-from game.components.send import make_sendable, Sendable
+from game.components.send.interaction import  Select_Options
+from game.components.send import make_sendable, Sendable, Option, Interaction
 
 NUM_LETTERS = games_config['elimination_letter_adder']['num_letters']
 START_LETTERS = games_config['elimination_letter_adder']['start_letters']
