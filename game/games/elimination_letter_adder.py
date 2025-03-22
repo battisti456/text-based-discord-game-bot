@@ -71,7 +71,7 @@ class Letter_Add_Input(Input[Letter_Add_Input_Type, Literal['Multi_Input'], Play
         )
     def side(self) -> Sendable:
         return make_sendable(
-            text = (f"{self.current_letters_text()}Choose which letter you would like to add, and the side to add it to." +
+            text = (f"{self.current_letters_text()}Choose which side you would like to add a letter to:" +
                 ("You may still select to challenge." 
                 if self._can_challenge else "")
                 ),
@@ -96,6 +96,7 @@ class Letter_Add_Input(Input[Letter_Add_Input_Type, Literal['Multi_Input'], Play
         )
     def letter(self) -> Sendable:
         return make_sendable(
+            text="Choose a letter:",
             with_options=tuple(
                 Option(
                     text= LOWER_CASE_LETTERS[i],
