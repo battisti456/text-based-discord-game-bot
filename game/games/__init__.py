@@ -74,5 +74,6 @@ __all__ = (
     'Emoji_Communication',
     'Basic_Game',
     'Chess_War',
-    'Letter_Physics'
+    'Letter_Physics',
+    'Elimination_Letter_Adder'
 )
