@@ -73,7 +73,7 @@ class Game(Interface_Component):
         """
         the actual running of the game, meant to be overloaded
         """
-        return []
+        ...
     async def run(self):
         """
         intended function to run the selected game

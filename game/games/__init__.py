@@ -16,6 +16,7 @@ from game.games.the_great_kitten_race import The_Great_Kitten_Race
 from game.games.tricky_trivia import Tricky_Trivia
 from game.games.chess_war import Chess_War
 from game.games.letter_physics import Letter_Physics
+from game.games.elimination_letter_adder import Elimination_Letter_Adder
 
 valid_games:list[type[Game]] = [
     Elimination_Blackjack,
@@ -30,7 +31,8 @@ valid_games:list[type[Game]] = [
     Chess_Puzzle_Elimination,
     Altered_Image_Guess,
     Emoji_Communication,
-    Letter_Physics]
+    Letter_Physics,
+    Elimination_Letter_Adder]
 
 def random_game() -> type[Game]:
     return choice(valid_games)
