@@ -90,6 +90,7 @@ class Discord_Player(Player):
         channel = await client.fetch_channel(channel_id)
         assert isinstance(channel,CompatibleChannels)
         await client.wait_until_ready()
+        assert channel.guild is not None
         member = await channel.guild.fetch_member(id)
         assert member is not None
         return Discord_Player(
