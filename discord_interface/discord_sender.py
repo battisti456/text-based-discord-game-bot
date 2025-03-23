@@ -53,7 +53,8 @@ class Discord_Sender(Sender[Discord_Address]):
         Text,
         With_Options,
         With_Text_Field,
-        Attach_Files
+        Attach_Files,
+        Direct_Message
     )
     def __init__(self,gi:'Discord_Game_Interface'):
         Sender.__init__(self)
