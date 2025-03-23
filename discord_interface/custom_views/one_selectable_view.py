@@ -5,7 +5,8 @@ import discord
 from discord_interface.common import Discord_Address
 from discord_interface.custom_views._custom_view import Custom_View
 from discord_interface.custom_views._interaction_handler import Interaction_Handler
-from game.components.send.interaction import Select_Options, Option
+from game.components.send.interaction import Select_Options
+from game.components.send.option import Option
 from game.components.send.sendable.prototype_sendables import With_Options
 from utils.common import get_first
 
