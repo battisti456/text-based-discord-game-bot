@@ -100,7 +100,7 @@ class Input(
                         clean_up.append(
                             await self.send(
                                 text=f"{mention_participants((participant,))}, we are still waiting for you to respond!",
-                                direct_message_participant=frozenset((participant,))
+                                direct_message_participants=frozenset((participant,))
                             )
                         )
                     try:
