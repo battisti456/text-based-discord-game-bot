@@ -30,7 +30,3 @@ class With_Text_Field(Sendable, is_prototype = True):
 @dataclass(frozen=True)
 class Reference_Message(Sendable, is_prototype = True):
     reference_message:'Address' = field(kw_only=True)
-
-@dataclass(frozen=True)
-class Direct_Message(Sendable, is_prototype = True):
-    direct_message_participants:frozenset[Participant]

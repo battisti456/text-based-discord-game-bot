@@ -9,6 +9,7 @@ from game.components.input_.response_validator import ResponseValidator, not_non
 from game.components.interface_component import Interface_Component
 from game.components.participant import ParticipantVar
 from game.components.send import make_sendable, Address
+from game.components.send.address import Direct_Message
 from smart_text import TextLike
 from utils.logging import get_logger
 from utils.types import Grouping, SimpleCallback
@@ -99,8 +100,8 @@ class Input(
                     for participant in self.responses.did_not_respond_valid():
                         clean_up.append(
                             await self.send(
-                                text=f"{mention_participants((participant,))}, we are still waiting for you to respond!",
-                                direct_message_participants=frozenset((participant,))
+                                address = await self.sender.generate_address(Direct_Message,participant),
+                                text = f"{mention_participants((participant,))}, we are still waiting for you to respond!"
                             )
                         )
                     try:

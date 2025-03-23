@@ -11,3 +11,11 @@ class Address():
         def _(interaction:'Interaction') -> bool:
             return interaction.at_address == self
         return _
+
+class Address_Tag_Base():
+    ...
+
+type Address_Tag = type[Address_Tag_Base]
+
+class Direct_Message(Address_Tag_Base):
+    ...

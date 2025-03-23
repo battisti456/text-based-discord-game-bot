@@ -17,7 +17,6 @@ class MakeSendableArgs(TypedDict, total = False):
     max_selectable:int
     hint_text:'TextLike'
     reference_message:'Address'
-    direct_message_participants:frozenset[Participant]
 
 def args_satisfied(prototype:type[Sendable],kwargs:MakeSendableArgs) -> bool:
     sig = inspect.signature(prototype)

@@ -25,7 +25,6 @@ from game.components.send.sendable.prototype_sendables import (
     Text,
     With_Options,
     With_Text_Field,
-    Direct_Message
 )
 from game.components.send.sendable.sendables import (
     Attach_Files,
@@ -34,6 +33,7 @@ from game.components.send.sendable.sendables import (
     Text_With_Options_And_Text_Field,
     Text_With_Text_Field,
 )
+from game.components.send.address import Direct_Message
 from smart_text import TextLike
 from utils.common import get_first
 from utils.logging import get_logger
@@ -53,8 +53,7 @@ class Discord_Sender(Sender[Discord_Address]):
         Text,
         With_Options,
         With_Text_Field,
-        Attach_Files,
-        Direct_Message
+        Attach_Files
     )
     def __init__(self,gi:'Discord_Game_Interface'):
         Sender.__init__(self)
@@ -85,11 +84,25 @@ class Discord_Sender(Sender[Discord_Address]):
                         if isinstance(p,ParticipantType):
                             participants.add(p)
             if name is None:
-                if len(participants) == 0:
+                if len(participants) == 1:
                     name = "Private Channel"
                 else:
                     name = name_participants(participants) +"'s private channel"
-            thread_id = await self.gi._new_channel(name,participants)
+            if Direct_Message in key:
+                players = get_players(participants)
+                if len(players) == 1:
+                    player = get_first(players)
+                    assert isinstance(player,Discord_Player)
+                    user= self.client.get_user(player.id)
+                    assert user is not None
+                    channel = user.dm_channel
+                    if channel is None:
+                        channel = await user.create_dm()
+                    thread_id = channel.id
+                else:
+                    raise NotImplementedError()
+            else:
+                thread_id = await self.gi._new_channel(name,participants)
             self.threads[key] = thread_id
         return Discord_Address(messages=list(Discord_Message(message_id=None,channel_id = self.threads[key]) for _ in range(length)), key = key)
     async def extend_address(self,address:Discord_Address, num:int):
@@ -102,21 +115,7 @@ class Discord_Sender(Sender[Discord_Address]):
     @override
     async def _send(self, sendable: Sendable, address: Discord_Address|None = None) -> Discord_Address:
         if address is None:
-            if isinstance(sendable,Direct_Message):
-                players = get_players(sendable.direct_message_participants)
-                if len(players) == 1:
-                    player = get_first(players)
-                    assert isinstance(player,Discord_Player)
-                    user= self.client.get_user(player.id)
-                    assert user is not None
-                    channel = user.dm_channel
-                    if channel is None:
-                        channel = await user.create_dm()
-                    address = Discord_Address(messages=[Discord_Message(message_id=None,channel_id=channel.id)])
-                else:
-                    raise NotImplementedError()
-            else:
-                address = await self.generate_address()
+            address = await self.generate_address()
         edit_kwargs:list[DiscordEditArgs] = []
         if isinstance(sendable,Text_Only):
             edit_kwargs.append({
