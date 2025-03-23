@@ -105,4 +105,4 @@ class Discord_Player(Player):
 def f(text:TextLike) -> str:
     return str(text)
 
-CompatibleChannels = discord.TextChannel|discord.Thread
+CompatibleChannels = discord.TextChannel|discord.Thread|discord.DMChannel
