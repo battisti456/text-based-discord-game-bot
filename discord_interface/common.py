@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 MESSAGE_MAX_LENGTH = 1800#actually 2000, but I leave extra for split indicators
 SLEEP429 = 10
 BLANK_TEXT = "_ _"#should appear blank
+MAX_OPTIONS_PER_SELECTABLE = 25
 
 class DiscordEditArgs(TypedDict, total = False):
     content:str
