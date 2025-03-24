@@ -44,7 +44,7 @@ class Letter_Add_Input(Input[Letter_Add_Input_Type, Literal['Multi_Input'], Play
         super().__init__(
             gi=gi,
             participants=(player,),
-            identifier=f"{player.user_name}'s choice on '{letters}'."
+            identifier=f"{player.user_name}'s choice on '{letters}'"
         )
     @override
     def is_done(self) -> bool:
