@@ -66,9 +66,10 @@ class Discord_Sender(Sender[Discord_Address]):
     async def generate_address(
         self, 
         *args:Hashable,
+        channel_id:int|None = None,
         length:int = 1) -> 'Discord_Address':
         key = frozenset(args)
-        if key not in self.threads.keys():
+        if key not in self.threads.keys() and channel_id is None:
             name:TextLike|None = None
             try:
                 name = get_first(val for val in key if isinstance(val,TextLike))
@@ -103,10 +104,12 @@ class Discord_Sender(Sender[Discord_Address]):
             else:
                 thread_id = await self.gi._new_channel(name,participants)
             self.threads[key] = thread_id
-        return Discord_Address(messages=list(Discord_Message(message_id=None,channel_id = self.threads[key]) for _ in range(length)), key = key)
+        if channel_id is None:
+            channel_id = self.threads[key]
+        return Discord_Address(messages=list(Discord_Message(message_id=None,channel_id = channel_id) for _ in range(length)), key = key)
     async def extend_address(self,address:Discord_Address, num:int):
         to_add = await self.generate_address(
-            None if len(address.messages) == 0 else address.messages[-1].channel_id,#type:ignore
+            channel_id = None if len(address.messages) == 0 else address.messages[-1].channel_id,
             length = num)
         for message in to_add.messages:
             self.cached_addresses[message] = address
