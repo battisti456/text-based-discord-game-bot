@@ -1,16 +1,20 @@
-from typing import TYPE_CHECKING, override
+from math import ceil
 from time import time
+from typing import TYPE_CHECKING, override
 
 import discord
 
-from discord_interface.common import Discord_Address, MAX_OPTIONS_PER_SELECTABLE
+from discord_interface.common import MAX_OPTIONS_PER_SELECTABLE, Discord_Address
 from discord_interface.custom_views._custom_view import Custom_View
-from game.components.send.sendable.prototype_sendables import With_Options
-from game.components.send.option import Option
-from math import ceil
-from utils.common import get_first
-from utils.grammar import s
 from game.components.send.interaction import Interaction, Select_Options
+from game.components.send.option import Option
+from game.components.send.sendable.prototype_sendables import With_Options
+from utils.common import get_first
+from utils.emoji_groups import LEFT_RIGHT_EMOJI, LIST
+from utils.grammar import s, wordify_iterable
+from utils.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 if TYPE_CHECKING:
@@ -19,6 +23,7 @@ if TYPE_CHECKING:
 
 class _Infinite_Select_View(discord.ui.View):
     def __init__(self, ivm: "Infinite_View_Manager"):
+        super().__init__()
         self.ivm = ivm
         self.add_item(self.ivm.selections[self.ivm.page])
         if self.ivm.page != 0:
@@ -41,11 +46,11 @@ class _Infinite_Selection(discord.ui.Select):
                 discord.SelectOption(
                     label=option.text, emoji=option.emoji, description=option.long_text
                 )
-                for option in self.ivm.cv.sendable.with_options[self.offset :]
+                for option in self.ivm.cv.sendable.with_options[self.offset:self.offset+MAX_OPTIONS_PER_SELECTABLE]
             ),
         )
-
     def update(self):
+        self.disabled = False
         selected_elsewhere = self.ivm.selected - self.number_selected
         min = self.ivm.min_select - selected_elsewhere
         if min < 0:
@@ -54,7 +59,11 @@ class _Infinite_Selection(discord.ui.Select):
         if max > len(self.options):
             max = len(self.options)
         self.min_values = min
-        self.max_values = max
+        if max < 1:
+            self.disabled = True
+            self.max_values = 1
+        else:
+            self.max_values = max
 
     @override
     async def callback(self, discord_interaction: discord.Interaction):
@@ -71,22 +80,25 @@ class _Infinite_Selection(discord.ui.Select):
         self.number_selected = len(options_selected)
         if self.number_selected == 1 and self.ivm.single_select:
             await self.ivm.generate_interaction(discord_interaction)
-        await self.ivm.update()
+        else:
+            await self.ivm.update(discord_interaction)
         return await super().callback(discord_interaction)
 
 
 class Infinite_View_Manager:
     def __init__(
-        self, cv: Custom_View[With_Options], source_interaction: discord.Interaction
+        self, cv: Custom_View[With_Options]
     ):
+        self.last_selection:None|tuple[Option,...] = None
         self.first = True
-        self.source_interaction = source_interaction
         self.cv = cv
         self.max_select: int = (
             self.cv.sendable.max_selectable
             if self.cv.sendable.max_selectable is not None
             else len(self.cv.sendable.with_options)
         )
+        if self.max_select > 1:
+            logger.warn("Multiselections are not fully figured out with infinite selection. No way to clear responses.")
         self.min_select: int = (
             self.cv.sendable.min_selectable
             if self.cv.sendable.min_selectable is not None
@@ -102,23 +114,28 @@ class Infinite_View_Manager:
             self.selections.append(_Infinite_Selection(self, p))
         self.left_button = discord.ui.Button(
             row=1,
+            label="go left a page",
+            emoji=LEFT_RIGHT_EMOJI[0]
         )
 
         async def left_button_press(interaction: discord.Interaction):
             self.page -= 1
-            await self.update()
+            await self.update(interaction)
 
         self.left_button.callback = left_button_press
         self.right_button = discord.ui.Button(
+            label= "go right a page",
             row=1,
+            emoji=LEFT_RIGHT_EMOJI[1]
         )
 
         async def right_button_press(interaction: discord.Interaction):
             self.page += 1
-            await self.update()
+            await self.update(interaction)
 
         self.right_button.callback = right_button_press
         self.confirm_button = discord.ui.Button(
+            label="confirm selection",
             row=2,
         )
 
@@ -146,10 +163,20 @@ class Infinite_View_Manager:
                 ),  # type:ignore
             )
         )
+        self.last_selection = tuple(options_selected)
         self.cv.last_responses[Infinite_View_Manager] = response
-        await self.cv.give_feedback(discord_interaction)
+        #reset in case wqe want to go again
+        for selection in self.selections:
+            selection.currently_selected = ()
+            selection.number_selected = 0
+        self.selected = 0
+        await self.update(discord_interaction)
 
-    async def update(self):
+        #await self.cv.give_feedback(discord_interaction)
+
+    async def update(self, discord_interaction:discord.Interaction):
+        for selection in self.selections:
+            selection.update()
         view = _Infinite_Select_View(self)
         text: str
         if self.single_select:
@@ -160,24 +187,28 @@ class Infinite_View_Manager:
                 f"Please select between {self.min_select} and {self.max_select} options, then press confirm.\n"
                 + f"You have selected {num_other} option{s(num_other)} on other pages."
             )
+        if self.last_selection is not None:
+            text += f"\nLast time your submission was {wordify_iterable("'" + option.text + "'" for option in self.last_selection)}."
         if self.first:
-            await self.source_interaction.response.send_message(
-                content=text, view=view, ephemeral=True
+            await discord_interaction.response.send_message(
+                content=text,
+                view=view,
+                ephemeral=True
             )
             self.first = False
         else:
-            await self.source_interaction.response.edit_message(content=text, view=view)
+            await discord_interaction.response.edit_message(content=text, view=view)
 
 
 class Infinite_Select_Button(discord.ui.Button):
     def __init__(self, cv: Custom_View[With_Options]):
         self.cv = cv
-        super().__init__(label="select")
+        super().__init__(label="Open dropdown", emoji=LIST)
 
     @override
     async def callback(self, discord_interaction: discord.Interaction):
-        ivm = Infinite_View_Manager(self.cv, discord_interaction)
-        await ivm.update()
+        ivm = Infinite_View_Manager(self.cv)
+        await ivm.update(discord_interaction)
         return await super().callback(discord_interaction)
 
 

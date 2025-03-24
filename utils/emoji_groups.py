@@ -11,3 +11,4 @@ LETTER_KEYCAP_EMOJI:Sequence[str] = ('🇦', '🇧', '🇨', '🇩', '🇪', '�
 ROCK_PAPER_SCISSORS_EMOJI:Sequence[str] = ['🪨','📜','✂️','🔫']
 LEFT_RIGHT_EMOJI = ['⬅️','➡️']
 FIGHT_SURRENDER_EMOJI = ['⚔️','🏳️']
+LIST = '📝'
