@@ -11,15 +11,12 @@ from discord_interface.common import (
     edit_to_send,
     f,
     pre_process,
-    Discord_Player,
-    MAX_OPTIONS_PER_SELECTABLE
+    Discord_Player
 )
 from discord_interface.custom_views import (
-    Button_Select_View,
-    One_Selectable_View,
     One_Text_Field_View,
     Options_And_Text_View,
-    Infinite_Select_View
+    select_view
 )
 from game.components.participant import ParticipantType, name_participants, get_players
 from game.components.send import Sendable, Sender
@@ -124,16 +121,9 @@ class Discord_Sender(Sender[Discord_Address]):
                 'content' : f(sendable.text)
             })
         elif isinstance(sendable,Text_With_Options):
-            view:discord.ui.View
-            if len(sendable.with_options) == 2 and sendable.max_selectable == 1:
-                view = Button_Select_View(self.gi,address,sendable)
-            elif len(sendable.with_options) > MAX_OPTIONS_PER_SELECTABLE:
-                view = Infinite_Select_View(self.gi,address,sendable)
-            else:
-                view = One_Selectable_View(self.gi,address,sendable)
             edit_kwargs.append({
                 'content' : f(sendable.text),
-                'view' : view
+                'view' : select_view(self.gi,address,sendable)
             })
         elif isinstance(sendable,Text_With_Text_Field):
             edit_kwargs.append({
@@ -163,7 +153,7 @@ class Discord_Sender(Sender[Discord_Address]):
             if isinstance(sendable,With_Options):
                 edit_kwargs.append({
                     'content' : text,
-                    'view' : One_Selectable_View(self.gi,address,sendable)
+                    'view' : select_view(self.gi,address,sendable)
                 })
             if isinstance(sendable,With_Text_Field):
                 edit_kwargs.append({
