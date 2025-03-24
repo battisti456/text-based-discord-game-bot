@@ -14,13 +14,12 @@ from utils.logging import get_logger
 from game.components.game_interface import (
     Game_Interface,
 )
-from game.components.participant import Player, name_participants, Team
+from game.components.participant import Player, Team
 from game.components.send import Interaction, Address
 from game.components.send.interaction import Send_Text, Command
 from game.components.send import sendables
 
 from utils.common import get_first
-from utils.types import Grouping
 from config.discord_config import discord_config
 from config.config import config
 
@@ -173,19 +172,3 @@ class Discord_Game_Interface(Game_Interface):
     def on_start(self,callback:AsyncCallback) -> AsyncCallback:
         self.on_start_callbacks.append(callback)
         return callback
-    async def who_can_see_channel(self,players:Grouping[Player]) -> int:
-        """
-        creates a ChannelId that only players can see, or returns one that it already made
-        """
-        fr_players = frozenset(players)
-        channel_id:int
-        if fr_players in self.who_can_see_dict:
-            channel_id = self.who_can_see_dict[fr_players]
-        else:
-            channel_id = await self._new_channel(
-                f"{name_participants(players)}'s Private Channel",
-                players
-            )
-            self.who_can_see_dict[fr_players] = channel_id
-        logger.info(f"channel limited game interface changing channel to id = {channel_id} so player_ids = {players} can see")
-        return channel_id
