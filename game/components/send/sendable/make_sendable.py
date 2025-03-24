@@ -2,7 +2,6 @@ from typing import TypedDict, Unpack, TYPE_CHECKING
 import inspect
 import dataclasses
 
-from game.components.participant import Participant
 from game.components.send.sendable.sendable import Sendable, SENDABLES, PROTOTYPE_SENDABLES
 
 if TYPE_CHECKING:
@@ -20,9 +19,14 @@ class MakeSendableArgs(TypedDict, total = False):
 
 def args_satisfied(prototype:type[Sendable],kwargs:MakeSendableArgs) -> bool:
     sig = inspect.signature(prototype)
-    return all(
-        arg_name in kwargs for arg_name,v in sig.parameters.items()
-        if v.default is inspect._empty)
+    if all(v.default is not inspect._empty for arg_name,v in sig.parameters.items()):
+        #if all parameters are optional, you need one optional parameter to infer prototype
+        return any(arg_name in kwargs for arg_name,v in sig.parameters.items())
+    else:
+        #if there are any required parameters, you need all of them to infer prototype
+        return all(
+            arg_name in kwargs for arg_name,v in sig.parameters.items()
+            if v.default is inspect._empty)
 
 def make_sendable(
         **kwargs:Unpack[MakeSendableArgs]
