@@ -165,7 +165,7 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
             "In this game you take turns adding letters to the combined letters, choosing to put them on the left or right side.\n" +
             f"Once we have more than {NUM_LETTERS}, if you add a letter that makes it spell a word, you lose!\n" +
             "But, beware! If the person after you challenges your word you must provide a word " + 
-            "that could still be spelled with the letters, or else you are eliminated.\n" +
+            "that could still be spelled with the current letters by only adding letters to the left and right sides, or else you are eliminated.\n" +
             "If the challenge was made in haste, however, the challenger is eliminated instead.\n" +
             f"To start us off in a round, I will generate {START_LETTERS} letters which are definitely a part of a word."
         )
@@ -220,7 +220,7 @@ class Elimination_Letter_Adder(Elimination_Base,Game_Word_Base):
             else:#challenge
                 message = Text_With_Text_Field(
                     text = f"{mention_participants([player])} has chosen to challenge {mention_participants([self.last_player])} on the letters '{letters}'. \n" +
-                    "What word do you think you could have spelled?")
+                    "What word do you think you could have spelled by only adding letters tot he left or right sides?")
                 address = await self.sender(message)
                 word_input = await self.basic_text_response(
                     content=address,
