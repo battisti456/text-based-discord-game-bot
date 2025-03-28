@@ -20,6 +20,8 @@ logger = get_logger(__name__)
 if TYPE_CHECKING:
     from discord_interface.discord_interface import Discord_Game_Interface
 
+TIMEOUT = 300#in seconds
+
 
 class _Infinite_Select_View(discord.ui.View):
     def __init__(self, ivm: "Infinite_View_Manager"):
@@ -193,7 +195,8 @@ class Infinite_View_Manager:
             await discord_interaction.response.send_message(
                 content=text,
                 view=view,
-                ephemeral=True
+                ephemeral=True,
+                delete_after=TIMEOUT
             )
             self.first = False
         else:
