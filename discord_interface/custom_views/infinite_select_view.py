@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 if TYPE_CHECKING:
     from discord_interface.discord_interface import Discord_Game_Interface
 
-TIMEOUT = 300#in seconds
+TIMEOUT = 30#in seconds
 
 
 class _Infinite_Select_View(discord.ui.View):
@@ -200,7 +200,7 @@ class Infinite_View_Manager:
             )
             self.first = False
         else:
-            await discord_interaction.response.edit_message(content=text, view=view)
+            await discord_interaction.response.edit_message(content=text, view=view, delete_after=TIMEOUT)
 
 
 class Infinite_Select_Button(discord.ui.Button):
