@@ -187,6 +187,10 @@ class Discord_Sender(Sender[Discord_Address]):
             else:
                 kwargs = edit_kwargs[i]
             channel = self.client.get_channel(message.channel_id)
+            if not isinstance(channel,CompatibleChannels):
+                logger.error(
+                    f"Received an incompatible channel {channel.__class__.__name__}. ID is {message.channel_id} and resulted from keys {list(key for key,value in self.threads.items() if value == message.channel_id)} in self.threads."
+                    )
             assert isinstance(channel,CompatibleChannels)
             if message.message_id is None:
                 await self.client.wait_until_ready()
