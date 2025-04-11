@@ -13,7 +13,7 @@ from game.components.send.address import Direct_Message
 from smart_text import TextLike
 from utils.logging import get_logger
 from utils.types import Grouping, SimpleCallback
-from game.components.participant import mention_participants
+from game.components.participant import mention_participants, name_participants
 
 if TYPE_CHECKING:
     from game.components.game_interface import Game_Interface
@@ -84,12 +84,12 @@ class Input(
     async def wait_until_done(self):
         logger.info(f"{self} waiting until is_done.")
         assert self.last_start_time is not None
-        timeout_check = lambda:True
+        timeout_check = lambda:True  # noqa: E731
         clean_up:list[Address] = []
         if self.timeout is not None:
             end_time = self.last_start_time+self.timeout
             clean_up.append(await self.send(text = f"You will need to have responded <t:{int(end_time)}:R>."))
-            timeout_check = lambda:time()<end_time
+            timeout_check = lambda:time()<end_time  # noqa: E731
         try:
             next_reminder = self.last_start_time + next(self.reminders)
         except StopIteration:
@@ -97,6 +97,9 @@ class Input(
         while not self.is_done() and timeout_check():
             if next_reminder is not None:
                 if time() >= next_reminder:
+                    logger.info(
+                        f"{self}: Sending a reminder to {name_participants(self.responses.did_not_respond_valid())} at {next_reminder}."
+                    )
                     for participant in self.responses.did_not_respond_valid():
                         clean_up.append(
                             await self.send(
@@ -109,12 +112,13 @@ class Input(
                     except StopIteration:
                         next_reminder = None
             await asyncio.sleep(WAIT_UNTIL_DONE_CHECK_TIME)
-        if timeout_check is not None:
-            for address in clean_up:
-                await self.send(
-                    address=address,
-                    text=""
-                )
+        #doesn't delete messages, just edits them to be blank. Do we even want messages deleted?
+        # if timeout_check is not None:
+        #     for address in clean_up:
+        #         await self.send(
+        #             address=address,
+        #             text=""
+        #         )
     def is_done(self) -> bool:
         return self.responses.all_valid()
     async def run(self):
