@@ -69,6 +69,7 @@ class ChessPuzzleEliminationConfig(TypedDict):
     num_to_sample:int
     num_move_options:int
     puzzle_rating_cap_escalation:int
+    number_of_rows:int
 class ContainerBiddingConfig(TypedDict):
     num_containers:int
     data_path:str

@@ -7,7 +7,8 @@ games_config:GamesConfigDict = {
         'popularity_range':None,
         'num_to_sample':500,
         'num_move_options':5,
-        'puzzle_rating_cap_escalation':200
+        'puzzle_rating_cap_escalation':200,
+        'number_of_rows':4800453
     },
     "altered_image_guess" : {
         "num_rounds" : 10,

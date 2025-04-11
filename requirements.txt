@@ -22,7 +22,6 @@ joblib==1.4.2
 multidict==6.0.5
 nltk==3.8.1
 numpy==1.26.4
-pandas==2.2.2
 pillow==10.3.0
 python-chess==1.999
 python-dateutil==2.9.0.post0
