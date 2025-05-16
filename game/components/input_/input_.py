@@ -57,7 +57,7 @@ class Input(
         #------------------------------------------------------TEMPORARY HACK
         from config.config import config
         self.timeout = config['default_timeout']
-        self.reminders = config['default_reminders']
+        self.reminders = config['default_warnings']
         #------------------------------------------------------
         #self.timeout:float|None = None
         #self.reminders:Iterator[float] = tuple().__iter__()
